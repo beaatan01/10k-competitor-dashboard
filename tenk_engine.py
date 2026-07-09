@@ -1206,3 +1206,108 @@ def answer_question(question: str, benchmark_df: pd.DataFrame) -> str:
             lines.append(
                 f"{row['company']}: operating cash flow {fmt_cur(row.get('operating_cash_flow'))}, "
                 f"
+# ================================================================
+# Manual statement selection helpers
+# ================================================================
+
+def raw_table_label(index: int, table: pd.DataFrame) -> str:
+    if index == -1:
+        return "Auto-detect / None"
+
+    preview_values = []
+
+    if table is not None and not table.empty:
+        flattened = table.fillna("").astype(str).values.flatten().tolist()
+        preview_values = [value.strip() for value in flattened if value.strip()][:4]
+
+    preview = " | ".join(preview_values)
+    preview = preview[:120] if preview else "empty table"
+
+    return f"Raw table {index + 1} — {table.shape[0]} rows x {table.shape[1]} cols — {preview}"
+
+
+def rebuild_financials_from_table_indexes(
+    raw_tables: List[pd.DataFrame],
+    income_index: int = -1,
+    balance_index: int = -1,
+    cashflow_index: int = -1,
+) -> Dict[str, pd.DataFrame]:
+    """
+    Build financial statement dictionary from manually selected raw table indexes.
+    Use -1 for any statement that should remain empty / auto-unselected.
+    """
+    financials = {
+        "income": pd.DataFrame(),
+        "balance": pd.DataFrame(),
+        "cashflow": pd.DataFrame(),
+    }
+
+    selections = {
+        "income": income_index,
+        "balance": balance_index,
+        "cashflow": cashflow_index,
+    }
+
+    for statement_type, table_index in selections.items():
+        if table_index is None or table_index < 0:
+            continue
+
+        if table_index >= len(raw_tables):
+            continue
+
+        standardized = standardize_columns(raw_tables[table_index])
+
+        if not standardized.empty:
+            financials[statement_type] = standardized
+
+    return financials
+
+
+def apply_manual_statement_selection(
+    result: Dict[str, Any],
+    income_index: int = -1,
+    balance_index: int = -1,
+    cashflow_index: int = -1,
+) -> Dict[str, Any]:
+    """
+    Return an updated company result after applying manually selected statement tables.
+    """
+    updated = result.copy()
+    raw_tables = updated.get("raw_tables", [])
+
+    manual_financials = rebuild_financials_from_table_indexes(
+        raw_tables=raw_tables,
+        income_index=income_index,
+        balance_index=balance_index,
+        cashflow_index=cashflow_index,
+    )
+
+    # Only apply manual mode if at least one selected table successfully standardizes.
+    any_manual_statement = any(not df.empty for df in manual_financials.values())
+
+    if any_manual_statement:
+        manual_kpis = compute_kpis(manual_financials)
+        manual_confidence = calculate_confidence(
+            manual_financials,
+            manual_kpis,
+            len(raw_tables),
+        )
+
+        updated["financials"] = manual_financials
+        updated["kpis"] = manual_kpis
+        updated["confidence"] = f"Manual / {manual_confidence}"
+        updated["manual_selection_applied"] = True
+        updated["manual_selection"] = {
+            "income_index": income_index,
+            "balance_index": balance_index,
+            "cashflow_index": cashflow_index,
+        }
+    else:
+        updated["manual_selection_applied"] = False
+        updated["manual_selection"] = {
+            "income_index": income_index,
+            "balance_index": balance_index,
+            "cashflow_index": cashflow_index,
+        }
+
+    return updated
