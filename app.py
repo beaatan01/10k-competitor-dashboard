@@ -184,7 +184,7 @@ def promote_header_row(df: pd.DataFrame) -> pd.DataFrame:
     for idx in range(min(5, len(df))):
         row = df.iloc[idx].tolist()
 
-        # ⭐ FIX APPLIED HERE — cast cell to string
+        # ⭐ FIX — cast cell to string
         score = sum(
             bool(re.search(r"20\d{2}|19\d{2}|three months|year ended|years ended", str(cell), re.I))
             for cell in row
@@ -432,14 +432,3 @@ company_results = {}
 
 if uploaded_files:
     for file in uploaded_files:
-        with st.spinner(f"Processing {file.name}..."):
-            text = extract_text(file)
-            tables = extract_tables(file)
-            financials = identify_financial_statements(tables)
-            kpis = compute_kpis(financials)
-            name = extract_company_name(text, file.name)
-            seg = extract_segment_revenue(tables)
-            company_results[name] = {"kpis": kpis, "segment": seg}
-
-    rows = []
-    for name, r in company
