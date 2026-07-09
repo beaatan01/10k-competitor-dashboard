@@ -1147,3 +1147,251 @@ def get_best_company(df: pd.DataFrame, metric: str, higher_is_better: bool = Tru
 def answer_question(question: str, benchmark_df: pd.DataFrame) -> str:
     if benchmark_df.empty:
         return "Upload filings first so I can compare extracted KPIs."
+
+    q = question.lower().strip()
+    lines = []
+
+    mentioned_companies = [
+        company for company in benchmark_df["company"].tolist()
+        if company.lower() in q
+    ]
+
+    scoped = benchmark_df
+
+    if mentioned_companies:
+        scoped = benchmark_df[benchmark_df["company"].isin(mentioned_companies)]
+
+    if any(term in q for term in ["margin", "profit", "profitability", "gross", "operating"]):
+        best_operating = get_best_company(scoped, "operating_margin")
+        best_gross = get_best_company(scoped, "gross_margin")
+
+        if best_operating is not None:
+            lines.append(
+                f"{best_operating['company']} leads operating profitability at "
+                f"{fmt_pct(best_operating['operating_margin'])}."
+            )
+
+        if best_gross is not None:
+            lines.append(
+                f"{best_gross['company']} has the highest gross margin at "
+                f"{fmt_pct(best_gross['gross_margin'])}."
+            )
+
+        for _, row in scoped.iterrows():
+            lines.append(
+                f"{row['company']}: gross margin {fmt_pct(row.get('gross_margin'))}, "
+                f"operating margin {fmt_pct(row.get('operating_margin'))}, "
+                f"net margin {fmt_pct(row.get('net_margin'))}."
+            )
+
+    elif any(term in q for term in ["cash", "fcf", "free cash", "cash flow", "cashflow"]):
+        best_fcf = get_best_company(scoped, "free_cash_flow")
+        best_cfo = get_best_company(scoped, "operating_cash_flow")
+
+        if best_fcf is not None:
+            lines.append(
+                f"{best_fcf['company']} leads free cash flow at "
+                f"{fmt_cur(best_fcf['free_cash_flow'])}."
+            )
+
+        if best_cfo is not None:
+            lines.append(
+                f"{best_cfo['company']} leads operating cash flow at "
+                f"{fmt_cur(best_cfo['operating_cash_flow'])}."
+            )
+
+        for _, row in scoped.iterrows():
+            lines.append(
+                f"{row['company']}: operating cash flow {fmt_cur(row.get('operating_cash_flow'))}, "
+                f"capex {fmt_cur(row.get('capex'))}, "
+                f"free cash flow {fmt_cur(row.get('free_cash_flow'))}."
+            )
+
+    elif any(term in q for term in ["risk", "risks", "competitive", "competition"]):
+        for _, row in scoped.iterrows():
+            risks = []
+
+            if pd.notna(row.get("revenue_yoy_growth")) and row["revenue_yoy_growth"] < 0:
+                risks.append("declining revenue")
+
+            if pd.notna(row.get("operating_margin")) and row["operating_margin"] < 0.10:
+                risks.append("low operating margin")
+
+            if pd.notna(row.get("free_cash_flow")) and row["free_cash_flow"] < 0:
+                risks.append("negative free cash flow")
+
+            if (
+                pd.notna(row.get("total_debt"))
+                and pd.notna(row.get("cash_balance"))
+                and row["total_debt"] > row["cash_balance"]
+            ):
+                risks.append("debt above cash balance")
+
+            if risks:
+                lines.append(f"{row['company']}: watch {', '.join(risks)}.")
+            else:
+                lines.append(f"{row['company']}: no major KPI-based risk signal detected.")
+
+    elif any(term in q for term in ["growth", "revenue", "sales", "scale"]):
+        best_revenue = get_best_company(scoped, "revenue")
+        best_growth = get_best_company(scoped, "revenue_yoy_growth")
+
+        if best_revenue is not None:
+            lines.append(
+                f"{best_revenue['company']} has the largest revenue base at "
+                f"{fmt_cur(best_revenue['revenue'])}."
+            )
+
+        if best_growth is not None:
+            lines.append(
+                f"{best_growth['company']} has the strongest extracted YoY revenue growth at "
+                f"{fmt_pct(best_growth['revenue_yoy_growth'])}."
+            )
+
+        for _, row in scoped.iterrows():
+            lines.append(
+                f"{row['company']}: revenue {fmt_cur(row.get('revenue'))}, "
+                f"YoY growth {fmt_pct(row.get('revenue_yoy_growth'))}."
+            )
+
+    else:
+        for _, row in scoped.iterrows():
+            lines.append(
+                f"{row['company']}: revenue {fmt_cur(row.get('revenue'))}, "
+                f"YoY growth {fmt_pct(row.get('revenue_yoy_growth'))}, "
+                f"operating margin {fmt_pct(row.get('operating_margin'))}, "
+                f"free cash flow {fmt_cur(row.get('free_cash_flow'))}."
+            )
+
+    return "\n".join(lines) if lines else "The uploaded filings did not contain enough comparable KPI data to answer that question confidently."
+
+
+# ================================================================
+# Manual statement selection helpers
+# ================================================================
+
+def raw_table_label(index: int, table: pd.DataFrame) -> str:
+    if index == -1:
+        return "Auto-detect / None"
+
+    preview_values = []
+
+    if table is not None and not table.empty:
+        flattened = table.fillna("").astype(str).values.flatten().tolist()
+        preview_values = [value.strip() for value in flattened if value.strip()][:4]
+
+    preview = " | ".join(preview_values)
+    preview = preview[:120] if preview else "empty table"
+
+    return f"Raw table {index + 1} — {table.shape[0]} rows x {table.shape[1]} cols — {preview}"
+
+
+def rebuild_financials_from_table_indexes(
+    raw_tables: List[pd.DataFrame],
+    income_index: int = -1,
+    balance_index: int = -1,
+    cashflow_index: int = -1,
+) -> Dict[str, pd.DataFrame]:
+    financials = {
+        "income": pd.DataFrame(),
+        "balance": pd.DataFrame(),
+        "cashflow": pd.DataFrame(),
+    }
+
+    selections = {
+        "income": income_index,
+        "balance": balance_index,
+        "cashflow": cashflow_index,
+    }
+
+    for statement_type, table_index in selections.items():
+        if table_index is None or table_index < 0:
+            continue
+
+        if table_index >= len(raw_tables):
+            continue
+
+        standardized = standardize_columns(raw_tables[table_index])
+
+        if not standardized.empty:
+            financials[statement_type] = standardized
+
+    return financials
+
+
+def apply_manual_statement_selection(
+    result: Dict[str, Any],
+    income_index: int = -1,
+    balance_index: int = -1,
+    cashflow_index: int = -1,
+) -> Dict[str, Any]:
+    updated = result.copy()
+    raw_tables = updated.get("raw_tables", [])
+
+    manual_financials = rebuild_financials_from_table_indexes(
+        raw_tables=raw_tables,
+        income_index=income_index,
+        balance_index=balance_index,
+        cashflow_index=cashflow_index,
+    )
+
+    any_manual_statement = any(not df.empty for df in manual_financials.values())
+
+    if any_manual_statement:
+        manual_kpis = compute_kpis(manual_financials)
+        manual_confidence = calculate_confidence(
+            manual_financials,
+            manual_kpis,
+            len(raw_tables),
+        )
+
+        updated["financials"] = manual_financials
+        updated["kpis"] = manual_kpis
+        updated["confidence"] = f"Manual / {manual_confidence}"
+        updated["manual_selection_applied"] = True
+        updated["manual_selection"] = {
+            "income_index": income_index,
+            "balance_index": balance_index,
+            "cashflow_index": cashflow_index,
+        }
+    else:
+        updated["manual_selection_applied"] = False
+        updated["manual_selection"] = {
+            "income_index": income_index,
+            "balance_index": balance_index,
+            "cashflow_index": cashflow_index,
+        }
+
+    return updated
+
+
+# ================================================================
+# Main processing entry point used by app.py
+# ================================================================
+
+def process_uploaded_file(file) -> Dict[str, Any]:
+    text = extract_text(file)
+    raw_tables = extract_tables(file)
+    financials = identify_financial_statements(raw_tables)
+    kpis = compute_kpis(financials)
+    company = extract_company_name(text, file.name)
+    segment = extract_segment_revenue(raw_tables)
+    confidence = calculate_confidence(financials, kpis, len(raw_tables))
+
+    return {
+        "company": company,
+        "file_name": file.name,
+        "text": text,
+        "raw_tables": raw_tables,
+        "table_count": len(raw_tables),
+        "financials": financials,
+        "kpis": kpis,
+        "segment": segment,
+        "confidence": confidence,
+        "manual_selection_applied": False,
+        "manual_selection": {
+            "income_index": -1,
+            "balance_index": -1,
+            "cashflow_index": -1,
+        },
+    }
