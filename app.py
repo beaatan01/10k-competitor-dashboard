@@ -432,3 +432,91 @@ company_results = {}
 
 if uploaded_files:
     for file in uploaded_files:
+        rows.append({
+            "company": name,
+            "period": r["kpis"]["latest_period"],
+            "revenue": r["kpis"]["revenue"],
+            "revenue_yoy_growth": r["kpis"]["revenue_yoy_growth"],
+            "gross_margin": r["kpis"]["gross_margin"],
+            "operating_margin": r["kpis"]["operating_margin"],
+            "net_margin": r["kpis"]["net_margin"],
+            "net_income": r["kpis"]["net_income"],
+            "operating_cash_flow": r["kpis"]["operating_cash_flow"],
+            "free_cash_flow": r["kpis"]["free_cash_flow"],
+            "cash_balance": r["kpis"]["cash_balance"],
+            "total_debt": r["kpis"]["total_debt"],
+            "capex": r["kpis"]["capex"],
+        })
+
+    benchmark_df = pd.DataFrame(rows)
+
+    st.subheader("Benchmark KPIs")
+    st.dataframe(benchmark_df, use_container_width=True)
+
+    # Time series charts
+    ts_frames = []
+    for name, r in company_results.items():
+        ts = r["kpis"]["time_series"]
+        if isinstance(ts, pd.DataFrame) and not ts.empty:
+            ts = ts.copy()
+            ts["company"] = name
+            ts_frames.append(ts)
+
+    if ts_frames:
+        full_ts = pd.concat(ts_frames, ignore_index=True)
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("### Revenue over time")
+            fig_rev = px.line(
+                full_ts,
+                x="period",
+                y="revenue",
+                color="company",
+                markers=True,
+            )
+            st.plotly_chart(fig_rev, use_container_width=True)
+
+        with col2:
+            st.markdown("### Operating margin over time")
+            fig_op = px.line(
+                full_ts,
+                x="period",
+                y="operating_margin",
+                color="company",
+                markers=True,
+            )
+            st.plotly_chart(fig_op, use_container_width=True)
+
+    # Segment revenue
+    st.subheader("Segment revenue (latest period)")
+    seg_frames = []
+    for name, r in company_results.items():
+        seg = r["segment"]
+        if isinstance(seg, pd.DataFrame) and not seg.empty:
+            seg = seg.copy()
+            seg["company"] = name
+            seg_frames.append(seg)
+
+    if seg_frames:
+        seg_all = pd.concat(seg_frames, ignore_index=True)
+        fig_seg = px.bar(
+            seg_all,
+            x="segment",
+            y="revenue",
+            color="company",
+            barmode="group",
+        )
+        st.plotly_chart(fig_seg, use_container_width=True)
+    else:
+        st.info("No segment revenue tables detected.")
+
+    # AI Q&A
+    if question.strip():
+        st.subheader("AI-style insight")
+        answer = answer_question(question, benchmark_df)
+        st.write(answer)
+
+else:
+    st.info("Upload at least one 10-K filing to begin.")
