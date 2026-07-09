@@ -3,6 +3,9 @@ pandas
 numpy
 plotly
 pdfplumber
-camelot-py
+camelot-py[cv]
 tabula-py
 beautifulsoup4
+lxml
+html5lib
+openpyxl
