@@ -47,10 +47,6 @@ if not uploaded_files:
     st.stop()
 
 
-# ================================================================
-# Process files
-# ================================================================
-
 company_results = {}
 
 for file in uploaded_files:
@@ -76,10 +72,6 @@ if not company_results:
     st.warning("No files could be processed.")
     st.stop()
 
-
-# ================================================================
-# Manual table mapping controls
-# ================================================================
 
 with st.sidebar:
     st.header("Manual Statement Mapping")
@@ -143,7 +135,6 @@ with st.sidebar:
             }
 
 
-# Apply manual selections before building benchmark dataframe.
 for company, settings in manual_settings.items():
     if any(index != -1 for index in settings.values()):
         company_results[company] = apply_manual_statement_selection(
@@ -156,11 +147,6 @@ for company, settings in manual_settings.items():
 
 benchmark_df = build_benchmark_dataframe(company_results)
 
-
-# ================================================================
-# App tabs
-# ================================================================
-
 kpi_tab, chart_tab, table_tab, debug_tab, insight_tab = st.tabs([
     "Benchmark KPIs",
     "Charts",
@@ -170,10 +156,6 @@ kpi_tab, chart_tab, table_tab, debug_tab, insight_tab = st.tabs([
 ])
 
 
-# ================================================================
-# Benchmark KPIs
-# ================================================================
-
 with kpi_tab:
     st.subheader("Benchmark KPIs")
 
@@ -182,7 +164,7 @@ with kpi_tab:
     else:
         st.dataframe(
             format_display_dataframe(benchmark_df),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -205,7 +187,7 @@ with kpi_tab:
 
     st.dataframe(
         pd.DataFrame(status_rows),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -214,10 +196,6 @@ with kpi_tab:
         "Pick the raw table that visually looks like the Income Statement, Balance Sheet, and Cash Flow Statement."
     )
 
-
-# ================================================================
-# Charts
-# ================================================================
 
 with chart_tab:
     st.subheader("Competitor Comparison")
@@ -235,7 +213,7 @@ with chart_tab:
                 text_auto=".2s",
                 title="Latest Revenue Comparison",
             )
-            st.plotly_chart(fig_revenue, use_container_width=True)
+            st.plotly_chart(fig_revenue, width="stretch")
         else:
             st.info("Revenue data is not available yet.")
 
@@ -262,7 +240,7 @@ with chart_tab:
                 title="Latest Margin Comparison",
             )
             fig_margin.update_yaxes(tickformat=".0%")
-            st.plotly_chart(fig_margin, use_container_width=True)
+            st.plotly_chart(fig_margin, width="stretch")
         else:
             st.info("Margin data is not available yet.")
 
@@ -278,7 +256,6 @@ with chart_tab:
 
         if ts_frames:
             full_ts = pd.concat(ts_frames, ignore_index=True)
-
             revenue_ts = full_ts.dropna(subset=["revenue"])
 
             if not revenue_ts.empty:
@@ -290,12 +267,8 @@ with chart_tab:
                     markers=True,
                     title="Revenue Over Time",
                 )
-                st.plotly_chart(fig_ts, use_container_width=True)
+                st.plotly_chart(fig_ts, width="stretch")
 
-
-# ================================================================
-# Financial Tables
-# ================================================================
 
 with table_tab:
     selected_company = st.selectbox(
@@ -324,12 +297,8 @@ with table_tab:
         if df.empty:
             st.info(f"{label} was not selected or not confidently detected.")
         else:
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
 
-
-# ================================================================
-# Extraction Debug
-# ================================================================
 
 with debug_tab:
     selected_company_debug = st.selectbox(
@@ -348,7 +317,7 @@ with debug_tab:
     else:
         st.info(
             "Review these raw tables, then use the sidebar to map the correct tables. "
-            "Look for tables containing rows like Revenue, Net Income, Total Assets, Total Liabilities, "
+            "Look for rows like Revenue, Net Income, Total Assets, Total Liabilities, "
             "Net Cash Provided by Operating Activities, and Capital Expenditures."
         )
 
@@ -357,12 +326,8 @@ with debug_tab:
                 f"Raw table {idx + 1} — {table.shape[0]} rows x {table.shape[1]} columns",
                 expanded=False,
             ):
-                st.dataframe(table, use_container_width=True)
+                st.dataframe(table, width="stretch")
 
-
-# ================================================================
-# AI-style insights
-# ================================================================
 
 with insight_tab:
     st.subheader("AI-Style Insight")
