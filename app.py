@@ -325,7 +325,7 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df[["line_item"] + keep_numeric]
     df = df[df["line_item"].astype(str).str.len() > 0]
-    df = df.drop_duplicates(subset=["line_item"], keep="first"]
+    df = df.drop_duplicates(subset=["line_item"], keep="first")
 
     return df.reset_index(drop=True)
 
