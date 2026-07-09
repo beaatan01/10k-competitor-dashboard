@@ -2,11 +2,12 @@ import io
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 
@@ -39,8 +40,8 @@ def remove_repeated_headers_footers(page_texts: List[str]) -> str:
 
     first_lines = []
     last_lines = []
-    split_pages = []
 
+    split_pages = []
     for page in page_texts:
         lines = [line.strip() for line in page.splitlines() if line.strip()]
         split_pages.append(lines)
@@ -290,7 +291,7 @@ def promote_header_row(df: pd.DataFrame) -> pd.DataFrame:
     for idx in range(min(5, len(df))):
         row = df.iloc[idx].astype(str).tolist()
         score = sum(bool(re.search(r"20\d{2}|19\d{2}|three months|year ended|years ended", cell, re.I)) for cell in row)
-        score -= sum(cell.strip().lower() in {"", "nan"} for cell in row) * 0.25
+        score += sum(cell.strip().lower() in {"", "nan"} for cell in row) * -0.25
 
         if score > best_score:
             best_score = score
@@ -322,7 +323,6 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
     for col in columns[1:]:
         raw = str(col).strip()
         year_match = re.search(r"(20\d{2}|19\d{2})", raw)
-
         if year_match:
             name = year_match.group(1)
         else:
@@ -352,7 +352,7 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df[["line_item"] + keep_numeric]
     df = df[df["line_item"].astype(str).str.len() > 0]
-    df = df.drop_duplicates(subset=["line_item"], keep="first")
+    df = df.drop_duplicates(subset=["line_item"], keep="first"]
 
     return df.reset_index(drop=True)
 
@@ -503,11 +503,18 @@ def find_matching_row(df: pd.DataFrame, patterns: List[str]) -> Optional[pd.Seri
         return None
 
     labels = df["line_item"].astype(str).str.lower()
-    skip_terms = ["per share", "basic", "diluted", "weighted average", "percentage"]
+
+    exact_penalty_terms = [
+        "per share",
+        "basic",
+        "diluted",
+        "weighted average",
+        "percentage",
+    ]
 
     matches = []
     for idx, label in labels.items():
-        if any(term in label for term in skip_terms):
+        if any(term in label for term in exact_penalty_terms):
             continue
 
         for pattern in patterns:
@@ -535,7 +542,7 @@ def extract_metric_series(df: pd.DataFrame, metric_name: str) -> Dict[str, float
 
 
 def combine_debt_series(balance: pd.DataFrame) -> Dict[str, float]:
-    if balance.empty or "line_item" not in balance.columns:
+    if balance.empty:
         return {}
 
     debt_rows = []
@@ -561,9 +568,9 @@ def combine_debt_series(balance: pd.DataFrame) -> Dict[str, float]:
 
 
 def safe_divide(numerator: Optional[float], denominator: Optional[float]) -> Optional[float]:
-    if numerator is None or denominator is None:
+    if numerator is None or denominator in {None, 0}:
         return None
-    if pd.isna(numerator) or pd.isna(denominator) or denominator == 0:
+    if pd.isna(numerator) or pd.isna(denominator):
         return None
     return float(numerator) / float(denominator)
 
@@ -591,10 +598,7 @@ def compute_yoy_growth(series: Dict[str, float], latest_period: str, periods: Li
     prior = series.get(prior_period)
     latest = series.get(latest_period)
 
-    if prior is None or pd.isna(prior) or prior == 0:
-        return None
-
-    return safe_divide(latest - prior, prior)
+    return safe_divide(latest - prior, prior) if prior not in {None, 0} else None
 
 
 def compute_kpis(financials: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
@@ -750,12 +754,13 @@ def create_benchmarking_table(company_results: Dict[str, Dict[str, Any]]) -> pd.
 def extract_segment_revenue(tables: List[pd.DataFrame]) -> pd.DataFrame:
     segment_keywords = [
         "segment",
-        "product",
-        "service",
+        "productivity",
         "cloud",
+        "services",
+        "devices",
+        "advertising",
         "geographic",
         "business unit",
-        "division",
     ]
 
     rows = []
@@ -919,473 +924,122 @@ def answer_financial_question(question: str, benchmark_df: pd.DataFrame) -> str:
                 risk_signals.append("thin operating margin")
             if pd.notna(row.get("free_cash_flow")) and row["free_cash_flow"] < 0:
                 risk_signals.append("negative free cash flow")
-            if pd.notna(row.get("total_debt")) and pd.notna(row.get("cash_balance")) and row["total_debt"] > row["cash_balance"]:
-                risk_signals.append("debt above cash balance")
-            if pd.notna(row.get("rnd_pct")) and row["rnd_pct"] < 0.03:
-                risk_signals.append("low R&D intensity")
+            if pd.notna(row.get("total_debt")) and pd.notna(row.get("cash_balance")):
+                if row["total_debt"] > 2 * row["cash_balance"]:
+                    risk_signals.append("high leverage vs cash")
 
             if risk_signals:
-                lines.append(f"- {row['company']}: watch {', '.join(risk_signals)}.")
+                lines.append(
+                    f"- {row['company']} risk signals: " + ", ".join(risk_signals) + "."
+                )
             else:
-                lines.append(f"- {row['company']}: no major KPI-based risk signal detected from extracted metrics.")
+                lines.append(
+                    f"- {row['company']} shows no major risk signals based on revenue growth, margins, cash flow, and leverage."
+                )
 
-    elif any(term in q for term in ["growth", "revenue", "sales"]):
-        best_revenue = get_best_company(scoped, "revenue")
-        best_growth = get_best_company(scoped, "revenue_yoy_growth")
-
-        if best_revenue is not None:
-            lines.append(
-                f"- Revenue leader: {best_revenue['company']} with "
-                f"{format_currency(best_revenue['revenue'])}."
-            )
-        if best_growth is not None:
-            lines.append(
-                f"- Fastest YoY revenue growth: {best_growth['company']} at "
-                f"{format_percent(best_growth['revenue_yoy_growth'])}."
-            )
-
+    else:
         for _, row in scoped.iterrows():
             lines.append(
                 f"- {row['company']}: revenue {format_currency(row.get('revenue'))}, "
-                f"YoY growth {format_percent(row.get('revenue_yoy_growth'))}."
+                f"gross margin {format_percent(row.get('gross_margin'))}, "
+                f"operating margin {format_percent(row.get('operating_margin'))}, "
+                f"net margin {format_percent(row.get('net_margin'))}, "
+                f"free cash flow {format_currency(row.get('free_cash_flow'))}."
             )
 
-    else:
-        leader_revenue = get_best_company(scoped, "revenue")
-        leader_margin = get_best_company(scoped, "operating_margin")
-        leader_fcf = get_best_company(scoped, "free_cash_flow")
+    if not lines:
+        return "I couldn't match your question to margins, cash flow, or risk. Try asking about margins, cash flow, or competitive risks."
 
-        lines.append("- Summary:")
-        if leader_revenue is not None:
-            lines.append(f"  - Scale leader: {leader_revenue['company']} at {format_currency(leader_revenue['revenue'])} revenue.")
-        if leader_margin is not None:
-            lines.append(f"  - Profitability leader: {leader_margin['company']} at {format_percent(leader_margin['operating_margin'])} operating margin.")
-        if leader_fcf is not None:
-            lines.append(f"  - Cash generation leader: {leader_fcf['company']} at {format_currency(leader_fcf['free_cash_flow'])} free cash flow.")
-
-    return "\n".join(lines) if lines else "The uploaded filings did not contain enough comparable KPI data to answer that question confidently."
-
-
-def generate_default_insights(benchmark_df: pd.DataFrame) -> List[str]:
-    if benchmark_df.empty:
-        return ["Upload filings to generate KPI-based insights."]
-
-    insights = []
-
-    revenue_leader = get_best_company(benchmark_df, "revenue")
-    margin_leader = get_best_company(benchmark_df, "operating_margin")
-    fcf_leader = get_best_company(benchmark_df, "free_cash_flow")
-    growth_leader = get_best_company(benchmark_df, "revenue_yoy_growth")
-
-    if revenue_leader is not None:
-        insights.append(
-            f"{revenue_leader['company']} has the largest extracted revenue base at "
-            f"{format_currency(revenue_leader['revenue'])}."
-        )
-
-    if growth_leader is not None and pd.notna(growth_leader.get("revenue_yoy_growth")):
-        insights.append(
-            f"{growth_leader['company']} shows the strongest extracted YoY revenue growth at "
-            f"{format_percent(growth_leader['revenue_yoy_growth'])}."
-        )
-
-    if margin_leader is not None:
-        insights.append(
-            f"{margin_leader['company']} leads operating profitability at "
-            f"{format_percent(margin_leader['operating_margin'])}."
-        )
-
-    if fcf_leader is not None:
-        insights.append(
-            f"{fcf_leader['company']} leads cash generation with "
-            f"{format_currency(fcf_leader['free_cash_flow'])} in free cash flow."
-        )
-
-    if not insights:
-        insights.append("Financial statements were detected, but comparable KPI coverage is limited.")
-
-    return insights
+    return "\n".join(lines)
 
 
 # =============================================================================
-# Visualization helpers
+# Streamlit UI with charts
 # =============================================================================
 
-def make_revenue_chart(benchmark_df: pd.DataFrame):
-    df = benchmark_df.dropna(subset=["revenue"])
-    if df.empty:
-        return None
+st.title("10-K Competitor Analysis Dashboard")
 
-    fig = px.bar(
-        df,
-        x="company",
-        y="revenue",
-        text_auto=".2s",
-        title="Revenue Comparison",
-        labels={"company": "Company", "revenue": "Revenue"},
-    )
-    fig.update_layout(showlegend=False, margin=dict(l=20, r=20, t=60, b=20))
-    return fig
+uploaded_files = st.file_uploader(
+    "Upload one or more 10-K filings (PDF, HTML, HTM, TXT)",
+    type=["pdf", "html", "htm", "txt"],
+    accept_multiple_files=True
+)
 
+if uploaded_files:
+    company_results: Dict[str, Dict[str, Any]] = {}
 
-def make_margin_chart(benchmark_df: pd.DataFrame):
-    cols = ["gross_margin", "operating_margin", "net_margin"]
-    available = [c for c in cols if c in benchmark_df.columns and benchmark_df[c].notna().any()]
+    for file in uploaded_files:
+        with st.spinner(f"Processing {file.name}..."):
+            text = extract_text(file)
+            tables = extract_tables(file)
+            financials = identify_financial_statements(tables)
+            kpis = compute_kpis(financials)
+            company_name = extract_company_name(text, file.name)
 
-    if not available:
-        return None
+            company_results[company_name] = {
+                "kpis": kpis,
+                "segments": extract_segment_revenue(tables),
+            }
 
-    long_df = benchmark_df.melt(
-        id_vars=["company"],
-        value_vars=available,
-        var_name="metric",
-        value_name="margin",
-    ).dropna(subset=["margin"])
-
-    long_df["metric"] = long_df["metric"].map({
-        "gross_margin": "Gross Margin",
-        "operating_margin": "Operating Margin",
-        "net_margin": "Net Margin",
-    })
-
-    fig = px.bar(
-        long_df,
-        x="company",
-        y="margin",
-        color="metric",
-        barmode="group",
-        text_auto=".1%",
-        title="Margin Comparison",
-        labels={"company": "Company", "margin": "Margin", "metric": "Metric"},
-    )
-    fig.update_yaxes_tickformat=".0%"
-    fig.update_layout(margin=dict(l=20, r=20, t=60, b=20))
-    return fig
-
-
-def make_cash_flow_chart(benchmark_df: pd.DataFrame):
-    cols = ["operating_cash_flow", "free_cash_flow"]
-    available = [c for c in cols if c in benchmark_df.columns and benchmark_df[c].notna().any()]
-
-    if not available:
-        return None
-
-    long_df = benchmark_df.melt(
-        id_vars=["company"],
-        value_vars=available,
-        var_name="metric",
-        value_name="amount",
-    ).dropna(subset=["amount"])
-
-    long_df["metric"] = long_df["metric"].map({
-        "operating_cash_flow": "Operating Cash Flow",
-        "free_cash_flow": "Free Cash Flow",
-    })
-
-    fig = px.bar(
-        long_df,
-        x="company",
-        y="amount",
-        color="metric",
-        barmode="group",
-        text_auto=".2s",
-        title="Cash Flow Comparison",
-        labels={"company": "Company", "amount": "Amount", "metric": "Metric"},
-    )
-    fig.update_layout(margin=dict(l=20, r=20, t=60, b=20))
-    return fig
-
-
-def make_revenue_trend_chart(company_results: Dict[str, Dict[str, Any]]):
-    rows = []
-
-    for company, result in company_results.items():
-        ts = result["kpis"].get("time_series")
-        if isinstance(ts, pd.DataFrame) and not ts.empty and "revenue" in ts.columns:
-            for _, row in ts.dropna(subset=["revenue"]).iterrows():
-                rows.append({
-                    "company": company,
-                    "period": row["period"],
-                    "revenue": row["revenue"],
-                })
-
-    df = pd.DataFrame(rows)
-    if df.empty:
-        return None
-
-    fig = px.line(
-        df,
-        x="period",
-        y="revenue",
-        color="company",
-        markers=True,
-        title="Revenue Trend",
-        labels={"period": "Period", "revenue": "Revenue", "company": "Company"},
-    )
-    fig.update_layout(margin=dict(l=20, r=20, t=60, b=20))
-    return fig
-
-
-def make_segment_chart(company_results: Dict[str, Dict[str, Any]]):
-    rows = []
-
-    for company, result in company_results.items():
-        segment_df = result.get("segments", pd.DataFrame())
-        if segment_df.empty:
-            continue
-
-        temp = segment_df.copy()
-        temp["company"] = company
-        rows.append(temp)
-
-    if not rows:
-        return None
-
-    df = pd.concat(rows, ignore_index=True)
-
-    fig = px.bar(
-        df,
-        x="segment",
-        y="revenue",
-        color="company",
-        barmode="group",
-        title="Segment Revenue Comparison",
-        labels={"segment": "Segment", "revenue": "Revenue", "company": "Company"},
-    )
-    fig.update_layout(margin=dict(l=20, r=20, t=60, b=80), xaxis_tickangle=-35)
-    return fig
-
-
-# =============================================================================
-# Formatting helpers
-# =============================================================================
-
-def format_kpi_table(df: pd.DataFrame) -> pd.DataFrame:
-    formatted = df.copy()
-
-    currency_cols = [
-        "revenue",
-        "net_income",
-        "operating_cash_flow",
-        "free_cash_flow",
-        "cash_balance",
-        "total_debt",
-        "capex",
-    ]
-
-    percent_cols = [
-        "revenue_yoy_growth",
-        "gross_margin",
-        "operating_margin",
-        "net_margin",
-        "rnd_pct",
-        "sga_pct",
-    ]
-
-    for col in currency_cols:
-        if col in formatted.columns:
-            formatted[col] = formatted[col].map(format_currency)
-
-    for col in percent_cols:
-        if col in formatted.columns:
-            formatted[col] = formatted[col].map(format_percent)
-
-    pretty_names = {
-        "company": "Company",
-        "period": "Period",
-        "revenue": "Revenue",
-        "revenue_yoy_growth": "YoY Revenue Growth",
-        "gross_margin": "Gross Margin",
-        "operating_margin": "Operating Margin",
-        "net_margin": "Net Margin",
-        "net_income": "Net Income",
-        "operating_cash_flow": "Operating Cash Flow",
-        "free_cash_flow": "Free Cash Flow",
-        "cash_balance": "Cash Balance",
-        "total_debt": "Total Debt",
-        "rnd_pct": "R&D %",
-        "sga_pct": "SG&A %",
-        "capex": "Capex",
-    }
-
-    return formatted.rename(columns=pretty_names)
-
-
-def process_uploaded_file(file) -> Dict[str, Any]:
-    text = extract_text(file)
-    tables = extract_tables(file)
-    financials = identify_financial_statements(tables)
-    kpis = compute_kpis(financials)
-    company_name = extract_company_name(text, file.name)
-    segments = extract_segment_revenue(tables)
-
-    return {
-        "company": company_name,
-        "file_name": file.name,
-        "text": text,
-        "tables": tables,
-        "financials": financials,
-        "kpis": kpis,
-        "segments": segments,
-    }
-
-
-# =============================================================================
-# Streamlit app
-# =============================================================================
-
-def main():
-    st.set_page_config(
-        page_title="10-K Financial Analysis",
-        layout="wide",
-    )
-
-    st.title("10-K Financial Analysis")
-    st.caption("Upload SEC 10-K filings to extract KPIs, benchmark competitors, and generate concise financial insights.")
-
-    with st.sidebar:
-        st.header("Files")
-        uploaded_files = st.file_uploader(
-            "Upload 10-K filings",
-            type=["pdf", "html", "htm", "txt"],
-            accept_multiple_files=True,
-        )
-
-    if not uploaded_files:
-        st.info("Upload one or more PDF, HTML, or TXT 10-K filings to begin.")
-        return
-
-    company_results = {}
-
-    with st.spinner("Extracting financial statements and KPIs..."):
-        for file in uploaded_files:
-            result = process_uploaded_file(file)
-            company = result["company"]
-
-            original_company = company
-            counter = 2
-            while company in company_results:
-                company = f"{original_company} ({counter})"
-                counter += 1
-
-            result["company"] = company
-            company_results[company] = result
-
-    company_names = list(company_results.keys())
-
-    with st.sidebar:
-        st.header("Company")
-        selected_company = st.selectbox("Select company", company_names)
-
+    st.subheader("Benchmarking Table")
     benchmark_df = create_benchmarking_table(company_results)
+    st.dataframe(benchmark_df, use_container_width=True)
 
-    overview_tab, tables_tab, charts_tab, insights_tab = st.tabs([
-        "KPIs",
-        "Financial Tables",
-        "Benchmarking Charts",
-        "AI Insights",
-    ])
-
-    with overview_tab:
-        st.subheader("Extracted KPIs")
-        st.dataframe(
-            format_kpi_table(benchmark_df),
-            use_container_width=True,
-            hide_index=True,
+    # Revenue Comparison Chart
+    if "revenue" in benchmark_df.columns and benchmark_df["revenue"].notna().any():
+        st.subheader("Revenue Comparison")
+        fig_rev = px.bar(
+            benchmark_df,
+            x="company",
+            y="revenue",
+            title="Latest Revenue by Company",
+            text_auto=True,
         )
+        st.plotly_chart(fig_rev, use_container_width=True)
 
-        st.subheader(f"{selected_company} KPI Detail")
-        selected_kpis = company_results[selected_company]["kpis"]
+    # Margin Comparison Chart
+    if {"gross_margin", "operating_margin", "net_margin"}.issubset(benchmark_df.columns):
+        st.subheader("Margin Comparison")
+        fig_margin = go.Figure()
+        fig_margin.add_trace(go.Bar(
+            x=benchmark_df["company"],
+            y=benchmark_df["gross_margin"],
+            name="Gross Margin",
+        ))
+        fig_margin.add_trace(go.Bar(
+            x=benchmark_df["company"],
+            y=benchmark_df["operating_margin"],
+            name="Operating Margin",
+        ))
+        fig_margin.add_trace(go.Bar(
+            x=benchmark_df["company"],
+            y=benchmark_df["net_margin"],
+            name="Net Margin",
+        ))
+        fig_margin.update_layout(barmode="group", title="Margin Comparison")
+        st.plotly_chart(fig_margin, use_container_width=True)
 
-        detail_cols = st.columns(4)
-        detail_cols[0].metric("Revenue", format_currency(selected_kpis.get("revenue")))
-        detail_cols[1].metric("Operating Margin", format_percent(selected_kpis.get("operating_margin")))
-        detail_cols[2].metric("Net Income", format_currency(selected_kpis.get("net_income")))
-        detail_cols[3].metric("Free Cash Flow", format_currency(selected_kpis.get("free_cash_flow")))
+    # Segment Revenue Charts
+    st.subheader("Segment Revenue Breakdown")
+    for company, result in company_results.items():
+        seg_df = result.get("segments")
+        if seg_df is not None and not seg_df.empty:
+            st.markdown(f"**{company} — Segment Revenue**")
+            fig_seg = px.bar(
+                seg_df,
+                x="segment",
+                y="revenue",
+                title=f"{company} Segment Revenue",
+                text_auto=True,
+            )
+            st.plotly_chart(fig_seg, use_container_width=True)
 
-        detail_cols = st.columns(4)
-        detail_cols[0].metric("YoY Revenue Growth", format_percent(selected_kpis.get("revenue_yoy_growth")))
-        detail_cols[1].metric("Gross Margin", format_percent(selected_kpis.get("gross_margin")))
-        detail_cols[2].metric("Cash Balance", format_currency(selected_kpis.get("cash_balance")))
-        detail_cols[3].metric("Total Debt", format_currency(selected_kpis.get("total_debt")))
+    # AI Insight Section
+    st.subheader("Ask a financial question")
+    question = st.text_input("Enter your question (e.g., 'Which company has the best margins?' or 'Compare cash flow risks.')")
+    if question:
+        answer = answer_financial_question(question, benchmark_df)
+        st.write(answer)
 
-    with tables_tab:
-        st.subheader(f"Detected Financial Statements: {selected_company}")
-
-        selected_financials = company_results[selected_company]["financials"]
-
-        for statement_key, statement_label in [
-            ("income", "Income Statement"),
-            ("balance", "Balance Sheet"),
-            ("cashflow", "Cash Flow Statement"),
-        ]:
-            st.markdown(f"#### {statement_label}")
-            df = selected_financials.get(statement_key, pd.DataFrame())
-
-            if df.empty:
-                st.warning(f"{statement_label} was not confidently detected.")
-            else:
-                st.dataframe(df, use_container_width=True, hide_index=True)
-
-    with charts_tab:
-        st.subheader("Competitor Comparison")
-
-        revenue_chart = make_revenue_chart(benchmark_df)
-        margin_chart = make_margin_chart(benchmark_df)
-        cash_flow_chart = make_cash_flow_chart(benchmark_df)
-        revenue_trend_chart = make_revenue_trend_chart(company_results)
-        segment_chart = make_segment_chart(company_results)
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if revenue_chart is not None:
-                st.plotly_chart(revenue_chart, use_container_width=True)
-            else:
-                st.info("Revenue comparison is unavailable from extracted data.")
-
-        with col2:
-            if margin_chart is not None:
-                st.plotly_chart(margin_chart, use_container_width=True)
-            else:
-                st.info("Margin comparison is unavailable from extracted data.")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            if cash_flow_chart is not None:
-                st.plotly_chart(cash_flow_chart, use_container_width=True)
-            else:
-                st.info("Cash flow comparison is unavailable from extracted data.")
-
-        with col2:
-            if revenue_trend_chart is not None:
-                st.plotly_chart(revenue_trend_chart, use_container_width=True)
-            else:
-                st.info("Revenue trend is unavailable from extracted data.")
-
-        if segment_chart is not None:
-            st.plotly_chart(segment_chart, use_container_width=True)
-        else:
-            st.info("Segment revenue comparison is unavailable from extracted tables.")
-
-    with insights_tab:
-        st.subheader("AI-Generated Financial Insights")
-
-        for insight in generate_default_insights(benchmark_df):
-            st.write(f"- {insight}")
-
-        st.divider()
-
-        question = st.text_input(
-            "Ask a question",
-            value="Compare company margins and cash flow.",
-        )
-
-        if question:
-            answer = answer_financial_question(question, benchmark_df)
-            st.markdown(answer)
-
-
-if __name__ == "__main__":
-    main()
+else:
+    st.info("Upload one or more 10-K filings to begin.")
