@@ -2,12 +2,11 @@ import io
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
 
@@ -40,8 +39,8 @@ def remove_repeated_headers_footers(page_texts: List[str]) -> str:
 
     first_lines = []
     last_lines = []
-
     split_pages = []
+
     for page in page_texts:
         lines = [line.strip() for line in page.splitlines() if line.strip()]
         split_pages.append(lines)
@@ -291,7 +290,7 @@ def promote_header_row(df: pd.DataFrame) -> pd.DataFrame:
     for idx in range(min(5, len(df))):
         row = df.iloc[idx].astype(str).tolist()
         score = sum(bool(re.search(r"20\d{2}|19\d{2}|three months|year ended|years ended", cell, re.I)) for cell in row)
-        score += sum(cell.strip().lower() in {"", "nan"} for cell in row) * -0.25
+        score -= sum(cell.strip().lower() in {"", "nan"} for cell in row) * 0.25
 
         if score > best_score:
             best_score = score
@@ -323,6 +322,7 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
     for col in columns[1:]:
         raw = str(col).strip()
         year_match = re.search(r"(20\d{2}|19\d{2})", raw)
+
         if year_match:
             name = year_match.group(1)
         else:
@@ -503,18 +503,11 @@ def find_matching_row(df: pd.DataFrame, patterns: List[str]) -> Optional[pd.Seri
         return None
 
     labels = df["line_item"].astype(str).str.lower()
-
-    exact_penalty_terms = [
-        "per share",
-        "basic",
-        "diluted",
-        "weighted average",
-        "percentage",
-    ]
+    skip_terms = ["per share", "basic", "diluted", "weighted average", "percentage"]
 
     matches = []
     for idx, label in labels.items():
-        if any(term in label for term in exact_penalty_terms):
+        if any(term in label for term in skip_terms):
             continue
 
         for pattern in patterns:
@@ -542,7 +535,7 @@ def extract_metric_series(df: pd.DataFrame, metric_name: str) -> Dict[str, float
 
 
 def combine_debt_series(balance: pd.DataFrame) -> Dict[str, float]:
-    if balance.empty:
+    if balance.empty or "line_item" not in balance.columns:
         return {}
 
     debt_rows = []
@@ -568,9 +561,9 @@ def combine_debt_series(balance: pd.DataFrame) -> Dict[str, float]:
 
 
 def safe_divide(numerator: Optional[float], denominator: Optional[float]) -> Optional[float]:
-    if numerator is None or denominator in {None, 0}:
+    if numerator is None or denominator is None:
         return None
-    if pd.isna(numerator) or pd.isna(denominator):
+    if pd.isna(numerator) or pd.isna(denominator) or denominator == 0:
         return None
     return float(numerator) / float(denominator)
 
@@ -598,7 +591,10 @@ def compute_yoy_growth(series: Dict[str, float], latest_period: str, periods: Li
     prior = series.get(prior_period)
     latest = series.get(latest_period)
 
-    return safe_divide(latest - prior, prior) if prior not in {None, 0} else None
+    if prior is None or pd.isna(prior) or prior == 0:
+        return None
+
+    return safe_divide(latest - prior, prior)
 
 
 def compute_kpis(financials: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
@@ -754,13 +750,12 @@ def create_benchmarking_table(company_results: Dict[str, Dict[str, Any]]) -> pd.
 def extract_segment_revenue(tables: List[pd.DataFrame]) -> pd.DataFrame:
     segment_keywords = [
         "segment",
-        "productivity",
+        "product",
+        "service",
         "cloud",
-        "services",
-        "devices",
-        "advertising",
         "geographic",
         "business unit",
+        "division",
     ]
 
     rows = []
@@ -1063,7 +1058,7 @@ def make_margin_chart(benchmark_df: pd.DataFrame):
         title="Margin Comparison",
         labels={"company": "Company", "margin": "Margin", "metric": "Metric"},
     )
-    fig.update_yaxes_tickformat(".0%")
+    fig.update_yaxes_tickformat=".0%"
     fig.update_layout(margin=dict(l=20, r=20, t=60, b=20))
     return fig
 
@@ -1242,7 +1237,6 @@ def process_uploaded_file(file) -> Dict[str, Any]:
 def main():
     st.set_page_config(
         page_title="10-K Financial Analysis",
-        page_icon="📄",
         layout="wide",
     )
 
@@ -1302,8 +1296,8 @@ def main():
 
         st.subheader(f"{selected_company} KPI Detail")
         selected_kpis = company_results[selected_company]["kpis"]
-        detail_cols = st.columns(4)
 
+        detail_cols = st.columns(4)
         detail_cols[0].metric("Revenue", format_currency(selected_kpis.get("revenue")))
         detail_cols[1].metric("Operating Margin", format_percent(selected_kpis.get("operating_margin")))
         detail_cols[2].metric("Net Income", format_currency(selected_kpis.get("net_income")))
@@ -1345,13 +1339,13 @@ def main():
         col1, col2 = st.columns(2)
 
         with col1:
-            if revenue_chart:
+            if revenue_chart is not None:
                 st.plotly_chart(revenue_chart, use_container_width=True)
             else:
                 st.info("Revenue comparison is unavailable from extracted data.")
 
         with col2:
-            if margin_chart:
+            if margin_chart is not None:
                 st.plotly_chart(margin_chart, use_container_width=True)
             else:
                 st.info("Margin comparison is unavailable from extracted data.")
@@ -1359,18 +1353,18 @@ def main():
         col1, col2 = st.columns(2)
 
         with col1:
-            if cash_flow_chart:
+            if cash_flow_chart is not None:
                 st.plotly_chart(cash_flow_chart, use_container_width=True)
             else:
                 st.info("Cash flow comparison is unavailable from extracted data.")
 
         with col2:
-            if revenue_trend_chart:
+            if revenue_trend_chart is not None:
                 st.plotly_chart(revenue_trend_chart, use_container_width=True)
             else:
                 st.info("Revenue trend is unavailable from extracted data.")
 
-        if segment_chart:
+        if segment_chart is not None:
             st.plotly_chart(segment_chart, use_container_width=True)
         else:
             st.info("Segment revenue comparison is unavailable from extracted tables.")
