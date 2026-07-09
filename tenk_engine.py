@@ -297,16 +297,13 @@ def parse_financial_value(value: Any) -> Optional[float]:
         multiplier = 1_000_000
 
     text = re.sub(r"(?i)\bmillion(s)?\b|\bbillion(s)?\b|\bthousand(s)?\b", "", text)
-
     matches = re.findall(r"-?\d+(?:\.\d+)?", text)
 
     if not matches:
         return np.nan
 
-    numeric_text = matches[0]
-
     try:
-        number = float(numeric_text) * multiplier
+        number = float(matches[0]) * multiplier
     except ValueError:
         return np.nan
 
@@ -1150,74 +1147,3 @@ def get_best_company(df: pd.DataFrame, metric: str, higher_is_better: bool = Tru
 def answer_question(question: str, benchmark_df: pd.DataFrame) -> str:
     if benchmark_df.empty:
         return "Upload filings first so I can compare extracted KPIs."
-
-    q = question.lower().strip()
-    lines = []
-
-    mentioned_companies = [
-        company for company in benchmark_df["company"].tolist()
-        if company.lower() in q
-    ]
-
-    scoped = benchmark_df
-
-    if mentioned_companies:
-        scoped = benchmark_df[benchmark_df["company"].isin(mentioned_companies)]
-
-    if any(term in q for term in ["margin", "profit", "profitability", "gross", "operating"]):
-        best_operating = get_best_company(scoped, "operating_margin")
-        best_gross = get_best_company(scoped, "gross_margin")
-
-        if best_operating is not None:
-            lines.append(
-                f"{best_operating['company']} leads operating profitability at "
-                f"{fmt_pct(best_operating['operating_margin'])}."
-            )
-
-        if best_gross is not None:
-            lines.append(
-                f"{best_gross['company']} has the highest gross margin at "
-                f"{fmt_pct(best_gross['gross_margin'])}."
-            )
-
-        for _, row in scoped.iterrows():
-            lines.append(
-                f"{row['company']}: gross margin {fmt_pct(row.get('gross_margin'))}, "
-                f"operating margin {fmt_pct(row.get('operating_margin'))}, "
-                f"net margin {fmt_pct(row.get('net_margin'))}."
-            )
-
-    elif any(term in q for term in ["cash", "fcf", "free cash", "cash flow", "cashflow"]):
-        best_fcf = get_best_company(scoped, "free_cash_flow")
-        best_cfo = get_best_company(scoped, "operating_cash_flow")
-
-        if best_fcf is not None:
-            lines.append(
-                f"{best_fcf['company']} leads free cash flow at "
-                f"{fmt_cur(best_fcf['free_cash_flow'])}."
-            )
-
-        if best_cfo is not None:
-            lines.append(
-                f"{best_cfo['company']} leads operating cash flow at "
-                f"{fmt_cur(best_cfo['operating_cash_flow'])}."
-            )
-
-        for _, row in scoped.iterrows():
-            lines.append(
-                f"{row['company']}: operating cash flow {fmt_cur(row.get('operating_cash_flow'))}, "
-                f"capex {fmt_cur(row.get('capex'))}, "
-                f"free cash flow {fmt_cur(row.get('free_cash_flow'))}."
-            )
-
-    elif any(term in q for term in ["risk", "risks", "competitive", "competition"]):
-        for _, row in scoped.iterrows():
-            risks = []
-
-            if pd.notna(row.get("revenue_yoy_growth")) and row["revenue_yoy_growth"] < 0:
-                risks.append("declining revenue")
-
-            if pd.notna(row.get("operating_margin")) and row["operating_margin"] < 0.10:
-                risks.append("low operating margin")
-
-           
