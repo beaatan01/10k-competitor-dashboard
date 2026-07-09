@@ -425,27 +425,44 @@ def answer_question(q, df):
 st.set_page_config(page_title="10-K Competitor Dashboard", layout="wide")
 st.title("📊 10-K Competitor Dashboard")
 
-uploaded_files = st.file_uploader("Upload 10-K filings", type=["pdf", "html", "htm", "txt"], accept_multiple_files=True)
+uploaded_files = st.file_uploader(
+    "Upload 10-K filings",
+    type=["pdf", "html", "htm", "txt"],
+    accept_multiple_files=True,
+)
 question = st.text_input("Ask a financial question")
 
 company_results = {}
 
 if uploaded_files:
     for file in uploaded_files:
+        with st.spinner(f"Processing {file.name}..."):
+            text = extract_text(file)
+            tables = extract_tables(file)
+            financials = identify_financial_statements(tables)
+            kpis = compute_kpis(financials)
+            name = extract_company_name(text, file.name)
+            seg = extract_segment_revenue(tables)
+            company_results[name] = {"kpis": kpis, "segment": seg}
+
+    # Build benchmark dataframe
+    rows = []
+    for name, r in company_results.items():
+        k = r["kpis"]
         rows.append({
             "company": name,
-            "period": r["kpis"]["latest_period"],
-            "revenue": r["kpis"]["revenue"],
-            "revenue_yoy_growth": r["kpis"]["revenue_yoy_growth"],
-            "gross_margin": r["kpis"]["gross_margin"],
-            "operating_margin": r["kpis"]["operating_margin"],
-            "net_margin": r["kpis"]["net_margin"],
-            "net_income": r["kpis"]["net_income"],
-            "operating_cash_flow": r["kpis"]["operating_cash_flow"],
-            "free_cash_flow": r["kpis"]["free_cash_flow"],
-            "cash_balance": r["kpis"]["cash_balance"],
-            "total_debt": r["kpis"]["total_debt"],
-            "capex": r["kpis"]["capex"],
+            "period": k["latest_period"],
+            "revenue": k["revenue"],
+            "revenue_yoy_growth": k["revenue_yoy_growth"],
+            "gross_margin": k["gross_margin"],
+            "operating_margin": k["operating_margin"],
+            "net_margin": k["net_margin"],
+            "net_income": k["net_income"],
+            "operating_cash_flow": k["operating_cash_flow"],
+            "free_cash_flow": k["free_cash_flow"],
+            "cash_balance": k["cash_balance"],
+            "total_debt": k["total_debt"],
+            "capex": k["capex"],
         })
 
     benchmark_df = pd.DataFrame(rows)
