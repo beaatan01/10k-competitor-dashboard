@@ -8,10 +8,6 @@ import numpy as np
 import pandas as pd
 
 
-# ================================================================
-# File handling and text extraction
-# ================================================================
-
 def get_file_extension(file) -> str:
     return Path(file.name).suffix.lower().replace(".", "")
 
@@ -35,17 +31,13 @@ def remove_repeated_headers_footers(page_texts: List[str]) -> str:
     if not page_texts:
         return ""
 
-    first_lines = []
-    last_lines = []
-    split_pages = []
+    first_lines, last_lines, split_pages = [], [], []
 
     for page in page_texts:
         lines = [line.strip() for line in page.splitlines() if line.strip()]
         split_pages.append(lines)
-
-        if lines:
-            first_lines.extend(lines[:3])
-            last_lines.extend(lines[-3:])
+        first_lines.extend(lines[:3])
+        last_lines.extend(lines[-3:])
 
     repeated = set()
 
@@ -83,34 +75,32 @@ def extract_text(file) -> str:
 
         with pdfplumber.open(io.BytesIO(data)) as pdf:
             for page in pdf.pages:
-                text = page.extract_text(x_tolerance=1, y_tolerance=3) or ""
-                page_texts.append(text)
+                page_texts.append(page.extract_text(x_tolerance=1, y_tolerance=3) or "")
 
         return clean_whitespace(remove_repeated_headers_footers(page_texts))
 
     if ext in {"html", "htm"}:
+        html = data.decode("utf-8", errors="ignore")
+
         try:
             from bs4 import BeautifulSoup
+
+            soup = BeautifulSoup(html, "html.parser")
+
+            for tag in soup(["script", "style", "noscript"]):
+                tag.decompose()
+
+            return clean_whitespace(soup.get_text(separator="\n"))
         except ImportError:
-            return ""
-
-        html = data.decode("utf-8", errors="ignore")
-        soup = BeautifulSoup(html, "html.parser")
-
-        for tag in soup(["script", "style", "noscript"]):
-            tag.decompose()
-
-        return clean_whitespace(soup.get_text(separator="\n"))
+            text = re.sub(r"(?is)<(script|style|noscript).*?</\1>", " ", html)
+            text = re.sub(r"(?s)<[^>]+>", "\n", text)
+            return clean_whitespace(text)
 
     if ext == "txt":
         return clean_whitespace(data.decode("utf-8", errors="ignore"))
 
     return ""
 
-
-# ================================================================
-# Table extraction
-# ================================================================
 
 def make_unique_columns(columns: List[Any]) -> List[str]:
     used = {}
@@ -150,10 +140,6 @@ def normalize_dataframe_shape(df: pd.DataFrame) -> pd.DataFrame:
 def extract_tables_from_pdf_with_camelot(file_path: str) -> List[pd.DataFrame]:
     try:
         import camelot
-    except ImportError:
-        return []
-
-    try:
         parsed = camelot.read_pdf(file_path, pages="all", flavor="stream")
     except Exception:
         return []
@@ -172,10 +158,6 @@ def extract_tables_from_pdf_with_camelot(file_path: str) -> List[pd.DataFrame]:
 def extract_tables_from_pdf_with_tabula(file_path: str) -> List[pd.DataFrame]:
     try:
         import tabula
-    except ImportError:
-        return []
-
-    try:
         parsed = tabula.read_pdf(
             file_path,
             pages="all",
@@ -207,9 +189,7 @@ def extract_tables_from_pdf_with_pdfplumber(data: bytes) -> List[pd.DataFrame]:
 
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         for page in pdf.pages:
-            page_tables = page.extract_tables() or []
-
-            for table in page_tables:
+            for table in page.extract_tables() or []:
                 df = normalize_dataframe_shape(pd.DataFrame(table))
 
                 if df.shape[0] >= 3 and df.shape[1] >= 2:
@@ -242,7 +222,7 @@ def extract_tables(file) -> List[pd.DataFrame]:
 
         try:
             parsed = pd.read_html(io.StringIO(html))
-        except ValueError:
+        except Exception:
             return []
 
         tables = []
@@ -258,12 +238,8 @@ def extract_tables(file) -> List[pd.DataFrame]:
     return []
 
 
-# ================================================================
-# Financial value parsing
-# ================================================================
-
 def parse_financial_value(value: Any) -> Optional[float]:
-    if pd.isna(value):
+    if value is None or pd.isna(value):
         return np.nan
 
     text = str(value).strip()
@@ -321,10 +297,6 @@ def clean_line_item(value: Any) -> str:
 
     return text.strip()
 
-
-# ================================================================
-# Statement table normalization
-# ================================================================
 
 def header_score(row: pd.Series) -> float:
     cells = row.fillna("").astype(str).tolist()
@@ -391,8 +363,51 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     columns = make_unique_columns(list(df.columns))
 
-    if not columns:
+    if not columns or len(columns) < 2:
         return pd.DataFrame()
+
+    df.columns = columns
+    line_col = columns[0]
+
+    year_positions = [
+        (re.search(r"(20\d{2}|19\d{2})", str(col)).group(1), idx)
+        for idx, col in enumerate(columns)
+        if re.search(r"(20\d{2}|19\d{2})", str(col))
+    ]
+
+    if year_positions:
+        output = pd.DataFrame({
+            "line_item": df[line_col].map(clean_line_item)
+        })
+
+        for idx, (year, start_pos) in enumerate(year_positions):
+            end_pos = year_positions[idx + 1][1] if idx + 1 < len(year_positions) else len(columns)
+            value_cols = columns[start_pos:end_pos]
+
+            output[year] = df[value_cols].apply(
+                lambda row: parse_financial_value(
+                    " ".join(
+                        str(value)
+                        for value in row.tolist()
+                        if str(value).strip() and str(value).lower() != "nan"
+                    )
+                ),
+                axis=1,
+            )
+
+        numeric_cols = [
+            col for col in output.columns
+            if col != "line_item" and output[col].notna().sum() > 0
+        ]
+
+        if not numeric_cols:
+            return pd.DataFrame()
+
+        output = output[["line_item"] + numeric_cols]
+        output = output[output["line_item"].astype(str).str.len() > 0]
+        output = output.drop_duplicates(subset=["line_item"], keep="first")
+
+        return output.reset_index(drop=True)
 
     rename_map = {columns[0]: "line_item"}
     used = {"line_item"}
@@ -409,7 +424,6 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
         used.add(name)
         rename_map[col] = name
 
-    df.columns = columns
     df = df.rename(columns=rename_map)
 
     if "line_item" not in df.columns:
@@ -442,10 +456,6 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     return df.reset_index(drop=True)
 
-
-# ================================================================
-# Statement identification
-# ================================================================
 
 STATEMENT_PATTERNS = {
     "income": [
@@ -518,11 +528,7 @@ def classify_statement(df: pd.DataFrame) -> Tuple[Optional[str], Dict[str, int]]
 
 
 def identify_financial_statements(tables: List[pd.DataFrame]) -> Dict[str, pd.DataFrame]:
-    candidates = {
-        "income": [],
-        "balance": [],
-        "cashflow": [],
-    }
+    candidates = {"income": [], "balance": [], "cashflow": []}
 
     for table in tables:
         statement_type, scores = classify_statement(table)
@@ -551,10 +557,6 @@ def identify_financial_statements(tables: List[pd.DataFrame]) -> Dict[str, pd.Da
     return financials
 
 
-# ================================================================
-# KPI extraction
-# ================================================================
-
 KPI_PATTERNS = {
     "revenue": [
         r"^total net sales$",
@@ -567,8 +569,6 @@ KPI_PATTERNS = {
         r"^total revenue$",
         r"^total revenues$",
         r"sales and other operating revenue",
-        r"product revenue",
-        r"service revenue",
     ],
     "gross_profit": [
         r"^gross profit$",
@@ -604,7 +604,6 @@ KPI_PATTERNS = {
         r"cash and cash equivalents",
         r"cash equivalents",
         r"cash and short-term investments",
-        r"cash cash equivalents and short-term investments",
     ],
     "total_debt": [
         r"^total debt$",
@@ -628,6 +627,7 @@ KPI_PATTERNS = {
         r"property and equipment",
     ],
 }
+
 
 ROW_EXCLUSION_PATTERNS = [
     r"per share",
@@ -865,10 +865,6 @@ def compute_kpis(financials: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
     return result
 
 
-# ================================================================
-# Company and segment extraction
-# ================================================================
-
 def extract_company_name(text: str, fallback_name: str) -> str:
     fallback = Path(fallback_name).stem.replace("_", " ").replace("-", " ").title()
 
@@ -955,10 +951,6 @@ def extract_segment_revenue(tables: List[pd.DataFrame]) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
-# ================================================================
-# Confidence and diagnostics
-# ================================================================
-
 def calculate_confidence(financials: Dict[str, pd.DataFrame], kpis: Dict[str, Any], raw_table_count: int) -> str:
     score = 0
 
@@ -984,12 +976,10 @@ def calculate_confidence(financials: Dict[str, pd.DataFrame], kpis: Dict[str, An
         "free_cash_flow",
     ]
 
-    extracted_metrics = sum(
+    score += sum(
         kpis.get(metric) is not None and not pd.isna(kpis.get(metric))
         for metric in key_metrics
     )
-
-    score += extracted_metrics
 
     if score >= 10:
         return "High"
@@ -1002,10 +992,6 @@ def calculate_confidence(financials: Dict[str, pd.DataFrame], kpis: Dict[str, An
 
     return "Very low"
 
-
-# ================================================================
-# Benchmarking and display helpers
-# ================================================================
 
 def build_benchmark_dataframe(company_results: Dict[str, Dict[str, Any]]) -> pd.DataFrame:
     rows = []
@@ -1127,10 +1113,6 @@ def format_display_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return formatted.rename(columns=pretty_names)
 
 
-# ================================================================
-# AI-style insight helper
-# ================================================================
-
 def get_best_company(df: pd.DataFrame, metric: str, higher_is_better: bool = True) -> Optional[pd.Series]:
     if df.empty or metric not in df.columns:
         return None
@@ -1189,16 +1171,10 @@ def answer_question(question: str, benchmark_df: pd.DataFrame) -> str:
         best_cfo = get_best_company(scoped, "operating_cash_flow")
 
         if best_fcf is not None:
-            lines.append(
-                f"{best_fcf['company']} leads free cash flow at "
-                f"{fmt_cur(best_fcf['free_cash_flow'])}."
-            )
+            lines.append(f"{best_fcf['company']} leads free cash flow at {fmt_cur(best_fcf['free_cash_flow'])}.")
 
         if best_cfo is not None:
-            lines.append(
-                f"{best_cfo['company']} leads operating cash flow at "
-                f"{fmt_cur(best_cfo['operating_cash_flow'])}."
-            )
+            lines.append(f"{best_cfo['company']} leads operating cash flow at {fmt_cur(best_cfo['operating_cash_flow'])}.")
 
         for _, row in scoped.iterrows():
             lines.append(
@@ -1207,40 +1183,12 @@ def answer_question(question: str, benchmark_df: pd.DataFrame) -> str:
                 f"free cash flow {fmt_cur(row.get('free_cash_flow'))}."
             )
 
-    elif any(term in q for term in ["risk", "risks", "competitive", "competition"]):
-        for _, row in scoped.iterrows():
-            risks = []
-
-            if pd.notna(row.get("revenue_yoy_growth")) and row["revenue_yoy_growth"] < 0:
-                risks.append("declining revenue")
-
-            if pd.notna(row.get("operating_margin")) and row["operating_margin"] < 0.10:
-                risks.append("low operating margin")
-
-            if pd.notna(row.get("free_cash_flow")) and row["free_cash_flow"] < 0:
-                risks.append("negative free cash flow")
-
-            if (
-                pd.notna(row.get("total_debt"))
-                and pd.notna(row.get("cash_balance"))
-                and row["total_debt"] > row["cash_balance"]
-            ):
-                risks.append("debt above cash balance")
-
-            if risks:
-                lines.append(f"{row['company']}: watch {', '.join(risks)}.")
-            else:
-                lines.append(f"{row['company']}: no major KPI-based risk signal detected.")
-
     elif any(term in q for term in ["growth", "revenue", "sales", "scale"]):
         best_revenue = get_best_company(scoped, "revenue")
         best_growth = get_best_company(scoped, "revenue_yoy_growth")
 
         if best_revenue is not None:
-            lines.append(
-                f"{best_revenue['company']} has the largest revenue base at "
-                f"{fmt_cur(best_revenue['revenue'])}."
-            )
+            lines.append(f"{best_revenue['company']} has the largest revenue base at {fmt_cur(best_revenue['revenue'])}.")
 
         if best_growth is not None:
             lines.append(
@@ -1265,10 +1213,6 @@ def answer_question(question: str, benchmark_df: pd.DataFrame) -> str:
 
     return "\n".join(lines) if lines else "The uploaded filings did not contain enough comparable KPI data to answer that question confidently."
 
-
-# ================================================================
-# Manual statement selection helpers
-# ================================================================
 
 def raw_table_label(index: int, table: pd.DataFrame) -> str:
     if index == -1:
@@ -1364,10 +1308,6 @@ def apply_manual_statement_selection(
 
     return updated
 
-
-# ================================================================
-# Main processing entry point used by app.py
-# ================================================================
 
 def process_uploaded_file(file) -> Dict[str, Any]:
     text = extract_text(file)
