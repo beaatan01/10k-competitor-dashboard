@@ -7,7 +7,6 @@ from typing import Dict, List, Optional, Tuple, Any
 import numpy as np
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
 # ================================================================
@@ -61,11 +60,7 @@ def extract_text(file) -> str:
     ext = get_file_extension(file)
     data = read_uploaded_file_bytes(file)
     if ext == "pdf":
-        try:
-            import pdfplumber
-        except ImportError:
-            st.error("PDF text extraction requires pdfplumber.")
-            return ""
+        import pdfplumber
         page_texts = []
         with pdfplumber.open(io.BytesIO(data)) as pdf:
             for page in pdf.pages:
@@ -73,20 +68,14 @@ def extract_text(file) -> str:
                 page_texts.append(text)
         return clean_whitespace(remove_repeated_headers_footers(page_texts))
     if ext in {"html", "htm"}:
-        try:
-            from bs4 import BeautifulSoup
-        except ImportError:
-            st.error("HTML extraction requires BeautifulSoup.")
-            return ""
+        from bs4 import BeautifulSoup
         html = data.decode("utf-8", errors="ignore")
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
-        text = soup.get_text(separator="\n")
-        return clean_whitespace(text)
+        return clean_whitespace(soup.get_text(separator="\n"))
     if ext == "txt":
-        text = data.decode("utf-8", errors="ignore")
-        return clean_whitespace(text)
+        return clean_whitespace(data.decode("utf-8", errors="ignore"))
     return ""
 
 # ================================================================
@@ -106,16 +95,11 @@ def extract_tables_from_pdf_with_camelot(file_path: str) -> List[pd.DataFrame]:
         import camelot
     except ImportError:
         return []
-    tables = []
     try:
         parsed = camelot.read_pdf(file_path, pages="all", flavor="stream")
-        for table in parsed:
-            df = normalize_dataframe_shape(table.df)
-            if df.shape[0] >= 3 and df.shape[1] >= 2:
-                tables.append(df)
+        return [normalize_dataframe_shape(t.df) for t in parsed if t.df.shape[0] >= 3]
     except Exception:
         return []
-    return tables
 
 def extract_tables_from_pdf_with_tabula(file_path: str) -> List[pd.DataFrame]:
     try:
@@ -124,30 +108,18 @@ def extract_tables_from_pdf_with_tabula(file_path: str) -> List[pd.DataFrame]:
         return []
     try:
         parsed = tabula.read_pdf(file_path, pages="all", multiple_tables=True, lattice=False, stream=True)
+        return [normalize_dataframe_shape(df) for df in parsed if df.shape[0] >= 3]
     except Exception:
         return []
-    tables = []
-    for df in parsed:
-        df = normalize_dataframe_shape(df)
-        if df.shape[0] >= 3 and df.shape[1] >= 2:
-            tables.append(df)
-    return tables
 
 def extract_tables_from_pdf_with_pdfplumber(data: bytes) -> List[pd.DataFrame]:
-    try:
-        import pdfplumber
-    except ImportError:
-        return []
+    import pdfplumber
     tables = []
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         for page in pdf.pages:
-            extracted = page.extract_tables() or []
-            for table in extracted:
-                if not table or len(table) < 3:
-                    continue
-                df = pd.DataFrame(table)
-                df = normalize_dataframe_shape(df)
-                if df.shape[0] >= 3 and df.shape[1] >= 2:
+            for table in page.extract_tables() or []:
+                df = normalize_dataframe_shape(pd.DataFrame(table))
+                if df.shape[0] >= 3:
                     tables.append(df)
     return tables
 
@@ -169,13 +141,9 @@ def extract_tables(file) -> List[pd.DataFrame]:
         html = data.decode("utf-8", errors="ignore")
         try:
             parsed = pd.read_html(io.StringIO(html))
+            return [normalize_dataframe_shape(df) for df in parsed if df.shape[0] >= 3]
         except ValueError:
             return []
-        return [
-            normalize_dataframe_shape(df)
-            for df in parsed
-            if df.shape[0] >= 3 and df.shape[1] >= 2
-        ]
     return []
 
 # ================================================================
@@ -188,48 +156,46 @@ def parse_financial_value(value: Any) -> Optional[float]:
     text = str(value).strip()
     if text == "":
         return np.nan
-    text = text.replace("\u2014", "-").replace("—", "-").replace("–", "-")
     text = text.replace("$", "").replace(",", "").replace("%", "")
-    text = re.sub(r"\s+", " ", text)
-    if text.lower() in {"-", "nm", "n/m", "na", "n/a"}:
-        return np.nan
-    negative = bool(re.fullmatch(r"\(.*\)", text))
+    negative = "(" in text and ")" in text
     text = text.strip("()")
     multiplier = 1
-    if re.search(r"(?i)\bmillion\b|\bmillions\b", text):
+    if "million" in text.lower():
         multiplier = 1_000_000
-    elif re.search(r"(?i)\bbillion\b|\bbillions\b", text):
+    if "billion" in text.lower():
         multiplier = 1_000_000_000
-    text = re.sub(r"(?i)\bmillion(s)?\b|\bbillion(s)?\b", "", text).strip()
-    match = re.search(r"-?\d+(\.\d+)?", text)
-    if not match:
+    text = re.sub(r"[^\d\.-]", "", text)
+    if text == "":
         return np.nan
-    number = float(match.group(0)) * multiplier
+    number = float(text) * multiplier
     return -abs(number) if negative else number
 
 def clean_line_item(value: Any) -> str:
-    if pd.isna(value):
-        return ""
-    text = str(value)
-    text = re.sub(r"\s+", " ", text)
-    text = re.sub(r"^\$?\s*", "", text)
-    return text.strip()
+    return re.sub(r"\s+", " ", str(value)).strip()
 
+# ⭐ PATCHED FUNCTION
 def promote_header_row(df: pd.DataFrame) -> pd.DataFrame:
     df = normalize_dataframe_shape(df)
     if df.empty:
         return df
+
     best_row, best_score = None, -1
+
     for idx in range(min(5, len(df))):
-        row = df.iloc[idx].astype(str).tolist()
+        row = df.iloc[idx].tolist()
+
+        # ⭐ FIX APPLIED HERE — cast cell to string
         score = sum(
             bool(re.search(r"20\d{2}|19\d{2}|three months|year ended|years ended", str(cell), re.I))
             for cell in row
         )
-        score += sum(cell.strip().lower() in {"", "nan"} for cell in row) * -0.25
+
+        score += sum(str(cell).strip().lower() in {"", "nan"} for cell in row) * -0.25
+
         if score > best_score:
             best_score = score
             best_row = idx
+
     if best_row is not None and best_score > 0:
         new_columns = [
             clean_line_item(c) if clean_line_item(c) else f"Column_{i}"
@@ -237,6 +203,7 @@ def promote_header_row(df: pd.DataFrame) -> pd.DataFrame:
         ]
         df = df.iloc[best_row + 1:].copy()
         df.columns = new_columns
+
     return normalize_dataframe_shape(df)
 
 def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -244,21 +211,14 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
     columns = [str(c).strip() for c in df.columns]
-    first_col = columns[0]
-    renamed = {first_col: "line_item"}
+    renamed = {columns[0]: "line_item"}
     used = {"line_item"}
     for col in columns[1:]:
-        raw = str(col).strip()
-        year_match = re.search(r"(20\d{2}|19\d{2})", raw)
-        if year_match:
-            name = year_match.group(1)
-        else:
-            name = re.sub(r"[^A-Za-z0-9]+", "_", raw).strip("_") or "value"
-        original_name = name
-        counter = 2
-        while name in used:
-            name = f"{original_name}_{counter}"
-            counter += 1
+        raw = str(col)
+        year = re.search(r"(20\d{2}|19\d{2})", raw)
+        name = year.group(1) if year else re.sub(r"[^A-Za-z0-9]+", "_", raw).strip("_")
+        if name in used:
+            name += "_2"
         renamed[col] = name
         used.add(name)
     df = df.rename(columns=renamed)
@@ -266,189 +226,220 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
         if col != "line_item":
             df[col] = df[col].map(parse_financial_value)
-    numeric_cols = [c for c in df.columns if c != "line_item"]
-    keep_numeric = [c for c in numeric_cols if df[c].notna().sum() > 0]
-    if not keep_numeric:
+    numeric_cols = [c for c in df.columns if c != "line_item" and df[c].notna().sum() > 0]
+    if not numeric_cols:
         return pd.DataFrame()
-    df = df[["line_item"] + keep_numeric]
-    df = df[df["line_item"].astype(str).str.len() > 0]
-    df = df.drop_duplicates(subset=["line_item"], keep="first")
+    df = df[["line_item"] + numeric_cols]
+    df = df.drop_duplicates(subset=["line_item"])
     return df.reset_index(drop=True)
 
-def table_text_for_classification(df: pd.DataFrame) -> str:
-    values = df.fillna("").astype(str).values.flatten().tolist()
-    return " ".join(values).lower()
-
 def classify_statement(df: pd.DataFrame) -> Optional[str]:
-    text = table_text_for_classification(df)
-    income_score = sum(bool(re.search(p, text)) for p in [
-        r"net sales|total revenue|revenues",
-        r"gross margin|gross profit",
-        r"operating income|income from operations",
-        r"net income|net earnings",
-        r"selling.*general.*administrative|research.*development",
-    ])
-    balance_score = sum(bool(re.search(p, text)) for p in [
-        r"cash and cash equivalents",
-        r"total assets",
-        r"total liabilities",
-        r"stockholders.? equity|shareholders.? equity",
-        r"long-term debt|short-term debt",
-    ])
-    cashflow_score = sum(bool(re.search(p, text)) for p in [
-        r"net cash.*operating activities",
-        r"cash flows from operating activities",
-        r"capital expenditures|property and equipment",
-        r"net cash.*investing activities",
-        r"net cash.*financing activities",
-    ])
-    scores = {"income": income_score, "balance": balance_score, "cashflow": cashflow_score}
-    statement, score = max(scores.items(), key=lambda item: item[1])
-    return statement if score >= 2 else None
+    text = " ".join(df.fillna("").astype(str).values.flatten()).lower()
+    scores = {
+        "income": sum(re.search(p, text) is not None for p in [
+            r"net sales", r"total revenue", r"gross profit", r"operating income", r"net income"
+        ]),
+        "balance": sum(re.search(p, text) is not None for p in [
+            r"total assets", r"total liabilities", r"equity", r"cash and cash equivalents"
+        ]),
+        "cashflow": sum(re.search(p, text) is not None for p in [
+            r"net cash.*operating", r"net cash.*investing", r"net cash.*financing"
+        ]),
+    }
+    best = max(scores, key=scores.get)
+    return best if scores[best] >= 2 else None
 
 def identify_financial_statements(tables: List[pd.DataFrame]) -> Dict[str, pd.DataFrame]:
-    candidates = {"income": [], "balance": [], "cashflow": []}
-    for raw_table in tables:
-        statement_type = classify_statement(raw_table)
-        if not statement_type:
+    out = {"income": pd.DataFrame(), "balance": pd.DataFrame(), "cashflow": pd.DataFrame()}
+    for t in tables:
+        stype = classify_statement(t)
+        if not stype:
             continue
-        standardized = standardize_columns(raw_table)
-        if standardized.empty:
+        std = standardize_columns(t)
+        if std.empty:
             continue
-        candidates[statement_type].append(standardized)
-    financials = {}
-    for statement_type, dfs in candidates.items():
-        if dfs:
-            financials[statement_type] = max(
-                dfs,
-                key=lambda d: d.shape[0] * d.shape[1] + d.notna().sum().sum()
-            )
-        else:
-            financials[statement_type] = pd.DataFrame()
-    return financials
+        if out[stype].empty or std.shape[0] > out[stype].shape[0]:
+            out[stype] = std
+    return out
 
 # ================================================================
 # KPI computation
 # ================================================================
 
-LINE_PATTERNS = {
-    "revenue": [
-        r"^total revenue$",
-        r"^revenues$",
-        r"^revenue$",
-        r"^net sales$",
-        r"^sales$",
-        r"total net sales",
-    ],
-    "gross_profit": [
-        r"gross profit",
-        r"gross margin",
-    ],
-    "operating_income": [
-        r"operating income",
-        r"income from operations",
-    ],
-    "net_income": [
-        r"^net income$",
-        r"^net earnings$",
-        r"net income attributable",
-        r"net earnings attributable",
-    ],
-    "rnd": [
-        r"research and development",
-        r"research development",
-        r"r&d",
-    ],
-    "sga": [
-        r"selling.*general.*administrative",
-        r"sales.*marketing.*general.*administrative",
-        r"general and administrative",
-    ],
-    "cash": [
-        r"cash and cash equivalents$",
-        r"cash, cash equivalents",
-        r"cash and short-term investments",
-    ],
-    "total_debt": [
-        r"total debt",
-        r"short-term debt",
-        r"long-term debt",
-        r"current portion of long-term debt",
-        r"borrowings",
-    ],
-    "operating_cash_flow": [
-        r"net cash.*operating activities",
-        r"cash provided by operating activities",
-        r"net cash provided by operating activities",
-    ],
-    "capex": [
-        r"capital expenditures",
-        r"additions to property and equipment",
-        r"purchases of property and equipment",
-        r"payments for property and equipment",
-    ],
-}
+def safe_div(n, d):
+    return None if d in {None, 0} else n / d if n is not None else None
 
-def find_matching_row(df: pd.DataFrame, patterns: List[str]) -> Optional[pd.Series]:
-    if df.empty or "line_item" not in df.columns:
-        return None
-    labels = df["line_item"].astype(str).str.lower()
-    exact_penalty_terms = ["per share", "basic", "diluted", "weighted average", "percentage"]
-    matches = []
-    for idx, label in labels.items():
-        if any(term in label for term in exact_penalty_terms):
-            continue
-        for pattern in patterns:
-            if re.search(pattern, label, flags=re.IGNORECASE):
-                matches.append((idx, len(label)))
-                break
-    if not matches:
-        return None
-    best_idx = sorted(matches, key=lambda item: item[1])[0][0]
-    return df.loc[best_idx]
+def compute_kpis(financials):
+    inc = financials["income"]
+    bal = financials["balance"]
+    cf = financials["cashflow"]
 
-def extract_metric_series(df: pd.DataFrame, metric_name: str) -> Dict[str, float]:
-    row = find_matching_row(df, LINE_PATTERNS[metric_name])
-    if row is None:
-        return {}
+    def extract(df, pattern):
+        if df.empty:
+            return {}
+        df2 = df.copy()
+        df2["match"] = df2["line_item"].str.lower().str.contains(pattern)
+        if df2["match"].sum() == 0:
+            return {}
+        row = df2[df2["match"]].iloc[0]
+        return {c: row[c] for c in df.columns if c != "line_item" and pd.notna(row[c])}
+
+    revenue = extract(inc, "revenue|sales")
+    gp = extract(inc, "gross")
+    op = extract(inc, "operating income")
+    ni = extract(inc, "net income")
+    cash = extract(bal, "cash")
+    debt = extract(bal, "debt")
+    cfo = extract(cf, "operating")
+    capex = extract(cf, "capital|property")
+
+    periods = sorted(set(revenue.keys()), reverse=True)
+    if not periods:
+        return {"latest_period": None, "periods": [], "time_series": pd.DataFrame()}
+
+    latest = periods[0]
+
+    rows = []
+    for p in periods:
+        rev = revenue.get(p)
+        gpv = gp.get(p)
+        opv = op.get(p)
+        niv = ni.get(p)
+        cfov = cfo.get(p)
+        cap = abs(capex.get(p)) if capex.get(p) else None
+        fcf = cfov - cap if cfov and cap else None
+
+        rows.append({
+            "period": p,
+            "revenue": rev,
+            "gross_profit": gpv,
+            "gross_margin": safe_div(gpv, rev),
+            "operating_income": opv,
+            "operating_margin": safe_div(opv, rev),
+            "net_income": niv,
+            "net_margin": safe_div(niv, rev),
+            "cash_balance": cash.get(p),
+            "total_debt": debt.get(p),
+            "operating_cash_flow": cfov,
+            "capex": cap,
+            "free_cash_flow": fcf,
+        })
+
+    ts = pd.DataFrame(rows)
+
+    def yoy(series):
+        if latest not in series:
+            return None
+        idx = periods.index(latest)
+        if idx + 1 >= len(periods):
+            return None
+        prev = periods[idx + 1]
+        if prev not in series or series[prev] in {None, 0}:
+            return None
+        return (series[latest] - series[prev]) / series[prev]
+
     return {
-        col: float(row[col])
-        for col in df.columns
-        if col != "line_item" and pd.notna(row[col])
+        "latest_period": latest,
+        "periods": periods,
+        "time_series": ts,
+        "revenue": revenue.get(latest),
+        "revenue_yoy_growth": yoy(revenue),
+        "gross_margin": ts.loc[ts["period"] == latest, "gross_margin"].iloc[0],
+        "operating_margin": ts.loc[ts["period"] == latest, "operating_margin"].iloc[0],
+        "net_margin": ts.loc[ts["period"] == latest, "net_margin"].iloc[0],
+        "net_income": ni.get(latest),
+        "cash_balance": cash.get(latest),
+        "total_debt": debt.get(latest),
+        "operating_cash_flow": cfo.get(latest),
+        "capex": capex.get(latest),
+        "free_cash_flow": ts.loc[ts["period"] == latest, "free_cash_flow"].iloc[0],
     }
 
-def combine_debt_series(balance: pd.DataFrame) -> Dict[str, float]:
-    if balance.empty:
-        return {}
-    debt_rows = []
-    labels = balance["line_item"].astype(str).str.lower()
-    for idx, label in labels.items():
-        if any(re.search(pattern, label) for pattern in LINE_PATTERNS["total_debt"]):
-            if "lease" not in label and "deferred" not in label:
-                debt_rows.append(balance.loc[idx])
-    if not debt_rows:
-        return {}
-    combined = {}
-    numeric_cols = [c for c in balance.columns if c != "line_item"]
-    for col in numeric_cols:
-        values = [row[col] for row in debt_rows if pd.notna(row[col])]
-        if values:
-            combined[col] = float(np.nansum(values))
-    return combined
+# ================================================================
+# Company name extraction
+# ================================================================
 
-def safe_divide(numerator: Optional[float], denominator: Optional[float]) -> Optional[float]:
-    if numerator is None or denominator in {None, 0}:
-        return None
-    if pd.isna(numerator) or pd.isna(denominator):
-        return None
-    return float(numerator) / float(denominator)
+def extract_company_name(text, fallback):
+    fallback = Path(fallback).stem.replace("_", " ").title()
+    m = re.search(r"Exact name.*?charter.*?:\s*([A-Za-z0-9 .,&-]+)", text, re.I)
+    if m:
+        return m.group(1).strip().title()
+    return fallback
 
-def period_sort_key(period: str) -> Tuple[int, str]:
-    year_match = re.search(r"(20\d{2}|19\d{2})", str(period))
-    if year_match:
-        return int(year_match.group(1)), str(period)
-    return 0, str(period)
+# ================================================================
+# Segment revenue extraction
+# ================================================================
 
-def compute_yoy_growth(series: Dict[str, float], latest_period: str, periods: List[str]) -> Optional[float]:
-    if latest_period not in series:
-        return None
+def extract_segment_revenue(tables):
+    out = []
+    for t in tables:
+        txt = " ".join(t.fillna("").astype(str).values.flatten()).lower()
+        if "segment" not in txt:
+            continue
+        df = standardize_columns(t)
+        if df.empty:
+            continue
+        cols = [c for c in df.columns if c != "line_item"]
+        latest = sorted(cols, reverse=True)[0]
+        for _, row in df.iterrows():
+            label = row["line_item"]
+            val = row[latest]
+            if pd.notna(val) and "total" not in label.lower():
+                out.append({"segment": label, "period": latest, "revenue": float(val)})
+    return pd.DataFrame(out)
+
+# ================================================================
+# AI-style Q&A
+# ================================================================
+
+def fmt_cur(v):
+    if v is None or pd.isna(v):
+        return "N/A"
+    if abs(v) >= 1_000_000_000:
+        return f"${v/1_000_000_000:.1f}B"
+    if abs(v) >= 1_000_000:
+        return f"${v/1_000_000:.1f}M"
+    return f"${v:,.0f}"
+
+def fmt_pct(v):
+    return "N/A" if v is None or pd.isna(v) else f"{v*100:.1f}%"
+
+def answer_question(q, df):
+    q = q.lower()
+    lines = []
+    if "margin" in q:
+        best = df.sort_values("operating_margin", ascending=False).iloc[0]
+        lines.append(f"{best['company']} leads with operating margin {fmt_pct(best['operating_margin'])}.")
+    elif "cash" in q:
+        best = df.sort_values("free_cash_flow", ascending=False).iloc[0]
+        lines.append(f"{best['company']} leads with FCF {fmt_cur(best['free_cash_flow'])}.")
+    else:
+        for _, r in df.iterrows():
+            lines.append(f"{r['company']}: revenue {fmt_cur(r['revenue'])}, YoY {fmt_pct(r['revenue_yoy_growth'])}.")
+    return "\n".join(lines)
+
+# ================================================================
+# Streamlit UI
+# ================================================================
+
+st.set_page_config(page_title="10-K Competitor Dashboard", layout="wide")
+st.title("📊 10-K Competitor Dashboard")
+
+uploaded_files = st.file_uploader("Upload 10-K filings", type=["pdf", "html", "htm", "txt"], accept_multiple_files=True)
+question = st.text_input("Ask a financial question")
+
+company_results = {}
+
+if uploaded_files:
+    for file in uploaded_files:
+        with st.spinner(f"Processing {file.name}..."):
+            text = extract_text(file)
+            tables = extract_tables(file)
+            financials = identify_financial_statements(tables)
+            kpis = compute_kpis(financials)
+            name = extract_company_name(text, file.name)
+            seg = extract_segment_revenue(tables)
+            company_results[name] = {"kpis": kpis, "segment": seg}
+
+    rows = []
+    for name, r in company
