@@ -559,6 +559,8 @@ def identify_financial_statements(tables: List[pd.DataFrame]) -> Dict[str, pd.Da
 
 KPI_PATTERNS = {
     "revenue": [
+        r"^total revenue$",
+        r"^total revenues$",
         r"^total net sales$",
         r"^net sales$",
         r"^sales$",
@@ -566,8 +568,6 @@ KPI_PATTERNS = {
         r"^revenues$",
         r"^net revenue$",
         r"^net revenues$",
-        r"^total revenue$",
-        r"^total revenues$",
         r"sales and other operating revenue",
     ],
     "gross_profit": [
@@ -640,26 +640,83 @@ ROW_EXCLUSION_PATTERNS = [
 ]
 
 
+SECTION_HEADER_PATTERNS = [
+    r".+:$",
+    r"^revenue:$",
+    r"^revenues:$",
+    r"^cost of revenue:$",
+    r"^cost of revenues:$",
+    r"^earnings per share:$",
+    r"^weighted average shares outstanding:$",
+]
+
+
 def row_is_excluded(label: str) -> bool:
     return any(re.search(pattern, label, re.IGNORECASE) for pattern in ROW_EXCLUSION_PATTERNS)
 
 
-def find_matching_row(df: pd.DataFrame, patterns: List[str]) -> Optional[pd.Series]:
+def row_is_section_header(label: str, row: pd.Series) -> bool:
+    clean_label = str(label).strip()
+
+    if not clean_label:
+        return True
+
+    numeric_values = [
+        row[col]
+        for col in row.index
+        if col != "line_item" and pd.notna(row[col])
+    ]
+
+    if numeric_values:
+        return False
+
+    return any(
+        re.search(pattern, clean_label, re.IGNORECASE)
+        for pattern in SECTION_HEADER_PATTERNS
+    )
+
+
+def row_match_priority(label: str, pattern: str, metric_name: str) -> int:
+    clean_label = re.sub(r"\s+", " ", str(label).strip().lower()).rstrip(":")
+
+    if metric_name == "revenue":
+        if clean_label in {"total revenue", "total revenues"}:
+            return 0
+        if clean_label in {"net revenue", "net revenues", "net sales", "total net sales"}:
+            return 1
+        if clean_label in {"revenue", "revenues", "sales"}:
+            return 2
+
+    if re.fullmatch(pattern, clean_label, re.IGNORECASE):
+        return 10
+
+    return 100 + len(clean_label)
+
+
+def find_matching_row(df: pd.DataFrame, patterns: List[str], metric_name: Optional[str] = None) -> Optional[pd.Series]:
     if df.empty or "line_item" not in df.columns:
         return None
 
     matches = []
 
     for idx, row in df.iterrows():
-        label = str(row["line_item"]).strip().lower()
+        label = str(row["line_item"]).strip()
 
-        if not label or row_is_excluded(label):
+        if not label:
             continue
 
+        if row_is_excluded(label):
+            continue
+
+        if row_is_section_header(label, row):
+            continue
+
+        comparable_label = label.rstrip(":").strip().lower()
+
         for pattern in patterns:
-            if re.search(pattern, label, re.IGNORECASE):
-                exact_bonus = 0 if re.fullmatch(pattern, label, re.IGNORECASE) else 100
-                matches.append((idx, exact_bonus + len(label)))
+            if re.search(pattern, comparable_label, re.IGNORECASE):
+                priority = row_match_priority(comparable_label, pattern, metric_name or "")
+                matches.append((idx, priority))
                 break
 
     if not matches:
@@ -670,7 +727,7 @@ def find_matching_row(df: pd.DataFrame, patterns: List[str]) -> Optional[pd.Seri
 
 
 def extract_metric_series(df: pd.DataFrame, metric_name: str) -> Dict[str, float]:
-    row = find_matching_row(df, KPI_PATTERNS[metric_name])
+    row = find_matching_row(df, KPI_PATTERNS[metric_name], metric_name=metric_name)
 
     if row is None:
         return {}
@@ -868,6 +925,40 @@ def compute_kpis(financials: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
 def extract_company_name(text: str, fallback_name: str) -> str:
     fallback = Path(fallback_name).stem.replace("_", " ").replace("-", " ").title()
 
+    bad_line_patterns = [
+        r"united states",
+        r"securities and exchange commission",
+        r"washington",
+        r"form 10-k",
+        r"annual report",
+        r"commission file number",
+        r"securities exchange act",
+        r"exchange act of 1934",
+        r"of 1934",
+        r"registrant",
+        r"irs employer",
+        r"identification number",
+        r"state or other jurisdiction",
+        r"table of contents",
+        r"indicate by check mark",
+    ]
+
+    def is_bad_company_candidate(candidate: str) -> bool:
+        candidate = re.sub(r"\s+", " ", str(candidate)).strip()
+
+        if not candidate:
+            return True
+
+        if len(candidate) < 2 or len(candidate) > 80:
+            return True
+
+        if re.fullmatch(r"[\d\s\-.,]+", candidate):
+            return True
+
+        lower = candidate.lower()
+
+        return any(re.search(pattern, lower, re.IGNORECASE) for pattern in bad_line_patterns)
+
     patterns = [
         r"Exact name of registrant as specified in its charter\)?\s*[:\-]?\s*([A-Za-z0-9 .,&'\-]+)",
         r"Registrant(?:’s|'s)? exact name\s*[:\-]?\s*([A-Za-z0-9 .,&'\-]+)",
@@ -878,22 +969,46 @@ def extract_company_name(text: str, fallback_name: str) -> str:
 
         if match:
             candidate = re.sub(r"\s+", " ", match.group(1)).strip()
-            candidate = re.sub(r"\bCommission File Number\b.*", "", candidate, flags=re.IGNORECASE).strip()
+            candidate = re.sub(
+                r"\bCommission File Number\b.*",
+                "",
+                candidate,
+                flags=re.IGNORECASE,
+            ).strip()
 
-            if 2 <= len(candidate) <= 80:
+            if not is_bad_company_candidate(candidate):
                 return candidate.title()
 
-    top_lines = [line.strip() for line in text.splitlines()[:100] if line.strip()]
+    top_lines = [line.strip() for line in text.splitlines()[:150] if line.strip()]
+    cleaned_lines = []
+
+    for line in top_lines:
+        line = re.sub(r"\s+", " ", line).strip()
+        line = line.strip("|:;")
+
+        if is_bad_company_candidate(line):
+            continue
+
+        cleaned_lines.append(line)
 
     uppercase_lines = [
-        line for line in top_lines
+        line for line in cleaned_lines
         if line.isupper()
-        and 3 <= len(line) <= 80
-        and not re.search(r"FORM 10-K|UNITED STATES|SECURITIES|COMMISSION|WASHINGTON", line)
+        and any(char.isalpha() for char in line)
+        and not is_bad_company_candidate(line)
     ]
 
     if uppercase_lines:
         return uppercase_lines[0].title()
+
+    title_like_lines = [
+        line for line in cleaned_lines
+        if re.search(r"[A-Za-z]", line)
+        and not is_bad_company_candidate(line)
+    ]
+
+    if title_like_lines:
+        return title_like_lines[0].title()
 
     return fallback
 
