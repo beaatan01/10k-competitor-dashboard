@@ -15,8 +15,11 @@ from tenk_engine import (
 
 st.set_page_config(page_title="Microsoft 10-K Dashboard", layout="wide")
 
-st.title("📊 Microsoft 10-K Financial Dashboard")
-st.caption("This dashboard uses hard-coded Microsoft financials (no uploads required).")
+st.title("📊 Microsoft 2025 10‑K Financial Statement Analysis")
+st.caption(
+    "The 2026 Microsoft 10‑K has not yet been released. "
+    "This dashboard reflects the most up‑to‑date financial information available."
+)
 
 # ================================================================
 # Always load Microsoft (A1 Hard)
@@ -80,7 +83,7 @@ with chart_tab:
     # Margin Bar
     margin_cols = ["gross_margin", "operating_margin", "net_margin"]
     margin_long = benchmark_df.melt(
-        id_vars=["company"],
+        id_vars=["company", "year"],
         value_vars=margin_cols,
         var_name="metric",
         value_name="margin",
