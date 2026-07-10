@@ -135,6 +135,7 @@ def build_benchmark_dataframe(results: dict) -> pd.DataFrame:
         k = r["kpis"]
         rows.append({
             "company": name,
+            "year": k["latest_period"],   # ⭐ YEAR COLUMN
             "revenue": k["revenue"],
             "revenue_yoy_growth": k["revenue_yoy_growth"],
             "gross_margin": k["gross_margin"],
@@ -190,7 +191,7 @@ def answer_question(q, df):
     lines = []
     for _, r in df.iterrows():
         lines.append(
-            f"{r['company']}: revenue {fmt_cur(r['revenue'])}, "
+            f"{r['company']} ({r['year']}): revenue {fmt_cur(r['revenue'])}, "
             f"YoY {fmt_pct(r['revenue_yoy_growth'])}, "
             f"operating margin {fmt_pct(r['operating_margin'])}."
         )
