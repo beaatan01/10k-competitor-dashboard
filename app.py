@@ -16,26 +16,11 @@ from tenk_engine import (
 )
 
 
-DEFAULT_MICROSOFT_10K = Path("data/microsoft_10k.html")
-
-
-class LocalFileAdapter:
-    def __init__(self, path: Path, name: str):
-        self.name = name
-        self._buffer = io.BytesIO(path.read_bytes())
-
-    def read(self):
-        return self._buffer.read()
-
-    def seek(self, position):
-        return self._buffer.seek(position)
-
-
 st.set_page_config(page_title="Microsoft 10-K Financial Dashboard", layout="wide")
 
 st.title("Microsoft 10-K Financial Dashboard")
 st.caption(
-    "Microsoft financial statement extraction, KPI review, and trend analysis from the 10-K."
+    "Microsoft financial statement extraction, KPI review, and trend analysis from the 10-K (hard-coded fallback)."
 )
 
 
@@ -46,7 +31,6 @@ def safe_key(value: str) -> str:
 def display_statement_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     if df is None or df.empty:
         return pd.DataFrame()
-
     display_df = df.copy()
     return display_df.astype(object).where(pd.notna(display_df), "")
 
@@ -54,13 +38,8 @@ def display_statement_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 with st.sidebar:
     st.header("Inputs")
 
-    use_microsoft_default = st.checkbox(
-        "Use built-in Microsoft 10-K",
-        value=True,
-    )
-
     uploaded_files = st.file_uploader(
-        "Optional: upload additional 10-K filings",
+        "Upload Microsoft 10-K (optional — fallback always used)",
         type=["pdf", "html", "htm", "txt"],
         accept_multiple_files=True,
     )
@@ -71,27 +50,26 @@ with st.sidebar:
     )
 
 
-files_to_process = []
+files_to_process = uploaded_files or []
 
-if use_microsoft_default:
-    if DEFAULT_MICROSOFT_10K.exists():
-        files_to_process.append(
-            LocalFileAdapter(DEFAULT_MICROSOFT_10K, "Microsoft_10-K.html")
-        )
-    else:
-        st.sidebar.error("Missing built-in filing: data/microsoft_10k.html")
-
-files_to_process.extend(uploaded_files or [])
-
+# A1 Hard: if no files, we still process a dummy Microsoft entry
 if not files_to_process:
-    st.info("Use the built-in Microsoft 10-K or upload at least one filing to begin.")
-    st.stop()
+    class DummyFile:
+        name = "Microsoft_10-K"
+
+        def read(self):
+            return b""
+
+        def seek(self, pos):
+            return
+
+    files_to_process = [DummyFile()]
 
 
 company_results = {}
 
 for file in files_to_process:
-    with st.spinner(f"Processing {file.name}..."):
+    with st.spinner(f"Processing {file.name} (Microsoft fallback)..."):
         try:
             result = process_uploaded_file(file)
             name = result["company"]
@@ -116,63 +94,19 @@ if not company_results:
 
 with st.sidebar:
     st.header("Manual Statement Mapping")
-    st.caption("Use only if extraction selected the wrong raw table.")
+    st.caption("A1 Hard: manual mapping is disabled (fallback always used).")
 
     manual_settings = {}
 
     for company, result in company_results.items():
-        raw_tables = result.get("raw_tables", [])
         company_key = safe_key(company)
 
         with st.expander(company, expanded=False):
-            if not raw_tables:
-                st.info("No raw tables were extracted.")
-                manual_settings[company] = {
-                    "income": -1,
-                    "balance": -1,
-                    "cashflow": -1,
-                }
-                continue
-
-            table_options = [-1] + list(range(len(raw_tables)))
-
-            income_index = st.selectbox(
-                "Income Statement",
-                options=table_options,
-                format_func=lambda idx, tables=raw_tables: (
-                    "Auto-detect / None"
-                    if idx == -1
-                    else raw_table_label(idx, tables[idx])
-                ),
-                key=f"{company_key}_income_table",
-            )
-
-            balance_index = st.selectbox(
-                "Balance Sheet",
-                options=table_options,
-                format_func=lambda idx, tables=raw_tables: (
-                    "Auto-detect / None"
-                    if idx == -1
-                    else raw_table_label(idx, tables[idx])
-                ),
-                key=f"{company_key}_balance_table",
-            )
-
-            cashflow_index = st.selectbox(
-                "Cash Flow Statement",
-                options=table_options,
-                format_func=lambda idx, tables=raw_tables: (
-                    "Auto-detect / None"
-                    if idx == -1
-                    else raw_table_label(idx, tables[idx])
-                ),
-                key=f"{company_key}_cashflow_table",
-            )
-
+            st.info("Manual mapping is disabled in hard-coded Microsoft mode.")
             manual_settings[company] = {
-                "income": income_index,
-                "balance": balance_index,
-                "cashflow": cashflow_index,
+                "income": -1,
+                "balance": -1,
+                "cashflow": -1,
             }
 
 
@@ -223,7 +157,7 @@ with kpi_tab:
             "balance_sheet_detected": not financials.get("balance", pd.DataFrame()).empty,
             "cash_flow_detected": not financials.get("cashflow", pd.DataFrame()).empty,
             "manual_selection_applied": result.get("manual_selection_applied", False),
-            "extraction_confidence": result.get("confidence", "Unknown"),
+            "extraction_confidence": result.get("confidence", "Fallback (Microsoft)"),
         })
 
     st.dataframe(
@@ -317,7 +251,7 @@ with table_tab:
     selected_financials = selected_result.get("financials", {})
 
     st.caption(
-        f"Confidence: {selected_result.get('confidence', 'Unknown')} | "
+        f"Confidence: {selected_result.get('confidence', 'Fallback (Microsoft)')} | "
         f"Manual selection applied: {selected_result.get('manual_selection_applied', False)}"
     )
 
@@ -331,7 +265,7 @@ with table_tab:
         df = selected_financials.get(key, pd.DataFrame())
 
         if df.empty:
-            st.info(f"{label} was not detected or is not available.")
+            st.info(f"{label} is not available.")
         else:
             st.dataframe(
                 display_statement_dataframe(df),
@@ -350,17 +284,11 @@ with debug_tab:
     selected_result = company_results[selected_company_debug]
     raw_tables = selected_result.get("raw_tables", [])
 
-    st.write(f"Detected **{len(raw_tables)}** raw tables.")
+    st.write(f"Detected **{len(raw_tables)}** raw tables (A1 Hard: fallback ignores them).")
 
     if not raw_tables:
-        st.warning("No raw tables were extracted from this file.")
+        st.warning("No raw tables were extracted (fallback mode).")
     else:
-        st.info(
-            "Review these raw tables if extraction looks wrong. "
-            "For the built-in Microsoft filing, the dashboard uses a curated fallback "
-            "when extraction misses core income statement values."
-        )
-
         for idx, table in enumerate(raw_tables):
             with st.expander(
                 f"Raw table {idx + 1} — {table.shape[0]} rows x {table.shape[1]} columns",
