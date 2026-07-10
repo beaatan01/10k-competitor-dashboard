@@ -1,311 +1,132 @@
-import io
-import re
-from pathlib import Path
-
-import pandas as pd
-import plotly.express as px
 import streamlit as st
+import plotly.express as px
+import pandas as pd
 
 from tenk_engine import (
-    answer_question,
-    apply_manual_statement_selection,
+    process_uploaded_file,
     build_benchmark_dataframe,
     format_display_dataframe,
-    process_uploaded_file,
-    raw_table_label,
+    answer_question,
 )
 
+# ================================================================
+# Page Setup
+# ================================================================
 
-st.set_page_config(page_title="Microsoft 10-K Financial Dashboard", layout="wide")
+st.set_page_config(page_title="Microsoft 10-K Dashboard", layout="wide")
 
-st.title("Microsoft 10-K Financial Dashboard")
-st.caption(
-    "Microsoft financial statement extraction, KPI review, and trend analysis from the 10-K (hard-coded fallback)."
-)
+st.title("📊 Microsoft 10-K Financial Dashboard")
+st.caption("This dashboard uses hard-coded Microsoft financials (no uploads required).")
 
+# ================================================================
+# Always load Microsoft (A1 Hard)
+# ================================================================
 
-def safe_key(value: str) -> str:
-    return re.sub(r"[^A-Za-z0-9_]+", "_", value)
-
-
-def display_statement_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    if df is None or df.empty:
-        return pd.DataFrame()
-    display_df = df.copy()
-    return display_df.astype(object).where(pd.notna(display_df), "")
-
-
-with st.sidebar:
-    st.header("Inputs")
-
-    uploaded_files = st.file_uploader(
-        "Upload Microsoft 10-K (optional — fallback always used)",
-        type=["pdf", "html", "htm", "txt"],
-        accept_multiple_files=True,
-    )
-
-    question = st.text_input(
-        "Ask a financial question",
-        value="Summarize Microsoft revenue, margins, and cash flow.",
-    )
-
-
-files_to_process = uploaded_files or []
-
-# A1 Hard: if no files, we still process a dummy Microsoft entry
-if not files_to_process:
-    class DummyFile:
-        name = "Microsoft_10-K"
-
-        def read(self):
-            return b""
-
-        def seek(self, pos):
-            return
-
-    files_to_process = [DummyFile()]
-
-
-company_results = {}
-
-for file in files_to_process:
-    with st.spinner(f"Processing {file.name} (Microsoft fallback)..."):
-        try:
-            result = process_uploaded_file(file)
-            name = result["company"]
-
-            original_name = name
-            counter = 2
-
-            while name in company_results:
-                name = f"{original_name} ({counter})"
-                counter += 1
-
-            company_results[name] = result
-
-        except Exception as error:
-            st.error(f"Could not process {file.name}: {error}")
-
-
-if not company_results:
-    st.warning("No files could be processed.")
-    st.stop()
-
-
-with st.sidebar:
-    st.header("Manual Statement Mapping")
-    st.caption("A1 Hard: manual mapping is disabled (fallback always used).")
-
-    manual_settings = {}
-
-    for company, result in company_results.items():
-        company_key = safe_key(company)
-
-        with st.expander(company, expanded=False):
-            st.info("Manual mapping is disabled in hard-coded Microsoft mode.")
-            manual_settings[company] = {
-                "income": -1,
-                "balance": -1,
-                "cashflow": -1,
-            }
-
-
-for company, settings in manual_settings.items():
-    if any(index != -1 for index in settings.values()):
-        company_results[company] = apply_manual_statement_selection(
-            result=company_results[company],
-            income_index=settings["income"],
-            balance_index=settings["balance"],
-            cashflow_index=settings["cashflow"],
-        )
-
+result = process_uploaded_file()
+company_results = {"Microsoft": result}
 
 benchmark_df = build_benchmark_dataframe(company_results)
 
-kpi_tab, chart_tab, table_tab, debug_tab, insight_tab = st.tabs([
+# ================================================================
+# Sidebar Question Input
+# ================================================================
+
+question = st.sidebar.text_input(
+    "Ask a financial question",
+    value="Summarize Microsoft revenue, margins, and cash flow."
+)
+
+# ================================================================
+# Tabs
+# ================================================================
+
+kpi_tab, chart_tab, table_tab, insight_tab = st.tabs([
     "Benchmark KPIs",
     "Charts",
     "Financial Tables",
-    "Extraction Debug",
     "AI-Style Insights",
 ])
 
+# ================================================================
+# KPI TAB
+# ================================================================
 
 with kpi_tab:
     st.subheader("Benchmark KPIs")
 
-    if benchmark_df.empty:
-        st.warning("No usable KPI data was extracted.")
-    else:
-        st.dataframe(
-            format_display_dataframe(benchmark_df),
-            use_container_width=True,
-            hide_index=True,
-        )
-
-    st.subheader("Extraction Status")
-
-    status_rows = []
-
-    for company, result in company_results.items():
-        financials = result.get("financials", {})
-
-        status_rows.append({
-            "company": company,
-            "tables_detected": result.get("table_count", 0),
-            "income_statement_detected": not financials.get("income", pd.DataFrame()).empty,
-            "balance_sheet_detected": not financials.get("balance", pd.DataFrame()).empty,
-            "cash_flow_detected": not financials.get("cashflow", pd.DataFrame()).empty,
-            "manual_selection_applied": result.get("manual_selection_applied", False),
-            "extraction_confidence": result.get("confidence", "Fallback (Microsoft)"),
-        })
-
     st.dataframe(
-        pd.DataFrame(status_rows),
+        format_display_dataframe(benchmark_df),
         use_container_width=True,
         hide_index=True,
     )
 
+# ================================================================
+# CHART TAB
+# ================================================================
 
 with chart_tab:
     st.subheader("Financial Charts")
 
-    if benchmark_df.empty:
-        st.info("No benchmark data available for charts.")
-    else:
-        revenue_latest = benchmark_df.dropna(subset=["revenue"])
+    # Revenue Bar
+    fig_rev = px.bar(
+        benchmark_df,
+        x="company",
+        y="revenue",
+        text_auto=".2s",
+        title="Latest Revenue",
+    )
+    st.plotly_chart(fig_rev, use_container_width=True)
 
-        if not revenue_latest.empty:
-            fig_revenue = px.bar(
-                revenue_latest,
-                x="company",
-                y="revenue",
-                text_auto=".2s",
-                title="Latest Revenue",
-            )
-            st.plotly_chart(fig_revenue, use_container_width=True)
-        else:
-            st.info("Revenue data is not available.")
+    # Margin Bar
+    margin_cols = ["gross_margin", "operating_margin", "net_margin"]
+    margin_long = benchmark_df.melt(
+        id_vars=["company"],
+        value_vars=margin_cols,
+        var_name="metric",
+        value_name="margin",
+    )
 
-        margin_cols = [
-            col for col in ["gross_margin", "operating_margin", "net_margin"]
-            if col in benchmark_df.columns and benchmark_df[col].notna().any()
-        ]
+    fig_margin = px.bar(
+        margin_long,
+        x="company",
+        y="margin",
+        color="metric",
+        barmode="group",
+        text_auto=".1%",
+        title="Latest Margins",
+    )
+    fig_margin.update_yaxes(tickformat=".0%")
+    st.plotly_chart(fig_margin, use_container_width=True)
 
-        if margin_cols:
-            margin_long = benchmark_df.melt(
-                id_vars=["company"],
-                value_vars=margin_cols,
-                var_name="metric",
-                value_name="margin",
-            ).dropna(subset=["margin"])
+    # Time Series
+    ts = result["kpis"]["time_series"]
+    fig_ts = px.line(
+        ts,
+        x="period",
+        y="revenue",
+        markers=True,
+        title="Revenue Over Time",
+    )
+    st.plotly_chart(fig_ts, use_container_width=True)
 
-            fig_margin = px.bar(
-                margin_long,
-                x="company",
-                y="margin",
-                color="metric",
-                barmode="group",
-                text_auto=".1%",
-                title="Latest Margins",
-            )
-            fig_margin.update_yaxes(tickformat=".0%")
-            st.plotly_chart(fig_margin, use_container_width=True)
-        else:
-            st.info("Margin data is not available.")
-
-        ts_frames = []
-
-        for company, result in company_results.items():
-            ts = result.get("kpis", {}).get("time_series")
-
-            if isinstance(ts, pd.DataFrame) and not ts.empty:
-                temp = ts.copy()
-                temp["company"] = company
-                ts_frames.append(temp)
-
-        if ts_frames:
-            full_ts = pd.concat(ts_frames, ignore_index=True)
-            revenue_ts = full_ts.dropna(subset=["revenue"])
-
-            if not revenue_ts.empty:
-                fig_ts = px.line(
-                    revenue_ts,
-                    x="period",
-                    y="revenue",
-                    color="company",
-                    markers=True,
-                    title="Revenue Over Time",
-                )
-                st.plotly_chart(fig_ts, use_container_width=True)
-
+# ================================================================
+# FINANCIAL TABLES TAB
+# ================================================================
 
 with table_tab:
-    selected_company = st.selectbox(
-        "Select company",
-        list(company_results.keys()),
-        key="financial_table_company",
-    )
+    st.subheader("Income Statement")
+    st.dataframe(result["financials"]["income"], use_container_width=True)
 
-    selected_result = company_results[selected_company]
-    selected_financials = selected_result.get("financials", {})
+    st.subheader("Balance Sheet")
+    st.dataframe(result["financials"]["balance"], use_container_width=True)
 
-    st.caption(
-        f"Confidence: {selected_result.get('confidence', 'Fallback (Microsoft)')} | "
-        f"Manual selection applied: {selected_result.get('manual_selection_applied', False)}"
-    )
+    st.subheader("Cash Flow Statement")
+    st.dataframe(result["financials"]["cashflow"], use_container_width=True)
 
-    for key, label in [
-        ("income", "Income Statement"),
-        ("balance", "Balance Sheet"),
-        ("cashflow", "Cash Flow Statement"),
-    ]:
-        st.subheader(label)
-
-        df = selected_financials.get(key, pd.DataFrame())
-
-        if df.empty:
-            st.info(f"{label} is not available.")
-        else:
-            st.dataframe(
-                display_statement_dataframe(df),
-                use_container_width=True,
-                hide_index=True,
-            )
-
-
-with debug_tab:
-    selected_company_debug = st.selectbox(
-        "Select company for raw table review",
-        list(company_results.keys()),
-        key="debug_company",
-    )
-
-    selected_result = company_results[selected_company_debug]
-    raw_tables = selected_result.get("raw_tables", [])
-
-    st.write(f"Detected **{len(raw_tables)}** raw tables (A1 Hard: fallback ignores them).")
-
-    if not raw_tables:
-        st.warning("No raw tables were extracted (fallback mode).")
-    else:
-        for idx, table in enumerate(raw_tables):
-            with st.expander(
-                f"Raw table {idx + 1} — {table.shape[0]} rows x {table.shape[1]} columns",
-                expanded=False,
-            ):
-                st.dataframe(
-                    display_statement_dataframe(table),
-                    use_container_width=True,
-                )
-
+# ================================================================
+# AI INSIGHT TAB
+# ================================================================
 
 with insight_tab:
     st.subheader("AI-Style Insight")
-
-    if benchmark_df.empty:
-        st.info("No benchmark data available.")
-    elif question.strip():
-        st.write(answer_question(question, benchmark_df))
-    else:
-        st.info("Enter a question in the sidebar.")
+    st.write(answer_question(question, benchmark_df))
