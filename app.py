@@ -21,7 +21,6 @@ DEFAULT_MICROSOFT_10K = Path("data/microsoft_10k.html")
 
 class LocalFileAdapter:
     def __init__(self, path: Path, name: str):
-        self.path = path
         self.name = name
         self._buffer = io.BytesIO(path.read_bytes())
 
@@ -36,7 +35,7 @@ st.set_page_config(page_title="Microsoft 10-K Financial Dashboard", layout="wide
 
 st.title("Microsoft 10-K Financial Dashboard")
 st.caption(
-    "Microsoft financial statement extraction, KPI review, and trend analysis from the latest 10-K."
+    "Microsoft financial statement extraction, KPI review, and trend analysis from the 10-K."
 )
 
 
@@ -49,8 +48,7 @@ def display_statement_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
 
     display_df = df.copy()
-    display_df = display_df.astype(object).where(pd.notna(display_df), "")
-    return display_df
+    return display_df.astype(object).where(pd.notna(display_df), "")
 
 
 with st.sidebar:
@@ -69,8 +67,9 @@ with st.sidebar:
 
     question = st.text_input(
         "Ask a financial question",
-        value="Compare margins and cash flow.",
+        value="Summarize Microsoft revenue, margins, and cash flow.",
     )
+
 
 files_to_process = []
 
@@ -97,10 +96,6 @@ for file in files_to_process:
             result = process_uploaded_file(file)
             name = result["company"]
 
-            if file.name == "Microsoft_10-K.html":
-                result["company"] = "Microsoft"
-                name = "Microsoft"
-
             original_name = name
             counter = 2
 
@@ -121,7 +116,7 @@ if not company_results:
 
 with st.sidebar:
     st.header("Manual Statement Mapping")
-    st.caption("Use this only if a statement was not detected correctly.")
+    st.caption("Use only if extraction selected the wrong raw table.")
 
     manual_settings = {}
 
@@ -210,7 +205,7 @@ with kpi_tab:
     else:
         st.dataframe(
             format_display_dataframe(benchmark_df),
-            width="stretch",
+            use_container_width=True,
             hide_index=True,
         )
 
@@ -233,13 +228,13 @@ with kpi_tab:
 
     st.dataframe(
         pd.DataFrame(status_rows),
-        width="stretch",
+        use_container_width=True,
         hide_index=True,
     )
 
 
 with chart_tab:
-    st.subheader("Financial Comparison")
+    st.subheader("Financial Charts")
 
     if benchmark_df.empty:
         st.info("No benchmark data available for charts.")
@@ -254,9 +249,9 @@ with chart_tab:
                 text_auto=".2s",
                 title="Latest Revenue",
             )
-            st.plotly_chart(fig_revenue, width="stretch")
+            st.plotly_chart(fig_revenue, use_container_width=True)
         else:
-            st.info("Revenue data is not available yet.")
+            st.info("Revenue data is not available.")
 
         margin_cols = [
             col for col in ["gross_margin", "operating_margin", "net_margin"]
@@ -281,9 +276,9 @@ with chart_tab:
                 title="Latest Margins",
             )
             fig_margin.update_yaxes(tickformat=".0%")
-            st.plotly_chart(fig_margin, width="stretch")
+            st.plotly_chart(fig_margin, use_container_width=True)
         else:
-            st.info("Margin data is not available yet.")
+            st.info("Margin data is not available.")
 
         ts_frames = []
 
@@ -308,7 +303,7 @@ with chart_tab:
                     markers=True,
                     title="Revenue Over Time",
                 )
-                st.plotly_chart(fig_ts, width="stretch")
+                st.plotly_chart(fig_ts, use_container_width=True)
 
 
 with table_tab:
@@ -336,11 +331,11 @@ with table_tab:
         df = selected_financials.get(key, pd.DataFrame())
 
         if df.empty:
-            st.info(f"{label} was not selected or not confidently detected.")
+            st.info(f"{label} was not detected or is not available.")
         else:
             st.dataframe(
                 display_statement_dataframe(df),
-                width="stretch",
+                use_container_width=True,
                 hide_index=True,
             )
 
@@ -362,8 +357,8 @@ with debug_tab:
     else:
         st.info(
             "Review these raw tables if extraction looks wrong. "
-            "Look for rows like Total revenue, Net income, Total assets, "
-            "Total liabilities, and Net cash from operating activities."
+            "For the built-in Microsoft filing, the dashboard uses a curated fallback "
+            "when extraction misses core income statement values."
         )
 
         for idx, table in enumerate(raw_tables):
@@ -373,7 +368,7 @@ with debug_tab:
             ):
                 st.dataframe(
                     display_statement_dataframe(table),
-                    width="stretch",
+                    use_container_width=True,
                 )
 
 
@@ -381,7 +376,7 @@ with insight_tab:
     st.subheader("AI-Style Insight")
 
     if benchmark_df.empty:
-        st.info("No benchmark data available yet.")
+        st.info("No benchmark data available.")
     elif question.strip():
         st.write(answer_question(question, benchmark_df))
     else:
