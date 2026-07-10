@@ -1,11 +1,11 @@
 import pandas as pd
-import numpy as np
 
-# ================================================================
-# Hard-coded Microsoft fallback financials (A1 Hard)
-# ================================================================
+# ============================================================
+# Microsoft Hard-Coded Financials
+# ============================================================
 
-def microsoft_fallback_financials() -> dict:
+def microsoft_fallback_financials():
+
     income = pd.DataFrame([
         {"line_item": "Product Revenue", "2025": 63946.0, "2024": 64773.0, "2023": 64699.0},
         {"line_item": "Service and Other Revenue", "2025": 217778.0, "2024": 180349.0, "2023": 147216.0},
@@ -33,85 +33,195 @@ def microsoft_fallback_financials() -> dict:
     }
 
 
-# ================================================================
-# KPI Computation
-# ================================================================
+# ============================================================
+# Utilities
+# ============================================================
 
 def safe_div(n, d):
-    if n is None or d is None or d == 0:
+    if d is None or d == 0:
         return None
     return n / d
 
-def compute_kpis(financials: dict) -> dict:
+
+# ============================================================
+# KPI Computation
+# ============================================================
+
+def compute_kpis(financials):
+
     income = financials["income"]
     balance = financials["balance"]
     cashflow = financials["cashflow"]
 
-    revenue = income.loc[income["line_item"] == "Total Revenue"].iloc[0].to_dict()
-    gross_margin = income.loc[income["line_item"] == "Gross Margin"].iloc[0].to_dict()
-    operating_income = income.loc[income["line_item"] == "Operating Income"].iloc[0].to_dict()
-    net_income = income.loc[income["line_item"] == "Net Income"].iloc[0].to_dict()
+    revenue = income.loc[
+        income["line_item"] == "Total Revenue"
+    ].iloc[0]
 
-    cash = balance.loc[balance["line_item"] == "Cash and Cash Equivalents"].iloc[0].to_dict()
-    debt = balance.loc[balance["line_item"] == "Total Debt"].iloc[0].to_dict()
+    gross_margin = income.loc[
+        income["line_item"] == "Gross Margin"
+    ].iloc[0]
 
-    ocf = cashflow.loc[cashflow["line_item"] == "Operating Cash Flow"].iloc[0].to_dict()
-    capex = cashflow.loc[cashflow["line_item"] == "Capital Expenditures"].iloc[0].to_dict()
+    operating_income = income.loc[
+        income["line_item"] == "Operating Income"
+    ].iloc[0]
+
+    net_income = income.loc[
+        income["line_item"] == "Net Income"
+    ].iloc[0]
+
+    cash = balance.loc[
+        balance["line_item"] == "Cash and Cash Equivalents"
+    ].iloc[0]
+
+    debt = balance.loc[
+        balance["line_item"] == "Total Debt"
+    ].iloc[0]
+
+    ocf = cashflow.loc[
+        cashflow["line_item"] == "Operating Cash Flow"
+    ].iloc[0]
+
+    capex = cashflow.loc[
+        cashflow["line_item"] == "Capital Expenditures"
+    ].iloc[0]
 
     periods = ["2025", "2024", "2023"]
     latest = "2025"
 
+    # ========================================================
+    # Time Series
+    # ========================================================
+
     ts_rows = []
+
     for p in periods:
+
         rev = revenue[p]
         gm = gross_margin[p]
         op = operating_income[p]
         ni = net_income[p]
-        oc = ocf[p]
-        cx = abs(capex[p])
-        fcf = oc - cx
 
-        ts_rows.append({
-            "period": p,
-            "revenue": rev,
-            "gross_margin": safe_div(gm, rev),
-            "operating_margin": safe_div(op, rev),
-            "net_margin": safe_div(ni, rev),
-            "cash_balance": cash[p],
-            "total_debt": debt[p],
-            "operating_cash_flow": oc,
-            "capex": cx,
-            "free_cash_flow": fcf,
-        })
+        operating_cf = ocf[p]
+        capex_amt = abs(capex[p])
+
+        fcf = operating_cf - capex_amt
+
+        ts_rows.append(
+            {
+                "period": p,
+                "revenue": rev,
+                "gross_margin": safe_div(gm, rev),
+                "operating_margin": safe_div(op, rev),
+                "net_margin": safe_div(ni, rev),
+                "cash_balance": cash[p],
+                "total_debt": debt[p],
+                "operating_cash_flow": operating_cf,
+                "capex": capex_amt,
+                "free_cash_flow": fcf,
+            }
+        )
 
     ts = pd.DataFrame(ts_rows)
 
-    yoy = (revenue["2025"] - revenue["2024"]) / revenue["2024"]
+    # ========================================================
+    # Revenue Mix
+    # ========================================================
+
+    product = income.loc[
+        income["line_item"] == "Product Revenue"
+    ].iloc[0]
+
+    services = income.loc[
+        income["line_item"] == "Service and Other Revenue"
+    ].iloc[0]
+
+    segment_revenue = pd.DataFrame(
+        [
+            {
+                "period": "2025",
+                "Product Revenue": product["2025"],
+                "Service and Other Revenue": services["2025"],
+            },
+            {
+                "period": "2024",
+                "Product Revenue": product["2024"],
+                "Service and Other Revenue": services["2024"],
+            },
+            {
+                "period": "2023",
+                "Product Revenue": product["2023"],
+                "Service and Other Revenue": services["2023"],
+            },
+        ]
+    )
+
+    yoy_growth = (
+        revenue["2025"] - revenue["2024"]
+    ) / revenue["2024"]
+
+    # ========================================================
+    # Return
+    # ========================================================
 
     return {
         "latest_period": latest,
         "periods": periods,
         "time_series": ts,
+        "segment_revenue": segment_revenue,
+
         "revenue": revenue[latest],
-        "revenue_yoy_growth": yoy,
-        "gross_margin": ts.loc[ts["period"] == latest, "gross_margin"].iloc[0],
-        "operating_margin": ts.loc[ts["period"] == latest, "operating_margin"].iloc[0],
-        "net_margin": ts.loc[ts["period"] == latest, "net_margin"].iloc[0],
+        "revenue_yoy_growth": yoy_growth,
+
+        "gross_margin":
+            ts.loc[
+                ts["period"] == latest,
+                "gross_margin"
+            ].iloc[0],
+
+        "operating_margin":
+            ts.loc[
+                ts["period"] == latest,
+                "operating_margin"
+            ].iloc[0],
+
+        "net_margin":
+            ts.loc[
+                ts["period"] == latest,
+                "net_margin"
+            ].iloc[0],
+
         "net_income": net_income[latest],
         "cash_balance": cash[latest],
         "total_debt": debt[latest],
-        "operating_cash_flow": ocf[latest],
-        "capex": abs(capex[latest]),
-        "free_cash_flow": ts.loc[ts["period"] == latest, "free_cash_flow"].iloc[0],
+
+        "operating_cash_flow":
+            ts.loc[
+                ts["period"] == latest,
+                "operating_cash_flow"
+            ].iloc[0],
+
+        "capex":
+            ts.loc[
+                ts["period"] == latest,
+                "capex"
+            ].iloc[0],
+
+        "free_cash_flow":
+            ts.loc[
+                ts["period"] == latest,
+                "free_cash_flow"
+            ].iloc[0],
     }
 
 
-# ================================================================
-# Always return Microsoft (A1 Hard)
-# ================================================================
+# ============================================================
+# Main Entry Point
+# ============================================================
 
-def process_uploaded_file(_file=None) -> dict:
+def process_uploaded_file(_file=None):
+
     financials = microsoft_fallback_financials()
+
     kpis = compute_kpis(financials)
 
     return {
@@ -121,78 +231,129 @@ def process_uploaded_file(_file=None) -> dict:
         "raw_tables": [],
         "table_count": 0,
         "manual_selection_applied": False,
-        "confidence": "Microsoft Hard-Coded Fallback",
+        "confidence": "Microsoft Hard-Coded Financials",
     }
 
 
-# ================================================================
-# Benchmark + Display Helpers
-# ================================================================
+# ============================================================
+# Benchmark Helper
+# ============================================================
 
-def build_benchmark_dataframe(results: dict) -> pd.DataFrame:
+def build_benchmark_dataframe(results):
+
     rows = []
-    for name, r in results.items():
-        k = r["kpis"]
-        rows.append({
-            "company": name,
-            "year": k["latest_period"],
-            "revenue": k["revenue"],
-            "revenue_yoy_growth": k["revenue_yoy_growth"],
-            "gross_margin": k["gross_margin"],
-            "operating_margin": k["operating_margin"],
-            "net_margin": k["net_margin"],
-            "net_income": k["net_income"],
-            "cash_balance": k["cash_balance"],
-            "total_debt": k["total_debt"],
-            "operating_cash_flow": k["operating_cash_flow"],
-            "capex": k["capex"],
-            "free_cash_flow": k["free_cash_flow"],
-        })
+
+    for company, result in results.items():
+
+        k = result["kpis"]
+
+        rows.append(
+            {
+                "company": company,
+                "year": k["latest_period"],
+                "revenue": k["revenue"],
+                "revenue_yoy_growth": k["revenue_yoy_growth"],
+                "gross_margin": k["gross_margin"],
+                "operating_margin": k["operating_margin"],
+                "net_margin": k["net_margin"],
+                "net_income": k["net_income"],
+                "cash_balance": k["cash_balance"],
+                "total_debt": k["total_debt"],
+                "operating_cash_flow": k["operating_cash_flow"],
+                "capex": k["capex"],
+                "free_cash_flow": k["free_cash_flow"],
+            }
+        )
+
     return pd.DataFrame(rows)
+
+
+# ============================================================
+# Display Helpers
+# ============================================================
 
 def format_display_dataframe(df):
     return df
 
+
 def apply_manual_statement_selection(result, *_args):
     return result
+
 
 def raw_table_label(i, _t):
     return f"Table {i}"
 
-# ================================================================
-# AI-style Q&A
-# ================================================================
+
+# ============================================================
+# Formatting
+# ============================================================
 
 def fmt_cur(v):
+
     if v is None:
         return "N/A"
-    if abs(v) >= 1_000_000_000:
-        return f"${v/1_000_000_000:.1f}B"
-    if abs(v) >= 1_000_000:
-        return f"${v/1_000_000:.1f}M"
-    return f"${v:,.0f}"
+
+    if abs(v) >= 1000:
+        return f"${v/1000:.1f}B"
+
+    return f"${v:,.0f}M"
+
 
 def fmt_pct(v):
-    return "N/A" if v is None else f"{v*100:.1f}%"
 
-def answer_question(q, df):
-    q = q.lower()
+    if v is None:
+        return "N/A"
+
+    return f"{v*100:.1f}%"
+
+
+# ============================================================
+# AI Insight Generator
+# ============================================================
+
+def answer_question(question, df):
+
     if df.empty:
         return "No data available."
 
-    if "margin" in q:
-        best = df.sort_values("operating_margin", ascending=False).iloc[0]
-        return f"{best['company']} has operating margin {fmt_pct(best['operating_margin'])}."
+    question = question.lower()
 
-    if "cash" in q or "fcf" in q:
-        best = df.sort_values("free_cash_flow", ascending=False).iloc[0]
-        return f"{best['company']} has free cash flow {fmt_cur(best['free_cash_flow'])}."
+    if "revenue" in question:
 
-    lines = []
-    for _, r in df.iterrows():
-        lines.append(
-            f"{r['company']} ({r['year']}): revenue {fmt_cur(r['revenue'])}, "
-            f"YoY {fmt_pct(r['revenue_yoy_growth'])}, "
-            f"operating margin {fmt_pct(r['operating_margin'])}."
+        r = df.iloc[0]
+
+        return (
+            f"Microsoft generated {fmt_cur(r['revenue'])} "
+            f"in revenue during FY{r['year']}, representing "
+            f"{fmt_pct(r['revenue_yoy_growth'])} year-over-year growth."
         )
-    return "\n".join(lines)
+
+    if "margin" in question:
+
+        r = df.iloc[0]
+
+        return (
+            f"Microsoft reported operating margin of "
+            f"{fmt_pct(r['operating_margin'])}, "
+            f"gross margin of {fmt_pct(r['gross_margin'])}, "
+            f"and net margin of {fmt_pct(r['net_margin'])}."
+        )
+
+    if "cash" in question or "fcf" in question:
+
+        r = df.iloc[0]
+
+        return (
+            f"Microsoft generated free cash flow of "
+            f"{fmt_cur(r['free_cash_flow'])}, with "
+            f"{fmt_cur(r['cash_balance'])} in cash and "
+            f"{fmt_cur(r['total_debt'])} in debt."
+        )
+
+    r = df.iloc[0]
+
+    return (
+        f"Microsoft generated {fmt_cur(r['revenue'])} of revenue, "
+        f"achieved operating margin of {fmt_pct(r['operating_margin'])}, "
+        f"and produced {fmt_cur(r['free_cash_flow'])} in free cash flow."
+    )
