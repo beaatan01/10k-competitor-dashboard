@@ -27,6 +27,16 @@ def safe_key(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]+", "_", value)
 
 
+def display_statement_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    if df is None or df.empty:
+        return pd.DataFrame()
+
+    display_df = df.copy()
+    display_df = display_df.astype(object).where(pd.notna(display_df), "")
+
+    return display_df
+
+
 with st.sidebar:
     st.header("Inputs")
 
@@ -297,7 +307,11 @@ with table_tab:
         if df.empty:
             st.info(f"{label} was not selected or not confidently detected.")
         else:
-            st.dataframe(df, width="stretch", hide_index=True)
+            st.dataframe(
+                display_statement_dataframe(df),
+                width="stretch",
+                hide_index=True,
+            )
 
 
 with debug_tab:
@@ -326,7 +340,10 @@ with debug_tab:
                 f"Raw table {idx + 1} — {table.shape[0]} rows x {table.shape[1]} columns",
                 expanded=False,
             ):
-                st.dataframe(table, width="stretch")
+                st.dataframe(
+                    display_statement_dataframe(table),
+                    width="stretch",
+                )
 
 
 with insight_tab:
