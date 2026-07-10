@@ -1,4 +1,6 @@
+import io
 import re
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
@@ -14,12 +16,27 @@ from tenk_engine import (
 )
 
 
-st.set_page_config(page_title="10-K Competitor Dashboard", layout="wide")
+DEFAULT_MICROSOFT_10K = Path("data/microsoft_10k.html")
 
-st.title("10-K Competitor Dashboard")
+
+class LocalFileAdapter:
+    def __init__(self, path: Path, name: str):
+        self.path = path
+        self.name = name
+        self._buffer = io.BytesIO(path.read_bytes())
+
+    def read(self):
+        return self._buffer.read()
+
+    def seek(self, position):
+        return self._buffer.seek(position)
+
+
+st.set_page_config(page_title="Microsoft 10-K Financial Dashboard", layout="wide")
+
+st.title("Microsoft 10-K Financial Dashboard")
 st.caption(
-    "Upload 10-K filings, review extracted tables, manually map financial statements if needed, "
-    "and benchmark KPIs across companies."
+    "Microsoft financial statement extraction, KPI review, and trend analysis from the latest 10-K."
 )
 
 
@@ -33,15 +50,19 @@ def display_statement_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     display_df = df.copy()
     display_df = display_df.astype(object).where(pd.notna(display_df), "")
-
     return display_df
 
 
 with st.sidebar:
     st.header("Inputs")
 
+    use_microsoft_default = st.checkbox(
+        "Use built-in Microsoft 10-K",
+        value=True,
+    )
+
     uploaded_files = st.file_uploader(
-        "Upload 10-K filings",
+        "Optional: upload additional 10-K filings",
         type=["pdf", "html", "htm", "txt"],
         accept_multiple_files=True,
     )
@@ -51,19 +72,34 @@ with st.sidebar:
         value="Compare margins and cash flow.",
     )
 
+files_to_process = []
 
-if not uploaded_files:
-    st.info("Upload at least one 10-K filing to begin.")
+if use_microsoft_default:
+    if DEFAULT_MICROSOFT_10K.exists():
+        files_to_process.append(
+            LocalFileAdapter(DEFAULT_MICROSOFT_10K, "Microsoft_10-K.html")
+        )
+    else:
+        st.sidebar.error("Missing built-in filing: data/microsoft_10k.html")
+
+files_to_process.extend(uploaded_files or [])
+
+if not files_to_process:
+    st.info("Use the built-in Microsoft 10-K or upload at least one filing to begin.")
     st.stop()
 
 
 company_results = {}
 
-for file in uploaded_files:
+for file in files_to_process:
     with st.spinner(f"Processing {file.name}..."):
         try:
             result = process_uploaded_file(file)
             name = result["company"]
+
+            if file.name == "Microsoft_10-K.html":
+                result["company"] = "Microsoft"
+                name = "Microsoft"
 
             original_name = name
             counter = 2
@@ -85,7 +121,7 @@ if not company_results:
 
 with st.sidebar:
     st.header("Manual Statement Mapping")
-    st.caption("Use this when Benchmark KPIs show N/A or Period is None.")
+    st.caption("Use this only if a statement was not detected correctly.")
 
     manual_settings = {}
 
@@ -201,14 +237,9 @@ with kpi_tab:
         hide_index=True,
     )
 
-    st.info(
-        "If Benchmark KPIs show N/A, use the sidebar Manual Statement Mapping controls. "
-        "Pick the raw table that visually looks like the Income Statement, Balance Sheet, and Cash Flow Statement."
-    )
-
 
 with chart_tab:
-    st.subheader("Competitor Comparison")
+    st.subheader("Financial Comparison")
 
     if benchmark_df.empty:
         st.info("No benchmark data available for charts.")
@@ -221,7 +252,7 @@ with chart_tab:
                 x="company",
                 y="revenue",
                 text_auto=".2s",
-                title="Latest Revenue Comparison",
+                title="Latest Revenue",
             )
             st.plotly_chart(fig_revenue, width="stretch")
         else:
@@ -247,7 +278,7 @@ with chart_tab:
                 color="metric",
                 barmode="group",
                 text_auto=".1%",
-                title="Latest Margin Comparison",
+                title="Latest Margins",
             )
             fig_margin.update_yaxes(tickformat=".0%")
             st.plotly_chart(fig_margin, width="stretch")
@@ -330,9 +361,9 @@ with debug_tab:
         st.warning("No raw tables were extracted from this file.")
     else:
         st.info(
-            "Review these raw tables, then use the sidebar to map the correct tables. "
-            "Look for rows like Revenue, Net Income, Total Assets, Total Liabilities, "
-            "Net Cash Provided by Operating Activities, and Capital Expenditures."
+            "Review these raw tables if extraction looks wrong. "
+            "Look for rows like Total revenue, Net income, Total assets, "
+            "Total liabilities, and Net cash from operating activities."
         )
 
         for idx, table in enumerate(raw_tables):
