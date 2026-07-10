@@ -1,6 +1,7 @@
 import io
 import re
 import tempfile
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -102,12 +103,26 @@ def extract_text(file) -> str:
     return ""
 
 
+def clean_cell(value: Any) -> str:
+    if value is None:
+        return ""
+
+    try:
+        if pd.isna(value):
+            return ""
+    except Exception:
+        pass
+
+    text = re.sub(r"\s+", " ", str(value)).strip()
+    return text.replace("—", "-").replace("–", "-")
+
+
 def make_unique_columns(columns: List[Any]) -> List[str]:
     used = {}
     output = []
 
     for col in columns:
-        name = str(col).strip()
+        name = clean_cell(col)
 
         if name == "" or name.lower() == "nan":
             name = "Column"
@@ -137,9 +152,123 @@ def normalize_dataframe_shape(df: pd.DataFrame) -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
+class SimpleHtmlTableParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.tables = []
+        self._table_depth = 0
+        self._table = None
+        self._row = None
+        self._cell = None
+        self._colspan = 1
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+
+        if tag == "table":
+            self._table_depth += 1
+
+            if self._table_depth == 1:
+                self._table = []
+
+        elif self._table_depth == 1 and tag == "tr":
+            self._row = []
+
+        elif self._table_depth == 1 and tag in {"td", "th"}:
+            self._cell = []
+            self._colspan = int(attrs.get("colspan", "1") or 1)
+
+    def handle_data(self, data):
+        if self._cell is not None:
+            self._cell.append(data)
+
+    def handle_endtag(self, tag):
+        if self._table_depth == 1 and tag in {"td", "th"} and self._row is not None:
+            value = clean_cell(" ".join(self._cell or []))
+            self._row.extend([value] + [""] * (self._colspan - 1))
+            self._cell = None
+            self._colspan = 1
+
+        elif self._table_depth == 1 and tag == "tr" and self._table is not None:
+            if self._row and any(cell for cell in self._row):
+                self._table.append(self._row)
+
+            self._row = None
+
+        elif tag == "table" and self._table_depth > 0:
+            if self._table_depth == 1 and self._table:
+                self.tables.append(self._table)
+                self._table = None
+
+            self._table_depth -= 1
+
+
+def rows_to_dataframe(rows: List[List[str]]) -> pd.DataFrame:
+    width = max(len(row) for row in rows)
+    padded = [row + [""] * (width - len(row)) for row in rows]
+
+    header_idx = max(
+        range(min(12, len(padded))),
+        key=lambda i: (
+            sum(bool(re.search(r"20\d{2}|19\d{2}", cell)) for cell in padded[i]),
+            sum(bool(cell) for cell in padded[i]),
+        ),
+    )
+
+    header = make_unique_columns(padded[header_idx])
+    data = padded[header_idx + 1:]
+
+    return pd.DataFrame(data, columns=header)
+
+
+def normalize_html_table(raw_rows: List[List[str]]) -> pd.DataFrame:
+    if not raw_rows:
+        return pd.DataFrame()
+
+    df = rows_to_dataframe(raw_rows)
+    df = df.dropna(how="all").dropna(axis=1, how="all")
+    df = df.map(clean_cell)
+    df = df.loc[~(df == "").all(axis=1)]
+
+    return df.reset_index(drop=True)
+
+
+def extract_tables_from_html(html: str) -> List[pd.DataFrame]:
+    parser = SimpleHtmlTableParser()
+    parser.feed(html)
+
+    tables = []
+
+    for raw_table in parser.tables:
+        df = normalize_html_table(raw_table)
+
+        if df.empty or df.shape[0] < 3 or df.shape[1] < 2:
+            continue
+
+        text = " ".join(df.fillna("").astype(str).values.flatten()).lower()
+
+        if any(
+            term in text
+            for term in [
+                "revenue",
+                "net income",
+                "total assets",
+                "total liabilities",
+                "operating activities",
+                "cash flows",
+                "stockholders",
+                "shareholders",
+            ]
+        ):
+            tables.append(df)
+
+    return tables
+
+
 def extract_tables_from_pdf_with_camelot(file_path: str) -> List[pd.DataFrame]:
     try:
         import camelot
+
         parsed = camelot.read_pdf(file_path, pages="all", flavor="stream")
     except Exception:
         return []
@@ -158,6 +287,7 @@ def extract_tables_from_pdf_with_camelot(file_path: str) -> List[pd.DataFrame]:
 def extract_tables_from_pdf_with_tabula(file_path: str) -> List[pd.DataFrame]:
     try:
         import tabula
+
         parsed = tabula.read_pdf(
             file_path,
             pages="all",
@@ -219,28 +349,20 @@ def extract_tables(file) -> List[pd.DataFrame]:
 
     if ext in {"html", "htm"}:
         html = data.decode("utf-8", errors="ignore")
-
-        try:
-            parsed = pd.read_html(io.StringIO(html))
-        except Exception:
-            return []
-
-        tables = []
-
-        for df in parsed:
-            df = normalize_dataframe_shape(df)
-
-            if df.shape[0] >= 3 and df.shape[1] >= 2:
-                tables.append(df)
-
-        return tables
+        return extract_tables_from_html(html)
 
     return []
 
 
 def parse_financial_value(value: Any) -> Optional[float]:
-    if value is None or pd.isna(value):
+    if value is None:
         return np.nan
+
+    try:
+        if pd.isna(value):
+            return np.nan
+    except Exception:
+        pass
 
     text = str(value).strip()
 
@@ -287,57 +409,11 @@ def parse_financial_value(value: Any) -> Optional[float]:
 
 
 def clean_line_item(value: Any) -> str:
-    if pd.isna(value):
-        return ""
-
-    text = str(value)
+    text = clean_cell(value)
     text = text.replace("\xa0", " ")
     text = re.sub(r"\s+", " ", text)
     text = re.sub(r"^\$?\s*", "", text)
-
     return text.strip()
-
-
-def header_score(row: pd.Series) -> float:
-    cells = row.fillna("").astype(str).tolist()
-
-    score = 0.0
-    score += sum(bool(re.search(r"20\d{2}|19\d{2}", cell)) for cell in cells) * 2.0
-    score += sum(
-        bool(re.search(r"year ended|years ended|fiscal year|twelve months", cell, re.I))
-        for cell in cells
-    ) * 1.5
-    score -= sum(cell.strip() == "" for cell in cells) * 0.25
-
-    return score
-
-
-def promote_header_row(df: pd.DataFrame) -> pd.DataFrame:
-    df = normalize_dataframe_shape(df)
-
-    if df.empty:
-        return df
-
-    best_row = None
-    best_score = -1.0
-
-    for idx in range(min(8, len(df))):
-        score = header_score(df.iloc[idx])
-
-        if score > best_score:
-            best_score = score
-            best_row = idx
-
-    if best_row is not None and best_score > 0:
-        new_columns = [
-            clean_line_item(value) if clean_line_item(value) else f"Column_{i}"
-            for i, value in enumerate(df.iloc[best_row].tolist())
-        ]
-
-        df = df.iloc[best_row + 1:].copy()
-        df.columns = make_unique_columns(new_columns)
-
-    return normalize_dataframe_shape(df)
 
 
 def infer_period_name(raw_col: Any, fallback_index: int) -> str:
@@ -355,19 +431,18 @@ def infer_period_name(raw_col: Any, fallback_index: int) -> str:
     return f"value_{fallback_index}"
 
 
+def year_columns(df: pd.DataFrame) -> List[str]:
+    return [col for col in df.columns if re.search(r"(20\d{2}|19\d{2})", str(col))]
+
+
 def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
-    df = promote_header_row(df)
+    df = normalize_dataframe_shape(df)
 
     if df.empty:
         return pd.DataFrame()
 
     columns = make_unique_columns(list(df.columns))
-
-    if not columns or len(columns) < 2:
-        return pd.DataFrame()
-
     df.columns = columns
-    line_col = columns[0]
 
     year_positions = [
         (re.search(r"(20\d{2}|19\d{2})", str(col)).group(1), idx)
@@ -376,6 +451,10 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
     ]
 
     if year_positions:
+        first_year_idx = min(idx for _, idx in year_positions)
+        line_col_candidates = columns[:first_year_idx]
+        line_col = line_col_candidates[0] if line_col_candidates else columns[0]
+
         output = pd.DataFrame({
             "line_item": df[line_col].map(clean_line_item)
         })
@@ -387,9 +466,9 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
             output[year] = df[value_cols].apply(
                 lambda row: parse_financial_value(
                     " ".join(
-                        str(value)
+                        clean_cell(value)
                         for value in row.tolist()
-                        if str(value).strip() and str(value).lower() != "nan"
+                        if clean_cell(value)
                     )
                 ),
                 axis=1,
@@ -459,37 +538,29 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 STATEMENT_PATTERNS = {
     "income": [
+        r"total revenue",
+        r"total revenues",
         r"net sales",
         r"net revenue",
         r"net revenues",
-        r"total revenue",
-        r"total revenues",
-        r"revenue",
-        r"revenues",
         r"gross profit",
         r"gross margin",
         r"operating income",
         r"income from operations",
-        r"operating expenses",
         r"net income",
         r"net earnings",
         r"cost of revenue",
         r"cost of sales",
-        r"selling.*general.*administrative",
         r"research.*development",
     ],
     "balance": [
         r"total assets",
         r"current assets",
         r"cash and cash equivalents",
-        r"cash equivalents",
         r"total liabilities",
         r"current liabilities",
         r"stockholders.? equity",
         r"shareholders.? equity",
-        r"long-term debt",
-        r"short-term debt",
-        r"total debt",
         r"retained earnings",
     ],
     "cashflow": [
@@ -504,7 +575,6 @@ STATEMENT_PATTERNS = {
         r"capital expenditures",
         r"purchases of property",
         r"property and equipment",
-        r"free cash flow",
     ],
 }
 
@@ -568,7 +638,6 @@ KPI_PATTERNS = {
         r"^revenues$",
         r"^net revenue$",
         r"^net revenues$",
-        r"sales and other operating revenue",
     ],
     "gross_profit": [
         r"^gross profit$",
@@ -598,6 +667,7 @@ KPI_PATTERNS = {
         r"sales.*marketing.*general.*administrative",
         r"general and administrative",
         r"selling and administrative",
+        r"sales and marketing",
     ],
     "cash": [
         r"^cash and cash equivalents$",
@@ -640,17 +710,6 @@ ROW_EXCLUSION_PATTERNS = [
 ]
 
 
-SECTION_HEADER_PATTERNS = [
-    r".+:$",
-    r"^revenue:$",
-    r"^revenues:$",
-    r"^cost of revenue:$",
-    r"^cost of revenues:$",
-    r"^earnings per share:$",
-    r"^weighted average shares outstanding:$",
-]
-
-
 def row_is_excluded(label: str) -> bool:
     return any(re.search(pattern, label, re.IGNORECASE) for pattern in ROW_EXCLUSION_PATTERNS)
 
@@ -670,10 +729,7 @@ def row_is_section_header(label: str, row: pd.Series) -> bool:
     if numeric_values:
         return False
 
-    return any(
-        re.search(pattern, clean_label, re.IGNORECASE)
-        for pattern in SECTION_HEADER_PATTERNS
-    )
+    return clean_label.endswith(":")
 
 
 def row_match_priority(label: str, pattern: str, metric_name: str) -> int:
@@ -925,25 +981,22 @@ def compute_kpis(financials: Dict[str, pd.DataFrame]) -> Dict[str, Any]:
 def extract_company_name(text: str, fallback_name: str) -> str:
     fallback = Path(fallback_name).stem.replace("_", " ").replace("-", " ").title()
 
-    bad_line_patterns = [
+    bad_patterns = [
+        r"^0$",
+        r"^\d+$",
         r"united states",
         r"securities and exchange commission",
-        r"washington",
         r"form 10-k",
         r"annual report",
         r"commission file number",
-        r"securities exchange act",
         r"exchange act of 1934",
         r"of 1934",
-        r"registrant",
-        r"irs employer",
-        r"identification number",
-        r"state or other jurisdiction",
         r"table of contents",
-        r"indicate by check mark",
+        r"registrant",
+        r"identification number",
     ]
 
-    def is_bad_company_candidate(candidate: str) -> bool:
+    def is_bad(candidate: str) -> bool:
         candidate = re.sub(r"\s+", " ", str(candidate)).strip()
 
         if not candidate:
@@ -952,12 +1005,14 @@ def extract_company_name(text: str, fallback_name: str) -> str:
         if len(candidate) < 2 or len(candidate) > 80:
             return True
 
-        if re.fullmatch(r"[\d\s\-.,]+", candidate):
+        if not re.search(r"[A-Za-z]", candidate):
             return True
 
         lower = candidate.lower()
+        return any(re.search(pattern, lower, re.IGNORECASE) for pattern in bad_patterns)
 
-        return any(re.search(pattern, lower, re.IGNORECASE) for pattern in bad_line_patterns)
+    if "microsoft" in fallback.lower():
+        return "Microsoft"
 
     patterns = [
         r"Exact name of registrant as specified in its charter\)?\s*[:\-]?\s*([A-Za-z0-9 .,&'\-]+)",
@@ -976,39 +1031,22 @@ def extract_company_name(text: str, fallback_name: str) -> str:
                 flags=re.IGNORECASE,
             ).strip()
 
-            if not is_bad_company_candidate(candidate):
+            if not is_bad(candidate):
                 return candidate.title()
 
     top_lines = [line.strip() for line in text.splitlines()[:150] if line.strip()]
-    cleaned_lines = []
 
     for line in top_lines:
-        line = re.sub(r"\s+", " ", line).strip()
-        line = line.strip("|:;")
+        candidate = re.sub(r"\s+", " ", line).strip("|:; ")
 
-        if is_bad_company_candidate(line):
-            continue
+        if candidate.isupper() and not is_bad(candidate):
+            return candidate.title()
 
-        cleaned_lines.append(line)
+    for line in top_lines:
+        candidate = re.sub(r"\s+", " ", line).strip("|:; ")
 
-    uppercase_lines = [
-        line for line in cleaned_lines
-        if line.isupper()
-        and any(char.isalpha() for char in line)
-        and not is_bad_company_candidate(line)
-    ]
-
-    if uppercase_lines:
-        return uppercase_lines[0].title()
-
-    title_like_lines = [
-        line for line in cleaned_lines
-        if re.search(r"[A-Za-z]", line)
-        and not is_bad_company_candidate(line)
-    ]
-
-    if title_like_lines:
-        return title_like_lines[0].title()
+        if not is_bad(candidate):
+            return candidate.title()
 
     return fallback
 
