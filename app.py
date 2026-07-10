@@ -15,7 +15,6 @@ from tenk_engine import (
 
 st.set_page_config(page_title="Microsoft 10-K Dashboard", layout="wide")
 
-# Global dark theme + card CSS
 st.markdown(
     """
     <style>
@@ -25,7 +24,6 @@ st.markdown(
         font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Remove default Streamlit padding */
     .block-container {
         padding-top: 1.5rem;
         padding-bottom: 1.5rem;
@@ -36,7 +34,22 @@ st.markdown(
         color: #f3f2f1;
     }
 
-    /* Card container */
+    .header-wrap {
+        margin-bottom: 1.5rem;
+    }
+
+    .header-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .header-subtitle {
+        color: #9ea0a6;
+        font-size: 0.9rem;
+        max-width: 780px;
+    }
+
     .kpi-row {
         display: flex;
         gap: 1.5rem;
@@ -118,29 +131,35 @@ st.markdown(
         background: #f25022;
     }
 
-    /* Tabs styling */
-    .stTabs [role="tablist"] {
-        gap: 0.5rem;
+    .chart-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
-    .stTabs [role="tab"] {
-        padding: 0.4rem 0.9rem;
-        border-radius: 999px;
-        background-color: #111319;
-        color: #cfd2da;
+    .chart-card {
+        background: #111319;
+        border-radius: 18px;
+        padding: 14px 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
         border: 1px solid rgba(255,255,255,0.04);
     }
 
-    .stTabs [role="tab"][aria-selected="true"] {
-        background-color: #0078d4;
-        color: #ffffff;
-        border-color: #0078d4;
+    .chart-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #f3f2f1;
+        margin-bottom: 0.4rem;
     }
 
-    /* Dataframe background */
     .stDataFrame, .stTable {
-        background-color: #111319;
-        border-radius: 12px;
+        background-color: #111319 !important;
+        border-radius: 12px !important;
+    }
+
+    .stDataFrame table, .stTable table {
+        color: #f3f2f1 !important;
     }
     </style>
     """,
@@ -153,19 +172,19 @@ st.markdown(
 
 st.markdown(
     """
-    <div style="margin-bottom: 0.75rem;">
-        <h1 style="margin-bottom: 0.2rem;">Microsoft 2025 10‑K Financial Statement Analysis</h1>
-        <p style="color:#9ea0a6; font-size:0.9rem; max-width:720px;">
+    <div class="header-wrap">
+        <div class="header-title">Microsoft 2025 10‑K Financial Statement Analysis</div>
+        <div class="header-subtitle">
             The 2026 Microsoft 10‑K has not yet been released. This dashboard reflects the most up‑to‑date
             financial information available from the 2025 filing, presented from a financial analyst and CFO perspective.
-        </p>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 # ================================================================
-# Load Microsoft data (A1 Hard)
+# Load Microsoft data
 # ================================================================
 
 result = process_uploaded_file()
@@ -183,7 +202,7 @@ question = st.sidebar.text_input(
 )
 
 # ================================================================
-# KPI Cards Row (Dark Fluent UI style)
+# KPI Cards Row
 # ================================================================
 
 revenue = k["revenue"]
@@ -209,7 +228,6 @@ def fmt_pct(v):
 
 st.markdown('<div class="kpi-row">', unsafe_allow_html=True)
 
-# Revenue card
 st.markdown(
     f"""
     <div class="kpi-card">
@@ -226,7 +244,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Margin card
 st.markdown(
     f"""
     <div class="kpi-card">
@@ -245,7 +262,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Cash & FCF card
 st.markdown(
     f"""
     <div class="kpi-card">
@@ -267,46 +283,34 @@ st.markdown(
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ================================================================
-# Tabs
+# Embedded Charts
 # ================================================================
 
-kpi_tab, chart_tab, table_tab, insight_tab = st.tabs([
-    "Benchmark KPIs",
-    "Charts",
-    "Financial Tables",
-    "AI-Style Insights",
-])
+st.markdown('<div class="chart-row">', unsafe_allow_html=True)
 
-# ================================================================
-# KPI TAB
-# ================================================================
-
-with kpi_tab:
-    st.subheader("Benchmark KPIs")
-
-    st.dataframe(
-        format_display_dataframe(benchmark_df),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-# ================================================================
-# CHART TAB
-# ================================================================
-
-with chart_tab:
-    st.subheader("Financial Charts")
-
-    fig_rev = px.bar(
-        benchmark_df,
-        x="company",
+# Revenue trend
+with st.container():
+    st.markdown('<div class="chart-card"><div class="chart-title">Revenue Over Time</div>', unsafe_allow_html=True)
+    ts = result["kpis"]["time_series"]
+    fig_ts = px.line(
+        ts,
+        x="period",
         y="revenue",
-        text_auto=".2s",
-        title="Latest Revenue",
+        markers=True,
         color_discrete_sequence=["#0078D4"],
     )
-    st.plotly_chart(fig_rev, use_container_width=True)
+    fig_ts.update_layout(
+        paper_bgcolor="#111319",
+        plot_bgcolor="#111319",
+        font_color="#f3f2f1",
+        margin=dict(l=10, r=10, t=10, b=10),
+    )
+    st.plotly_chart(fig_ts, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
+# Margin comparison
+with st.container():
+    st.markdown('<div class="chart-card"><div class="chart-title">Margin Profile</div>', unsafe_allow_html=True)
     margin_cols = ["gross_margin", "operating_margin", "net_margin"]
     margin_long = benchmark_df.melt(
         id_vars=["company", "year"],
@@ -314,15 +318,12 @@ with chart_tab:
         var_name="metric",
         value_name="margin",
     )
-
     fig_margin = px.bar(
         margin_long,
-        x="company",
+        x="metric",
         y="margin",
         color="metric",
-        barmode="group",
         text_auto=".1%",
-        title="Latest Margins",
         color_discrete_map={
             "gross_margin": "#7FBA00",
             "operating_margin": "#0078D4",
@@ -330,37 +331,92 @@ with chart_tab:
         },
     )
     fig_margin.update_yaxes(tickformat=".0%")
+    fig_margin.update_layout(
+        paper_bgcolor="#111319",
+        plot_bgcolor="#111319",
+        font_color="#f3f2f1",
+        margin=dict(l=10, r=10, t=10, b=10),
+        showlegend=False,
+    )
     st.plotly_chart(fig_margin, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    ts = result["kpis"]["time_series"]
-    fig_ts = px.line(
-        ts,
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Second chart row: Cash flow + revenue bar
+st.markdown('<div class="chart-row">', unsafe_allow_html=True)
+
+with st.container():
+    st.markdown('<div class="chart-card"><div class="chart-title">Operating Cash Flow and Free Cash Flow</div>', unsafe_allow_html=True)
+    ts_cf = result["kpis"]["time_series"][["period", "operating_cash_flow", "free_cash_flow"]]
+    ts_cf_long = ts_cf.melt(
+        id_vars=["period"],
+        value_vars=["operating_cash_flow", "free_cash_flow"],
+        var_name="metric",
+        value_name="value",
+    )
+    fig_cf = px.line(
+        ts_cf_long,
         x="period",
-        y="revenue",
+        y="value",
+        color="metric",
         markers=True,
-        title="Revenue Over Time",
+        color_discrete_map={
+            "operating_cash_flow": "#0078D4",
+            "free_cash_flow": "#7FBA00",
+        },
+    )
+    fig_cf.update_layout(
+        paper_bgcolor="#111319",
+        plot_bgcolor="#111319",
+        font_color="#f3f2f1",
+        margin=dict(l=10, r=10, t=10, b=10),
+    )
+    st.plotly_chart(fig_cf, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with st.container():
+    st.markdown('<div class="chart-card"><div class="chart-title">Latest Revenue Snapshot</div>', unsafe_allow_html=True)
+    fig_rev = px.bar(
+        benchmark_df,
+        x="company",
+        y="revenue",
+        text_auto=".2s",
         color_discrete_sequence=["#0078D4"],
     )
-    st.plotly_chart(fig_ts, use_container_width=True)
+    fig_rev.update_layout(
+        paper_bgcolor="#111319",
+        plot_bgcolor="#111319",
+        font_color="#f3f2f1",
+        margin=dict(l=10, r=10, t=10, b=10),
+    )
+    st.plotly_chart(fig_rev, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ================================================================
-# FINANCIAL TABLES TAB
+# Financial Tables (Dark Theme)
 # ================================================================
 
-with table_tab:
+st.markdown("### Financial Tables")
+
+col1, col2 = st.columns(2)
+
+with col1:
     st.subheader("Income Statement")
     st.dataframe(result["financials"]["income"], use_container_width=True)
 
+with col2:
     st.subheader("Balance Sheet")
     st.dataframe(result["financials"]["balance"], use_container_width=True)
 
-    st.subheader("Cash Flow Statement")
-    st.dataframe(result["financials"]["cashflow"], use_container_width=True)
+st.subheader("Cash Flow Statement")
+st.dataframe(result["financials"]["cashflow"], use_container_width=True)
 
 # ================================================================
-# AI INSIGHT TAB
+# AI Insight
 # ================================================================
 
-with insight_tab:
-    st.subheader("AI-Style Insight")
-    st.write(answer_question(question, benchmark_df))
+st.markdown("### AI-Style Insight")
+st.write(answer_question(question, benchmark_df))
