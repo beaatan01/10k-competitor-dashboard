@@ -135,7 +135,7 @@ def build_benchmark_dataframe(results: dict) -> pd.DataFrame:
         k = r["kpis"]
         rows.append({
             "company": name,
-            "year": k["latest_period"],   # ⭐ YEAR COLUMN
+            "year": k["latest_period"],
             "revenue": k["revenue"],
             "revenue_yoy_growth": k["revenue_yoy_growth"],
             "gross_margin": k["gross_margin"],
