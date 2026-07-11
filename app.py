@@ -23,7 +23,7 @@ st.set_page_config(
 )
 
 # ================================================================
-# Core Helpers
+# Helpers
 # ================================================================
 
 def safe_html(content: str):
@@ -48,6 +48,20 @@ def dataframe_to_csv(df):
     return df.to_csv(index=False).encode("utf-8")
 
 
+def render_section(title, subtitle, tag):
+    safe_html(
+        f"""
+        <div class="section-head">
+            <div>
+                <div class="section-title">{py_html.escape(title)}</div>
+                <div class="section-subtitle">{py_html.escape(subtitle)}</div>
+            </div>
+            <div class="section-tag">{py_html.escape(tag)}</div>
+        </div>
+        """
+    )
+
+
 def render_kpi_card(label, title, value, subtext, badge, badge_class=""):
     safe_html(
         f"""
@@ -59,6 +73,18 @@ def render_kpi_card(label, title, value, subtext, badge, badge_class=""):
             <div class="badge {badge_class}">
                 <span class="dot"></span>{py_html.escape(badge)}
             </div>
+        </div>
+        """
+    )
+
+
+def render_capability_card(label, title, text):
+    safe_html(
+        f"""
+        <div class="capability-card">
+            <div class="card-label">{py_html.escape(label)}</div>
+            <div class="capability-title">{py_html.escape(title)}</div>
+            <div class="capability-text">{py_html.escape(text)}</div>
         </div>
         """
     )
@@ -76,18 +102,6 @@ def render_info_card(label, title, text, formula=None):
             <div class="info-title">{py_html.escape(title)}</div>
             <div class="info-text">{py_html.escape(text)}</div>
             {formula_html}
-        </div>
-        """
-    )
-
-
-def render_capability_card(label, title, text):
-    safe_html(
-        f"""
-        <div class="capability-card">
-            <div class="card-label">{py_html.escape(label)}</div>
-            <div class="capability-title">{py_html.escape(title)}</div>
-            <div class="capability-text">{py_html.escape(text)}</div>
         </div>
         """
     )
@@ -112,20 +126,6 @@ def render_insight(title, text):
         <div class="insight-card">
             <div class="insight-label">{py_html.escape(title)}</div>
             <div class="insight-text">{py_html.escape(text)}</div>
-        </div>
-        """
-    )
-
-
-def render_section(title, subtitle, tag):
-    safe_html(
-        f"""
-        <div class="section-head">
-            <div>
-                <div class="section-title">{py_html.escape(title)}</div>
-                <div class="section-subtitle">{py_html.escape(subtitle)}</div>
-            </div>
-            <div class="section-tag">{py_html.escape(tag)}</div>
         </div>
         """
     )
@@ -196,7 +196,7 @@ safe_html(
         --muted: #AEB6C5;
         --muted2: #7D8798;
 
-        --glass: rgba(14, 19, 32, 0.34);
+        --glass: rgba(13, 19, 32, 0.42);
         --glass-soft: rgba(255, 255, 255, 0.045);
         --border: rgba(255, 255, 255, 0.12);
         --border-blue: rgba(0, 120, 212, 0.48);
@@ -258,33 +258,30 @@ safe_html(
         font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* ============================================================
-       TABS
-       ============================================================ */
-
     .stTabs [data-baseweb="tab-list"] {
         gap: 0.34rem;
-    *   background: rgba(255,255,255,0.*35);
-        border: 1px solid rgb*(255,255,255,0.08);
-        border*radius: 999px;
-        padding: 0.*0rem;
-        margin-bottom: 1rem;*        backdrop-filter: blur(24px*;
-        -webkit-backdrop-filter:*blur(24px);
-        box-shadow: 0 *0px 30px rgba(0,0,0,0.22);
+        background: rgba(255,255,255,0.035);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 999px;
+        padding: 0.30rem;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.22);
     }
 
-*   .stTabs [data-baseweb="tab"] {
-*       height: 34px;
-        paddi*g: 0 0.72rem;
-        border-radiu*: 999px !important;
-        color:*rgba(218,226,238,0.66);
-        fo*t-weight: 680;
-        font-size: *.735rem;
-        transition: all 0*16s ease !important;
-        borde*: 1px solid transparent;
+    .stTabs [data-baseweb="tab"] {
+        height: 34px;
+        padding: 0 0.72rem;
+        border-radius: 999px !important;
+        color: rgba(218,226,238,0.66);
+        font-weight: 680;
+        font-size: 0.735rem;
+        transition: all 0.16s ease !important;
+        border: 1px solid transparent;
     }
 
-  * .stTabs [data-baseweb="tab"]:hover {
+    .stTabs [data-baseweb="tab"]:hover {
         border-radius: 999px !important;
         background: rgba(255,255,255,0.075) !important;
         color: #E6F4FF !important;
@@ -299,91 +296,91 @@ safe_html(
         box-shadow: 0 0 24px rgba(0,120,212,0.22);
     }
 
-    /* ============================================================
-       HERO
-       ============================================================ */
-
     .hero {
-        position* relative;
-        min-height: 154*x;
-        border-radius: 24px;
-  *     border: 1px solid rgba(255,25*,255,0.13);
-        background:
-  *         linear-gradient(145deg, r*ba(255,255,255,0.105), rgba(255,25*,255,0.026)),
-            rgba(10,*15, 28, 0.36);
-        backdrop-fi*ter: blur(28px);
-        -webkit-b*ckdrop-filter: blur(28px);
-       *box-shadow: var(--shadow);
-       *padding: 1.05rem 1.25rem;
-        *verflow: hidden;
-        margin-bo*tom: 1rem;
-    }
-
-    .hero::after*{
-        content: "";
-        pos*tion: absolute;
-        right: -12*px;
-        top: -120px;
-        w*dth: 280px;
-        height: 280px;*        background: radial-gradien*(circle, rgba(0,120,212,0.28), tra*sparent 64%);
-        pointer-even*s: none;
-    }
-
-    .hero-content *
         position: relative;
-     *  z-index: 2;
-        max-width: 9*0px;
+        min-height: 154px;
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,0.13);
+        background:
+            linear-gradient(145deg, rgba(255,255,255,0.105), rgba(255,255,255,0.026)),
+            rgba(10, 15, 28, 0.38);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        box-shadow: var(--shadow);
+        padding: 1.05rem 1.25rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .hero::after {
+        content: "";
+        position: absolute;
+        right: -120px;
+        top: -120px;
+        width: 280px;
+        height: 280px;
+        background: radial-gradient(circle, rgba(0,120,212,0.28), transparent 64%);
+        pointer-events: none;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 930px;
     }
 
     .hero-topline {
-  *     display: flex;
-        align-*tems: center;
-        gap: 0.48rem*
+        display: flex;
+        align-items: center;
+        gap: 0.48rem;
         color: #D9EEFF;
-        f*nt-size: 0.57rem;
-        font-wei*ht: 760;
-        letter-spacing: 0*145em;
-        text-transform: upp*rcase;
-        margin-bottom: 0.46*em;
+        font-size: 0.57rem;
+        font-weight: 760;
+        letter-spacing: 0.145em;
+        text-transform: uppercase;
+        margin-bottom: 0.46rem;
     }
 
     .logo-squares {
-   *    width: 10px;
-        height: 1*px;
+        width: 10px;
+        height: 10px;
         display: grid;
-       *grid-template-columns: 1fr 1fr;
-  *     gap: 2px;
-        flex: 0 0 a*to;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        flex: 0 0 auto;
     }
 
-    .logo-squares span:*th-child(1) { background: #F25022;*}
-    .logo-squares span:nth-child*2) { background: #7FBA00; }
-    .l*go-squares span:nth-child(3) { bac*ground: #0078D4; }
-    .logo-squar*s span:nth-child(4) { background: *FFB900; }
+    .logo-squares span:nth-child(1) { background: #F25022; }
+    .logo-squares span:nth-child(2) { background: #7FBA00; }
+    .logo-squares span:nth-child(3) { background: #0078D4; }
+    .logo-squares span:nth-child(4) { background: #FFB900; }
 
     .hero-title {
-     *  color: #FFFFFF;
-        font-siz*: clamp(1.55rem, 1.95vw, 2.06rem);*        font-weight: 720;
-        *etter-spacing: -0.015em;
-        l*ne-height: 1.22;
-        margin-bo*tom: 0.43rem;
-        max-width: 7*0px;
+        color: #FFFFFF;
+        font-size: clamp(1.55rem, 1.95vw, 2.06rem);
+        font-weight: 720;
+        letter-spacing: -0.015em;
+        line-height: 1.22;
+        margin-bottom: 0.43rem;
+        max-width: 700px;
     }
 
     .hero-subtitle {
- *      color: #C8CED9;
-        font*size: 0.725rem;
-        line-heigh*: 1.58;
+        color: #C8CED9;
+        font-size: 0.725rem;
+        line-height: 1.58;
         max-width: 940px;
-*   }
-
-    .pill-row {
-        disp*ay: flex;
-        flex-wrap: wrap;*        gap: 0.38rem;
-        marg*n-top: 0.70rem;
     }
 
-    .pill {*        display: inline-flex;
+    .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.38rem;
+        margin-top: 0.70rem;
+    }
+
+    .pill {
+        display: inline-flex;
         align-items: center;
         padding: 0.27rem 0.48rem;
         border-radius: 999px;
@@ -402,25 +399,21 @@ safe_html(
         border-color: rgba(0,120,212,0.42);
     }
 
-    /* ============================================================
-       SECTIONS
-       ============================================================ */
-
     .section-head {
-    *   display: flex;
-        align-it*ms: flex-end;
-        justify-cont*nt: space-between;
-        gap: 0.*5rem;
-        margin: 1rem 0 0.54r*m 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 0.85rem;
+        margin: 1rem 0 0.54rem 0;
     }
 
     .section-title {
- *      color: #FFFFFF;
-        font*size: 0.845rem;
-        font-weigh*: 740;
-        letter-spacing: 0.0*2em;
+        color: #FFFFFF;
+        font-size: 0.845rem;
+        font-weight: 740;
+        letter-spacing: 0.002em;
         line-height: 1.32;
-  * }
+    }
 
     .section-subtitle {
         color: var(--muted2);
@@ -442,157 +435,156 @@ safe_html(
         -webkit-backdrop-filter: blur(18px);
     }
 
-    /* ============================================================
-       GLASS CARDS
-       ============================================================ */
-
     .kpi-card,
-    .c*pability-card,
+    .capability-card,
     .info-card,
-   *.scenario-card,
-    .insight-card,*    .chart-title-card,
-    .table-*ard {
+    .scenario-card,
+    .insight-card,
+    .chart-title-card,
+    .table-card {
         position: relative;
-*       border-radius: 18px;
-      * border: 1px solid rgba(255,255,25*,0.125);
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,0.125);
         background:
-     *      linear-gradient(145deg, rgba*255,255,255,0.095), rgba(255,255,2*5,0.022)),
-            rgba(12, 18* 31, 0.34);
-        backdrop-filte*: blur(26px);
-        -webkit-back*rop-filter: blur(26px);
-        bo*-shadow: var(--shadow);
-        ov*rflow: hidden;
-        transition:*transform 0.16s ease, border-color*0.16s ease, box-shadow 0.16s ease,*background 0.16s ease;
+            linear-gradient(145deg, rgba(255,255,255,0.095), rgba(255,255,255,0.022)),
+            rgba(12, 18, 31, 0.36);
+        backdrop-filter: blur(26px);
+        -webkit-backdrop-filter: blur(26px);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
     }
 
-    *kpi-card:hover,
-    .capability-ca*d:hover,
+    .kpi-card:hover,
+    .capability-card:hover,
     .info-card:hover,
-   *.scenario-card:hover,
-    .insight*card:hover {
-        transform: tr*nslateY(-4px);
-        border-colo*: rgba(0,120,212,0.55);
-        ba*kground:
-            linear-gradie*t(145deg, rgba(255,255,255,0.12), *gba(255,255,255,0.035)),
-         *  rgba(14, 21, 37, 0.44);
-        *ox-shadow: var(--shadow-hover);
-  * }
+    .scenario-card:hover,
+    .insight-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(0,120,212,0.55);
+        background:
+            linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.035)),
+            rgba(14, 21, 37, 0.48);
+        box-shadow: var(--shadow-hover);
+    }
 
     .kpi-card {
-        min-he*ght: 114px;
-        padding: 0.76r*m;
-        margin-bottom: 0.72rem;*    }
-
-    .capability-card,
-    .*nfo-card,
-    .scenario-card {
-   *    min-height: 104px;
-        pad*ing: 0.76rem;
-        margin-botto*: 0.72rem;
+        min-height: 114px;
+        padding: 0.76rem;
+        margin-bottom: 0.72rem;
     }
 
-    .card-label *
+    .capability-card,
+    .info-card,
+    .scenario-card {
+        min-height: 104px;
+        padding: 0.76rem;
+        margin-bottom: 0.72rem;
+    }
+
+    .card-label {
         color: #D9EEFF;
-        f*nt-size: 0.54rem;
-        font-wei*ht: 780;
-        letter-spacing: 0*145em;
-        text-transform: upp*rcase;
-        margin-bottom: 0.36*em;
+        font-size: 0.54rem;
+        font-weight: 780;
+        letter-spacing: 0.145em;
+        text-transform: uppercase;
+        margin-bottom: 0.36rem;
     }
 
     .card-title {
-     *  color: #D8DEE9;
-        font-siz*: 0.70rem;
-        font-weight: 70*;
+        color: #D8DEE9;
+        font-size: 0.70rem;
+        font-weight: 700;
         line-height: 1.32;
-     *  letter-spacing: 0.003em;
-       *margin-bottom: 0.36rem;
+        letter-spacing: 0.003em;
+        margin-bottom: 0.36rem;
     }
 
-   *.card-value {
-        color: #FFFF*F;
+    .card-value {
+        color: #FFFFFF;
         font-size: 1.14rem;
-   *    font-weight: 780;
-        lett*r-spacing: -0.025em;
-        margi*-bottom: 0.24rem;
+        font-weight: 780;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.24rem;
     }
 
-    .card*sub {
+    .card-sub {
         color: #AAB2C1;
-    *   font-size: 0.60rem;
-        lin*-height: 1.38;
-        margin-bott*m: 0.46rem;
+        font-size: 0.60rem;
+        line-height: 1.38;
+        margin-bottom: 0.46rem;
     }
 
     .badge {
-  *     display: inline-flex;
-       *align-items: center;
-        gap: *.31rem;
-        padding: 0.245rem *.415rem;
-        border-radius: 99*px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.31rem;
+        padding: 0.245rem 0.415rem;
+        border-radius: 999px;
         color: #DDF1FF;
-      * border: 1px solid rgba(0,120,212,*.34);
-        background: rgba(0,1*0,212,0.15);
-        font-size: 0.*55rem;
+        border: 1px solid rgba(0,120,212,0.34);
+        background: rgba(0,120,212,0.15);
+        font-size: 0.555rem;
         font-weight: 760;
- *  }
+    }
 
     .badge.green {
-        co*or: #E7FAC2;
-        border-color:*rgba(127,186,0,0.38);
-        back*round: rgba(127,186,0,0.145);
-    *
+        color: #E7FAC2;
+        border-color: rgba(127,186,0,0.38);
+        background: rgba(127,186,0,0.145);
+    }
 
     .badge.orange {
-        colo*: #FFC7BD;
-        border-color: r*ba(242,80,34,0.36);
-        backgr*und: rgba(242,80,34,0.14);
+        color: #FFC7BD;
+        border-color: rgba(242,80,34,0.36);
+        background: rgba(242,80,34,0.14);
     }
 
-*   .dot {
+    .dot {
         width: 6px;
-    *   height: 6px;
-        border-rad*us: 999px;
-        background: cur*entColor;
-        box-shadow: 0 0 *0px currentColor;
-        display:*inline-block;
+        height: 6px;
+        border-radius: 999px;
+        background: currentColor;
+        box-shadow: 0 0 10px currentColor;
+        display: inline-block;
     }
 
-    .capabili*y-title,
+    .capability-title,
     .info-title,
-    .sce*ario-title {
-        color: #FFFFF*;
-        font-size: 0.80rem;
-    *   font-weight: 720;
-        margi*-bottom: 0.30rem;
-        letter-s*acing: 0.006em;
-        line-heigh*: 1.35;
-    }
-
-    .capability-tex*,
-    .info-text,
-    .scenario-te*t {
-        color: #AAB2C1;
-      * font-size: 0.63rem;
-        line-*eight: 1.46;
-    }
-
-    .scenario-*alue {
+    .scenario-title {
         color: #FFFFFF;
-   *    font-size: 1.12rem;
-        fo*t-weight: 780;
-        letter-spac*ng: -0.028em;
-        margin-botto*: 0.24rem;
+        font-size: 0.80rem;
+        font-weight: 720;
+        margin-bottom: 0.30rem;
+        letter-spacing: 0.006em;
+        line-height: 1.35;
+    }
+
+    .capability-text,
+    .info-text,
+    .scenario-text {
+        color: #AAB2C1;
+        font-size: 0.63rem;
+        line-height: 1.46;
+    }
+
+    .scenario-value {
+        color: #FFFFFF;
+        font-size: 1.12rem;
+        font-weight: 780;
+        letter-spacing: -0.028em;
+        margin-bottom: 0.24rem;
     }
 
     .formula {
- *      margin-top: 0.46rem;
-       *padding: 0.36rem 0.46rem;
-        *olor: #DDF1FF;
-        background:*rgba(0,120,212,0.13);
-        bord*r: 1px solid rgba(0,120,212,0.30);*        border-radius: 10px;
-     *  font-size: 0.56rem;
-        font*weight: 700;
+        margin-top: 0.46rem;
+        padding: 0.36rem 0.46rem;
+        color: #DDF1FF;
+        background: rgba(0,120,212,0.13);
+        border: 1px solid rgba(0,120,212,0.30);
+        border-radius: 10px;
+        font-size: 0.56rem;
+        font-weight: 700;
     }
 
     .insight-card {
@@ -617,10 +609,6 @@ safe_html(
         line-height: 1.54;
     }
 
-    /* ============================================================
-       CHARTS
-       ============================================================ */
-
     .chart-title-card {
         min-height: 46px;
         padding: 0.60rem 0.70rem;
@@ -643,51 +631,47 @@ safe_html(
         font-weight: 680;
     }
 
-    /* ============================================================
-       FINANCIAL TABLES
-       ============================================================ */
-
     .table-card {
-        paddi*g: 0.82rem;
-        margin-bottom:*0.9rem;
+        padding: 0.82rem;
+        margin-bottom: 0.9rem;
     }
 
-    .table-card-hea* {
+    .table-card-head {
         display: flex;
-        *ustify-content: space-between;
-   *    align-items: center;
-        m*rgin-bottom: 0.58rem;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.58rem;
     }
 
-    .*able-title {
-        color: #FFFFF*;
+    .table-title {
+        color: #FFFFFF;
         font-size: 0.78rem;
-    *   font-weight: 720;
-        line-*eight: 1.35;
+        font-weight: 720;
+        line-height: 1.35;
     }
 
-    .table-not* {
+    .table-note {
         color: var(--muted2);
- *      font-size: 0.58rem;
-        *argin-top: 0.12rem;
+        font-size: 0.58rem;
+        margin-top: 0.12rem;
     }
 
-    .ta*le-wrap {
-        overflow-x: auto*
+    .table-wrap {
+        overflow-x: auto;
         border-radius: 13px;
-    *   border: 1px solid rgba(255,255,*55,0.08);
-        background: rgba*5,8,18,0.28);
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(5,8,18,0.32);
     }
 
-    table.fin*nce-table {
+    table.finance-table {
         width: 100%;
- *      border-collapse: collapse;
- *      font-size: 0.64rem;
-        *olor: #DDE3EE;
-        min-width: *20px;
+        border-collapse: collapse;
+        font-size: 0.64rem;
+        color: #DDE3EE;
+        min-width: 520px;
     }
 
-    .finance-table th*{
+    .finance-table th {
         background: rgba(255,255,255,0.055);
         color: #DDF1FF;
         text-align: left;
@@ -708,136 +692,133 @@ safe_html(
         background: rgba(0,120,212,0.08);
     }
 
-    /* ============================================================
-       STREAMLIT NATIVE UI
-       ============================================================ */
-
     h3 {
-        color: #FFFFFF*!important;
-        font-size: 0.8*rem !important;
-        font-weigh*: 720 !important;
-        margin: *.52rem 0 0.42rem 0 !important;
-   *}
+        color: #FFFFFF !important;
+        font-size: 0.82rem !important;
+        font-weight: 720 !important;
+        margin: 0.52rem 0 0.42rem 0 !important;
+    }
 
     .stDownloadButton button,
- *  .stButton button {
-        font-*ize: 0.62rem !important;
-        p*dding: 0.35rem 0.60rem !important;*        border-radius: 999px !impo*tant;
-        color: #FFFFFF !impo*tant;
-        background: rgba(0,1*0,212,0.68) !important;
-        bo*der: 1px solid rgba(255,255,255,0.*2) !important;
-        box-shadow:*0 10px 22px rgba(0,120,212,0.20);
-*       backdrop-filter: blur(18px)*
+    .stButton button {
+        font-size: 0.62rem !important;
+        padding: 0.35rem 0.60rem !important;
+        border-radius: 999px !important;
+        color: #FFFFFF !important;
+        background: rgba(0,120,212,0.68) !important;
+        border: 1px solid rgba(255,255,255,0.12) !important;
+        box-shadow: 0 10px 22px rgba(0,120,212,0.20);
+        backdrop-filter: blur(18px);
     }
 
     .stTextArea textarea,
-*   .stTextInput input {
-        co*or: #F3F2F1 !important;
-        ba*kground: rgba(15,20,34,0.35) !impo*tant;
-        border: 1px solid rg*a(255,255,255,0.12) !important;
-  *     border-radius: 16px !importan*;
-        font-size: 0.70rem !impo*tant;
-        backdrop-filter: blu*(20px);
+    .stTextInput input {
+        color: #F3F2F1 !important;
+        background: rgba(15,20,34,0.35) !important;
+        border: 1px solid rgba(255,255,255,0.12) !important;
+        border-radius: 16px !important;
+        font-size: 0.70rem !important;
+        backdrop-filter: blur(20px);
     }
 
-    .stTextArea tex*area:focus,
-    .stTextInput input*focus {
-        border-color: rgba*0,120,212,0.60) !important;
-      * box-shadow: 0 0 0 3px rgba(0,120,*12,0.16) !important;
+    .stTextArea textarea:focus,
+    .stTextInput input:focus {
+        border-color: rgba(0,120,212,0.60) !important;
+        box-shadow: 0 0 0 3px rgba(0,120,212,0.16) !important;
     }
 
-    .s*TextArea label,
-    .stTextInput l*bel,
+    .stTextArea label,
+    .stTextInput label,
     .stSlider label {
-       *color: #AAB2C1 !important;
-       *font-size: 0.62rem !important;
-   *    font-weight: 720 !important;
- *      text-transform: uppercase;
- *      letter-spacing: 0.10em;
-    *
+        color: #AAB2C1 !important;
+        font-size: 0.62rem !important;
+        font-weight: 720 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.10em;
+    }
 
     @media (max-width: 760px) {
-*       .block-container {
-        *   padding: 1rem !important;
-     *  }
+        .block-container {
+            padding: 1rem !important;
+        }
 
         .hero {
-            m*n-height: 170px;
-            paddi*g: 0.95rem;
+            min-height: 170px;
+            padding: 0.95rem;
         }
 
-        .he*o-title {
-            font-size: 1*42rem;
+        .hero-title {
+            font-size: 1.42rem;
         }
     }
-    </style*
+    </style>
     """
 )
 
-# ====================*==================================*========
+# ================================================================
 # Data
-# ================*==================================*============
+# ================================================================
 
-result = process_upl*aded_file()
-company_results = {"Mi*rosoft": result}
-benchmark_df = bu*ld_benchmark_dataframe(company_res*lts)
+result = process_uploaded_file()
+company_results = {"Microsoft": result}
+benchmark_df = build_benchmark_dataframe(company_results)
 
 k = result["kpis"]
 ts = k["time_series"].copy()
-segment_revenue*= k["segment_revenue"].copy()
+segment_revenue = k["segment_revenue"].copy()
 
-# =*==================================*===========================
-# Plot*y Styling
-# ======================*==================================*======
+# ================================================================
+# Plotly Styling
+# ================================================================
 
-def style_fig(fig, height=*36, showlegend=False):
-    fig.upd*te_layout(
+def style_fig(fig, height=236, showlegend=False):
+    fig.update_layout(
         height=height,
-*       paper_bgcolor="rgba(0,0,0,0*",
-        plot_bgcolor="rgba(0,0,*,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         font=dict(
-         *  family="Segoe UI, Inter, sans-se*if",
+            family="Segoe UI, Inter, sans-serif",
             color="#C9D0DC",
-*           size=10,
+            size=10,
         ),
-   *    margin=dict(l=34, r=18, t=8, b*30),
-        hovermode="x unified"*
+        margin=dict(l=34, r=18, t=8, b=30),
+        hovermode="x unified",
         showlegend=showlegend,
-  *     legend=dict(
-            orie*tation="h",
-            yanchor="b*ttom",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
             y=1.03,
-       *    xanchor="right",
-            x*1,
-            font=dict(color="#C*D0DC", size=9),
+            xanchor="right",
+            x=1,
+            font=dict(color="#C9D0DC", size=9),
         ),
-       *xaxis=dict(
-            showgrid=F*lse,
+        xaxis=dict(
+            showgrid=False,
             zeroline=False,
- *          showline=True,
-         *  linewidth=1,
-            linecol*r="rgba(255,255,255,0.11)",
-      *     tickfont=dict(color="#8D97A8"* size=9),
-            title_font=d*ct(color="#8D97A8", size=10),
-    *   ),
+            showline=True,
+            linewidth=1,
+            linecolor="rgba(255,255,255,0.11)",
+            tickfont=dict(color="#8D97A8", size=9),
+            title_font=dict(color="#8D97A8", size=10),
+        ),
         yaxis=dict(
-        *   showgrid=True,
-            grid*idth=1,
-            gridcolor="rgb*(255,255,255,0.060)",
-            *eroline=False,
-            showlin*=False,
-            tickfont=dict(*olor="#8D97A8", size=9),
-         *  title_font=dict(color="#8D97A8",*size=10),
+            showgrid=True,
+            gridwidth=1,
+            gridcolor="rgba(255,255,255,0.060)",
+            zeroline=False,
+            showline=False,
+            tickfont=dict(color="#8D97A8", size=9),
+            title_font=dict(color="#8D97A8", size=10),
         ),
     )
-    ret*rn fig
+    return fig
 
 
-# =======================*==================================*=====
+# ================================================================
 # Tabs
-# ===================*==================================*=========
+# ================================================================
 
-tab_summary, tab_kpi, t*b_revenue, tab_forecast, tab_finan*ials, tab_ai = st.tabs(
+tab_summary, tab_kpi, tab_revenue, tab_forecast, tab_financials, tab_ai = st.tabs(
     [
         "✨ Executive Summary",
         "📊 Intelligence Hub",
@@ -848,80 +829,82 @@ tab_summary, tab_kpi, t*b_revenue, tab_forecast, tab_finan*ials, tab_ai = st.tab
     ]
 )
 
-# =================*==================================*===========
+# ================================================================
 # Executive Summary
-# *==================================*============================
+# ================================================================
 
-with*tab_summary:
+with tab_summary:
     safe_html(
-      * """
+        """
         <div class="hero">
-  *         <div class="hero-content"*
-                <div class="hero-*opline">
-                    <div *lass="logo-squares">
-             *          <span></span><span></spa*><span></span><span></span>
-      *             </div>
-              *     Microsoft Fluent UI Inspired *inancial Intelligence
-            *   </div>
-                <div cla*s="hero-title">Microsoft Financial*Intelligence Platform</div>
-      *         <div class="hero-subtitle*>
-                    An AI-style *inancial analytics application bui*t from Microsoft's FY2025 10-K dat*.
-                    The platform*converts traditional financial sta*ements into compact executive KPIs*
-                    revenue intel*igence, forecasting scenarios, and*natural-language financial comment*ry.
+            <div class="hero-content">
+                <div class="hero-topline">
+                    <div class="logo-squares">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                    Microsoft Fluent UI Inspired Financial Intelligence
                 </div>
-       *        <div class="pill-row">
-   *                <span class="pill *lue">FY2025</span>
-               *    <span class="pill">10-K Analys*s</span>
-                    <span*class="pill">Revenue Intelligence<*span>
-                    <span cl*ss="pill">AI Forecasting</span>
-  *                 <span class="pill*>Executive Analytics</span>
-      *         </div>
-            </div>*        </div>
+                <div class="hero-title">Microsoft Financial Intelligence Platform</div>
+                <div class="hero-subtitle">
+                    An AI-style financial analytics application built from Microsoft's FY2025 10-K data.
+                    The platform converts traditional financial statements into compact executive KPIs,
+                    revenue intelligence, forecasting scenarios, and natural-language financial commentary.
+                </div>
+                <div class="pill-row">
+                    <span class="pill blue">FY2025</span>
+                    <span class="pill">10-K Analysis</span>
+                    <span class="pill">Revenue Intelligence</span>
+                    <span class="pill">AI Forecasting</span>
+                    <span class="pill">Executive Analytics</span>
+                </div>
+            </div>
+        </div>
         """
     )
 
-*   render_section(
-        "Strate*ic Platform Capabilities",
-       *"A polished executive overview of *he dashboard's core finance, analy*ics, forecasting, and commentary l*yers.",
-        "Executive Summary*",
+    render_section(
+        "Strategic Platform Capabilities",
+        "A polished executive overview of the dashboard's core finance, analytics, forecasting, and commentary layers.",
+        "Executive Summary",
     )
 
-    c1, c2, c3, c4 = st.c*lumns(4, gap="medium")
+    c1, c2, c3, c4 = st.columns(4, gap="medium")
 
-    with c*:
+    with c1:
         render_capability_card(
-*           "Finance Model",
-      *     "Statement Intelligence",
-   *        "Transforms financial stat*ment data into structured income, *alance sheet, and cash flow views.*",
+            "Finance Model",
+            "Statement Intelligence",
+            "Transforms financial statement data into structured income, balance sheet, and cash flow views.",
         )
 
     with c2:
-        *ender_capability_card(
-           *"Performance",
-            "KPI In*elligence",
-            "Summarize* revenue, profitability, free cash*flow, liquidity, and operating per*ormance.",
+        render_capability_card(
+            "Performance",
+            "KPI Intelligence",
+            "Summarizes revenue, profitability, free cash flow, liquidity, and operating performance.",
         )
 
-    with c3:*        render_capability_card(
-  *         "Outlook",
-            "F*recasting Engine",
-            "Si*ulates bear, base, and bull case r*venue outcomes using forward growt* assumptions.",
+    with c3:
+        render_capability_card(
+            "Outlook",
+            "Forecasting Engine",
+            "Simulates bear, base, and bull case revenue outcomes using forward growth assumptions.",
         )
 
-    wit* c4:
-        render_capability_car*(
+    with c4:
+        render_capability_card(
             "Narrative",
-       *    "AI Commentary Layer",
-       *    "Turns financial metrics into *lain-English executive commentary *or business interpretation.",
-    *   )
+            "AI Commentary Layer",
+            "Turns financial metrics into plain-English executive commentary for business interpretation.",
+        )
 
     render_section(
         "Executive Snapshot",
-        "A qu*ck view of the latest reported fin*ncial signals powering the platfor*.",
+        "A quick view of the latest reported financial signals powering the platform.",
         "FY2025 View",
     )
 
-*   s1, s2, s3, s4 = st.columns(4, gap="medium")
+    s1, s2, s3, s4 = st.columns(4, gap="medium")
 
     with s1:
         render_kpi_card(
