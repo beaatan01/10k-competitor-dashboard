@@ -2,7 +2,7 @@ import pandas as pd
 
 # ============================================================
 # Microsoft Hard-Coded Financials
-# All values are in millions of dollars.
+# Values are in millions of dollars.
 # ============================================================
 
 def microsoft_fallback_financials():
@@ -33,7 +33,6 @@ def microsoft_fallback_financials():
         "cashflow": cashflow,
     }
 
-
 # ============================================================
 # Utility Functions
 # ============================================================
@@ -43,23 +42,17 @@ def safe_div(n, d):
         return None
     return n / d
 
-
 def fmt_cur(v):
     if v is None:
         return "N/A"
-
     if abs(v) >= 1000:
         return f"${v/1000:.1f}B"
-
     return f"${v:,.0f}M"
-
 
 def fmt_pct(v):
     if v is None:
         return "N/A"
-
     return f"{v*100:.1f}%"
-
 
 # ============================================================
 # KPI Computation
@@ -71,57 +64,26 @@ def compute_kpis(financials):
     balance = financials["balance"]
     cashflow = financials["cashflow"]
 
-    revenue = income.loc[
-        income["line_item"] == "Total Revenue"
-    ].iloc[0]
+    revenue = income.loc[income["line_item"] == "Total Revenue"].iloc[0]
+    product_revenue = income.loc[income["line_item"] == "Product Revenue"].iloc[0]
+    service_revenue = income.loc[income["line_item"] == "Service and Other Revenue"].iloc[0]
 
-    product_revenue = income.loc[
-        income["line_item"] == "Product Revenue"
-    ].iloc[0]
+    gross_margin = income.loc[income["line_item"] == "Gross Margin"].iloc[0]
+    operating_income = income.loc[income["line_item"] == "Operating Income"].iloc[0]
+    net_income = income.loc[income["line_item"] == "Net Income"].iloc[0]
 
-    service_revenue = income.loc[
-        income["line_item"] == "Service and Other Revenue"
-    ].iloc[0]
+    cash = balance.loc[balance["line_item"] == "Cash and Cash Equivalents"].iloc[0]
+    debt = balance.loc[balance["line_item"] == "Total Debt"].iloc[0]
 
-    gross_margin = income.loc[
-        income["line_item"] == "Gross Margin"
-    ].iloc[0]
-
-    operating_income = income.loc[
-        income["line_item"] == "Operating Income"
-    ].iloc[0]
-
-    net_income = income.loc[
-        income["line_item"] == "Net Income"
-    ].iloc[0]
-
-    cash = balance.loc[
-        balance["line_item"] == "Cash and Cash Equivalents"
-    ].iloc[0]
-
-    debt = balance.loc[
-        balance["line_item"] == "Total Debt"
-    ].iloc[0]
-
-    ocf = cashflow.loc[
-        cashflow["line_item"] == "Operating Cash Flow"
-    ].iloc[0]
-
-    capex = cashflow.loc[
-        cashflow["line_item"] == "Capital Expenditures"
-    ].iloc[0]
+    ocf = cashflow.loc[cashflow["line_item"] == "Operating Cash Flow"].iloc[0]
+    capex = cashflow.loc[cashflow["line_item"] == "Capital Expenditures"].iloc[0]
 
     periods = ["2025", "2024", "2023"]
     latest = "2025"
 
-    # ========================================================
-    # Time Series Dataset
-    # ========================================================
-
     ts_rows = []
 
     for p in periods:
-
         rev = revenue[p]
         gm = gross_margin[p]
         op = operating_income[p]
@@ -130,54 +92,40 @@ def compute_kpis(financials):
         capex_amt = abs(capex[p])
         fcf = operating_cf - capex_amt
 
-        ts_rows.append(
-            {
-                "period": p,
-                "revenue": rev,
-                "gross_margin": safe_div(gm, rev),
-                "operating_margin": safe_div(op, rev),
-                "net_margin": safe_div(ni, rev),
-                "cash_balance": cash[p],
-                "total_debt": debt[p],
-                "operating_cash_flow": operating_cf,
-                "capex": capex_amt,
-                "free_cash_flow": fcf,
-            }
-        )
+        ts_rows.append({
+            "period": p,
+            "revenue": rev,
+            "gross_margin": safe_div(gm, rev),
+            "operating_margin": safe_div(op, rev),
+            "net_margin": safe_div(ni, rev),
+            "cash_balance": cash[p],
+            "total_debt": debt[p],
+            "operating_cash_flow": operating_cf,
+            "capex": capex_amt,
+            "free_cash_flow": fcf,
+        })
 
     ts = pd.DataFrame(ts_rows)
 
-    # ========================================================
-    # Segment Revenue Dataset
-    # ========================================================
+    segment_revenue = pd.DataFrame([
+        {
+            "period": "2025",
+            "Product Revenue": product_revenue["2025"],
+            "Service and Other Revenue": service_revenue["2025"],
+        },
+        {
+            "period": "2024",
+            "Product Revenue": product_revenue["2024"],
+            "Service and Other Revenue": service_revenue["2024"],
+        },
+        {
+            "period": "2023",
+            "Product Revenue": product_revenue["2023"],
+            "Service and Other Revenue": service_revenue["2023"],
+        },
+    ])
 
-    segment_revenue = pd.DataFrame(
-        [
-            {
-                "period": "2025",
-                "Product Revenue": product_revenue["2025"],
-                "Service and Other Revenue": service_revenue["2025"],
-            },
-            {
-                "period": "2024",
-                "Product Revenue": product_revenue["2024"],
-                "Service and Other Revenue": service_revenue["2024"],
-            },
-            {
-                "period": "2023",
-                "Product Revenue": product_revenue["2023"],
-                "Service and Other Revenue": service_revenue["2023"],
-            },
-        ]
-    )
-
-    # ========================================================
-    # KPI Values
-    # ========================================================
-
-    yoy_growth = (
-        revenue["2025"] - revenue["2024"]
-    ) / revenue["2024"]
+    yoy_growth = (revenue["2025"] - revenue["2024"]) / revenue["2024"]
 
     latest_ts = ts.loc[ts["period"] == latest].iloc[0]
 
@@ -215,7 +163,6 @@ def compute_kpis(financials):
         "free_cash_flow": latest_ts["free_cash_flow"],
     }
 
-
 # ============================================================
 # Main Entry Point
 # ============================================================
@@ -235,7 +182,6 @@ def process_uploaded_file(_file=None):
         "confidence": "Microsoft Hard-Coded Financials",
     }
 
-
 # ============================================================
 # Benchmark Dataset
 # ============================================================
@@ -248,33 +194,36 @@ def build_benchmark_dataframe(results):
 
         k = result["kpis"]
 
-        rows.append(
-            {
-                "company": company,
-                "year": k["latest_period"],
-                "revenue": k["revenue"],
-                "prior_year_revenue": k["prior_year_revenue"],
-                "revenue_yoy_growth": k["revenue_yoy_growth"],
-                "product_revenue": k["product_revenue"],
-                "service_revenue": k["service_revenue"],
-                "product_revenue_mix": k["product_revenue_mix"],
-                "service_revenue_mix": k["service_revenue_mix"],
-                "gross_margin": k["gross_margin"],
-                "operating_margin": k["operating_margin"],
-                "net_margin": k["net_margin"],
-                "gross_margin_dollars": k["gross_margin_dollars"],
-                "operating_income": k["operating_income"],
-                "net_income": k["net_income"],
-                "cash_balance": k["cash_balance"],
-                "total_debt": k["total_debt"],
-                "operating_cash_flow": k["operating_cash_flow"],
-                "capex": k["capex"],
-                "free_cash_flow": k["free_cash_flow"],
-            }
-        )
+        rows.append({
+            "company": company,
+            "year": k["latest_period"],
+
+            "revenue": k["revenue"],
+            "prior_year_revenue": k["prior_year_revenue"],
+            "revenue_yoy_growth": k["revenue_yoy_growth"],
+
+            "product_revenue": k["product_revenue"],
+            "service_revenue": k["service_revenue"],
+            "product_revenue_mix": k["product_revenue_mix"],
+            "service_revenue_mix": k["service_revenue_mix"],
+
+            "gross_margin": k["gross_margin"],
+            "operating_margin": k["operating_margin"],
+            "net_margin": k["net_margin"],
+
+            "gross_margin_dollars": k["gross_margin_dollars"],
+            "operating_income": k["operating_income"],
+            "net_income": k["net_income"],
+
+            "cash_balance": k["cash_balance"],
+            "total_debt": k["total_debt"],
+
+            "operating_cash_flow": k["operating_cash_flow"],
+            "capex": k["capex"],
+            "free_cash_flow": k["free_cash_flow"],
+        })
 
     return pd.DataFrame(rows)
-
 
 # ============================================================
 # Forecasting Helpers
@@ -294,16 +243,13 @@ def build_forecast_dataframe(
         year = start_year + i
         revenue = revenue * (1 + growth_rate)
 
-        rows.append(
-            {
-                "year": year,
-                "revenue": revenue,
-                "growth_rate": growth_rate,
-            }
-        )
+        rows.append({
+            "year": year,
+            "revenue": revenue,
+            "growth_rate": growth_rate,
+        })
 
     return pd.DataFrame(rows)
-
 
 def build_scenario_dataframe(
     starting_revenue,
@@ -330,17 +276,14 @@ def build_scenario_dataframe(
             year = start_year + i
             revenue = revenue * (1 + growth_rate)
 
-            rows.append(
-                {
-                    "scenario": scenario_name,
-                    "year": year,
-                    "revenue": revenue,
-                    "growth_rate": growth_rate,
-                }
-            )
+            rows.append({
+                "scenario": scenario_name,
+                "year": year,
+                "revenue": revenue,
+                "growth_rate": growth_rate,
+            })
 
     return pd.DataFrame(rows)
-
 
 # ============================================================
 # Display Helpers
@@ -349,17 +292,14 @@ def build_scenario_dataframe(
 def format_display_dataframe(df):
     return df
 
-
 def apply_manual_statement_selection(result, *_args):
     return result
-
 
 def raw_table_label(i, _t):
     return f"Table {i}"
 
-
 # ============================================================
-# AI-Style Financial Commentary
+# AI-Style Commentary
 # ============================================================
 
 def answer_question(question, df, kpis=None):
@@ -372,8 +312,8 @@ def answer_question(question, df, kpis=None):
 
     revenue = r["revenue"]
     yoy = r["revenue_yoy_growth"]
-    operating_margin = r["operating_margin"]
     gross_margin = r["gross_margin"]
+    operating_margin = r["operating_margin"]
     net_margin = r["net_margin"]
     fcf = r["free_cash_flow"]
     cash = r["cash_balance"]
@@ -394,8 +334,7 @@ def answer_question(question, df, kpis=None):
 
         return (
             f"Using a simple 12.0% annual revenue growth assumption, Microsoft revenue would reach "
-            f"{fmt_cur(final_revenue)} by FY{final_year}. This is a simplified scenario model rather than a formal forecast, "
-            f"but it helps show how sensitive future revenue is to growth assumptions."
+            f"{fmt_cur(final_revenue)} by FY{final_year}. This is a simplified scenario model, not a formal forecast."
         )
 
     if "revenue" in q or "growth" in q:
@@ -405,21 +344,19 @@ def answer_question(question, df, kpis=None):
         if service_mix is not None:
             mix_text = (
                 f" Service and other revenue represents approximately {fmt_pct(service_mix)} of total revenue, "
-                f"which makes it the largest revenue category in the simplified dataset."
+                f"making it the largest category in the simplified dataset."
             )
 
         return (
-            f"Microsoft generated {fmt_cur(revenue)} in revenue during FY{r['year']}, representing "
-            f"{fmt_pct(yoy)} year-over-year growth. This indicates strong top-line expansion compared with the prior year."
-            f"{mix_text}"
+            f"Microsoft generated {fmt_cur(revenue)} in FY{r['year']} revenue, representing "
+            f"{fmt_pct(yoy)} year-over-year growth.{mix_text}"
         )
 
     if "margin" in q or "profit" in q or "profitability" in q:
 
         return (
-            f"Microsoft's profitability profile is strong in this dataset, with gross margin of {fmt_pct(gross_margin)}, "
-            f"operating margin of {fmt_pct(operating_margin)}, and net margin of {fmt_pct(net_margin)}. "
-            f"Operating margin is especially useful because it shows how efficiently the company converts revenue into operating income."
+            f"Microsoft shows a strong profitability profile, with gross margin of {fmt_pct(gross_margin)}, "
+            f"operating margin of {fmt_pct(operating_margin)}, and net margin of {fmt_pct(net_margin)}."
         )
 
     if "cash" in q or "fcf" in q or "free cash flow" in q or "liquidity" in q:
@@ -428,8 +365,7 @@ def answer_question(question, df, kpis=None):
 
         return (
             f"Microsoft generated {fmt_cur(fcf)} in free cash flow and held {fmt_cur(cash)} in cash and cash equivalents. "
-            f"Total debt was {fmt_cur(debt)}, resulting in a debt-to-cash ratio of {debt_to_cash:.1f}x. "
-            f"This view helps evaluate financial flexibility, capital allocation capacity, and balance sheet strength."
+            f"Total debt was {fmt_cur(debt)}, giving a debt-to-cash ratio of approximately {debt_to_cash:.1f}x."
         )
 
     if "debt" in q or "balance sheet" in q:
@@ -438,12 +374,10 @@ def answer_question(question, df, kpis=None):
 
         return (
             f"Microsoft's balance sheet view shows {fmt_cur(cash)} of cash and cash equivalents compared with "
-            f"{fmt_cur(debt)} of total debt. The debt-to-cash ratio is approximately {debt_to_cash:.1f}x, "
-            f"which provides a quick lens into liquidity and financial flexibility."
+            f"{fmt_cur(debt)} of total debt. The debt-to-cash ratio is approximately {debt_to_cash:.1f}x."
         )
 
     return (
         f"Microsoft generated {fmt_cur(revenue)} of FY{r['year']} revenue, grew {fmt_pct(yoy)} year over year, "
-        f"reported operating margin of {fmt_pct(operating_margin)}, and produced {fmt_cur(fcf)} in free cash flow. "
-        f"Overall, the simplified dashboard highlights strong scale, profitability, and cash generation."
+        f"reported operating margin of {fmt_pct(operating_margin)}, and produced {fmt_cur(fcf)} in free cash flow."
     )
