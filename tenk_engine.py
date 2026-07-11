@@ -33,6 +33,7 @@ def microsoft_fallback_financials():
         "cashflow": cashflow,
     }
 
+
 # ============================================================
 # Utility Functions
 # ============================================================
@@ -42,17 +43,20 @@ def safe_div(n, d):
         return None
     return n / d
 
+
 def fmt_cur(v):
     if v is None:
         return "N/A"
     if abs(v) >= 1000:
-        return f"${v/1000:.1f}B"
+        return f"${v / 1000:.1f}B"
     return f"${v:,.0f}M"
+
 
 def fmt_pct(v):
     if v is None:
         return "N/A"
-    return f"{v*100:.1f}%"
+    return f"{v * 100:.1f}%"
+
 
 # ============================================================
 # KPI Computation
@@ -163,6 +167,7 @@ def compute_kpis(financials):
         "free_cash_flow": latest_ts["free_cash_flow"],
     }
 
+
 # ============================================================
 # Main Entry Point
 # ============================================================
@@ -182,6 +187,7 @@ def process_uploaded_file(_file=None):
         "confidence": "Microsoft Hard-Coded Financials",
     }
 
+
 # ============================================================
 # Benchmark Dataset
 # ============================================================
@@ -191,7 +197,6 @@ def build_benchmark_dataframe(results):
     rows = []
 
     for company, result in results.items():
-
         k = result["kpis"]
 
         rows.append({
@@ -225,6 +230,7 @@ def build_benchmark_dataframe(results):
 
     return pd.DataFrame(rows)
 
+
 # ============================================================
 # Forecasting Helpers
 # ============================================================
@@ -251,6 +257,7 @@ def build_forecast_dataframe(
 
     return pd.DataFrame(rows)
 
+
 def build_scenario_dataframe(
     starting_revenue,
     start_year=2026,
@@ -269,7 +276,6 @@ def build_scenario_dataframe(
     rows = []
 
     for scenario_name, growth_rate in scenarios.items():
-
         revenue = starting_revenue
 
         for i in range(periods):
@@ -285,6 +291,7 @@ def build_scenario_dataframe(
 
     return pd.DataFrame(rows)
 
+
 # ============================================================
 # Display Helpers
 # ============================================================
@@ -292,11 +299,14 @@ def build_scenario_dataframe(
 def format_display_dataframe(df):
     return df
 
+
 def apply_manual_statement_selection(result, *_args):
     return result
 
+
 def raw_table_label(i, _t):
     return f"Table {i}"
+
 
 # ============================================================
 # AI-Style Commentary
