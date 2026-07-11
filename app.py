@@ -916,7 +916,7 @@ with*tab_summary:
     *   )
 
     render_section(
-        *Executive Snapshot",
+        "Executive Snapshot",
         "A qu*ck view of the latest reported fin*ncial signals powering the platfor*.",
         "FY2025 View",
     )
