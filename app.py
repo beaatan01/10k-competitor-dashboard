@@ -17,7 +17,7 @@ from tenk_engine import (
 
 st.set_page_config(
     page_title="Microsoft Financial Intelligence Platform",
-    page_icon="📊",
+    page_icon="M",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -271,12 +271,12 @@ safe_html(
     }
 
     .stTabs [data-baseweb="tab"] {
-        height: 34px;
-        padding: 0 0.72rem;
+        height: 44px;
+        padding: 0 1.05rem;
         border-radius: 999px !important;
         color: rgba(218,226,238,0.66);
         font-weight: 680;
-        font-size: 0.735rem;
+        font-size: 0.92rem;
         transition: all 0.16s ease !important;
         border: 1px solid transparent;
     }
@@ -750,6 +750,12 @@ safe_html(
         .hero-title {
             font-size: 1.42rem;
         }
+
+        .stTabs [data-baseweb="tab"] {
+            height: 42px;
+            padding: 0 0.75rem;
+            font-size: 0.82rem;
+        }
     }
     </style>
     """
@@ -818,16 +824,141 @@ def style_fig(fig, height=236, showlegend=False):
 # Tabs
 # ================================================================
 
-tab_summary, tab_kpi, tab_revenue, tab_forecast, tab_financials, tab_ai = st.tabs(
+tab_welcome, tab_summary, tab_kpi, tab_revenue, tab_forecast, tab_financials, tab_ai = st.tabs(
     [
-        "✨ Executive Summary",
-        "📊 Intelligence Hub",
-        "📈 Revenue Intelligence",
-        "🔮 AI Forecasting",
-        "📄 Financial Statements",
-        "🤖 AI Copilot",
+        "Welcome",
+        "Executive Summary",
+        "Intelligence Hub",
+        "Revenue Intelligence",
+        "AI Forecasting",
+        "Financial Statements",
+        "AI Copilot",
     ]
 )
+
+# ================================================================
+# Welcome
+# ================================================================
+
+with tab_welcome:
+    safe_html(
+        """
+        <div class="hero">
+            <div class="hero-content">
+                <div class="hero-topline">
+                    <div class="logo-squares">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                    Microsoft Financial Intelligence Platform
+                </div>
+                <div class="hero-title">Welcome to the Microsoft Financial Intelligence Platform</div>
+                <div class="hero-subtitle">
+                    A modern executive dashboard designed to transform Microsoft 10-K financial data into a clean,
+                    visual, presentation-ready intelligence experience. The platform combines financial statements,
+                    KPI interpretation, revenue analytics, forecasting scenarios, and AI-style commentary in one
+                    streamlined application.
+                </div>
+                <div class="pill-row">
+                    <span class="pill blue">Executive Ready</span>
+                    <span class="pill">FY2023-FY2025</span>
+                    <span class="pill">10-K Analysis</span>
+                    <span class="pill">Forecasting Workflow</span>
+                    <span class="pill">Strategic Finance</span>
+                </div>
+            </div>
+        </div>
+        """
+    )
+
+    render_section(
+        "Platform Overview",
+        "Context for why this dashboard was built, how it is structured, and how it supports presentation workflows.",
+        "Welcome",
+    )
+
+    w1, w2 = st.columns(2, gap="medium")
+
+    with w1:
+        render_info_card(
+            "Why Built",
+            "Executive Financial Clarity",
+            (
+                "This platform was built to convert dense 10-K financial disclosures into an executive-ready "
+                "analytics experience. Instead of manually reviewing statement tables, users can quickly understand "
+                "performance, profitability, cash generation, balance sheet flexibility, and future revenue scenarios."
+            ),
+        )
+
+    with w2:
+        render_info_card(
+            "Why FY2023-FY2025",
+            "Three-Year Business Trend Window",
+            (
+                "The FY2023-FY2025 period provides a focused view of recent financial momentum. It is long enough "
+                "to show trend direction across revenue, margins, and segment mix, while staying recent enough to "
+                "support relevant executive interpretation."
+            ),
+        )
+
+    w3, w4 = st.columns(2, gap="medium")
+
+    with w3:
+        render_info_card(
+            "Dashboard Architecture",
+            "Layered Intelligence Design",
+            (
+                "The dashboard is organized into clear layers: welcome context, executive KPIs, business performance "
+                "drivers, revenue intelligence, scenario forecasting, statement tables, and AI-generated financial "
+                "commentary. Each tab serves a specific decision-support purpose."
+            ),
+        )
+
+    with w4:
+        render_info_card(
+            "Presentation Workflow",
+            "From Data to Boardroom Narrative",
+            (
+                "The workflow is designed for presentations: start with the Welcome page for context, move into the "
+                "Executive Summary for key signals, use Revenue Intelligence for performance evidence, show AI "
+                "Forecasting for forward-looking scenarios, then reference statements and commentary as support."
+            ),
+        )
+
+    render_section(
+        "Strategic Capabilities",
+        "The core capabilities that make the platform useful for financial storytelling and executive analysis.",
+        "Capability Map",
+    )
+
+    sc1, sc2, sc3, sc4 = st.columns(4, gap="medium")
+
+    with sc1:
+        render_capability_card(
+            "Signal Detection",
+            "Performance Monitoring",
+            "Highlights revenue growth, profitability structure, free cash flow, liquidity, and debt positioning.",
+        )
+
+    with sc2:
+        render_capability_card(
+            "Visual Analytics",
+            "Revenue Intelligence",
+            "Uses charts and structured views to explain historical growth and product versus service revenue mix.",
+        )
+
+    with sc3:
+        render_capability_card(
+            "Scenario Planning",
+            "Forecast Modeling",
+            "Provides bear, base, and bull case revenue outcomes based on user-selected growth assumptions.",
+        )
+
+    with sc4:
+        render_capability_card(
+            "Narrative Layer",
+            "AI-Style Commentary",
+            "Turns financial metrics into clear business commentary that can support executive summaries and presentations.",
+        )
 
 # ================================================================
 # Executive Summary
@@ -861,6 +992,63 @@ with tab_summary:
         </div>
         """
     )
+
+    revenue = k["revenue"]
+    revenue_yoy = k["revenue_yoy_growth"]
+    gross_margin = k["gross_margin"]
+    operating_margin = k["operating_margin"]
+    net_margin = k["net_margin"]
+    fcf = k["free_cash_flow"]
+    cash_balance = k["cash_balance"]
+    total_debt = k["total_debt"]
+    debt_to_cash = total_debt / cash_balance if cash_balance else None
+
+    render_section(
+        "Executive Snapshot",
+        "A quick view of the latest reported financial signals powering the platform.",
+        "FY2025 View",
+    )
+
+    s1, s2, s3, s4 = st.columns(4, gap="medium")
+
+    with s1:
+        render_kpi_card(
+            "Revenue Intelligence",
+            f"FY{k['latest_period']} Revenue",
+            fmt_cur(revenue),
+            "Total reported revenue.",
+            f"{fmt_pct(revenue_yoy)} YoY",
+            "green",
+        )
+
+    with s2:
+        render_kpi_card(
+            "Profitability Signals",
+            "Operating Margin",
+            fmt_pct(operating_margin),
+            f"Gross {fmt_pct(gross_margin)} · Net {fmt_pct(net_margin)}",
+            "Margin profile",
+        )
+
+    with s3:
+        render_kpi_card(
+            "Cash Flow Engine",
+            "Free Cash Flow",
+            fmt_cur(fcf),
+            "Operating cash flow less capex.",
+            "Cash generative",
+            "green",
+        )
+
+    with s4:
+        debt_to_cash_text = f"{debt_to_cash:.1f}x debt/cash" if debt_to_cash is not None else "N/A debt/cash"
+        render_kpi_card(
+            "Balance Sheet Health",
+            "Cash and Debt",
+            fmt_cur(cash_balance),
+            f"Debt {fmt_cur(total_debt)} · {debt_to_cash_text}",
+            "Liquidity",
+        )
 
     render_section(
         "Strategic Platform Capabilities",
@@ -899,49 +1087,43 @@ with tab_summary:
         )
 
     render_section(
-        "Executive Snapshot",
-        "A quick view of the latest reported financial signals powering the platform.",
-        "FY2025 View",
+        "Performance Drivers",
+        "Short explanations for how each executive KPI should be interpreted.",
+        "Metric Guide",
     )
 
-    s1, s2, s3, s4 = st.columns(4, gap="medium")
+    e1, e2, e3, e4 = st.columns(4, gap="medium")
 
-    with s1:
-        render_kpi_card(
+    with e1:
+        render_info_card(
             "Revenue",
-            "FY2025 Revenue",
-            fmt_cur(k["revenue"]),
-            "Latest annual revenue in the dataset.",
-            f"{fmt_pct(k['revenue_yoy_growth'])} YoY",
-            "green",
+            "Business Scale",
+            "Measures top-line size and growth momentum.",
+            "Growth = Current / Prior - 1",
         )
 
-    with s2:
-        render_kpi_card(
+    with e2:
+        render_info_card(
             "Margin",
-            "Operating Margin",
-            fmt_pct(k["operating_margin"]),
-            f"Gross {fmt_pct(k['gross_margin'])} · Net {fmt_pct(k['net_margin'])}",
-            "Profitability",
+            "Operating Efficiency",
+            "Shows how efficiently revenue turns into operating income.",
+            "Operating Income / Revenue",
         )
 
-    with s3:
-        render_kpi_card(
+    with e3:
+        render_info_card(
             "Cash Flow",
-            "Free Cash Flow",
-            fmt_cur(k["free_cash_flow"]),
-            "Operating cash flow less capital expenditures.",
-            "Cash generative",
-            "green",
+            "Financial Output",
+            "Shows cash available after capital spending.",
+            "OCF - Capex",
         )
 
-    with s4:
-        render_kpi_card(
+    with e4:
+        render_info_card(
             "Liquidity",
-            "Cash Balance",
-            fmt_cur(k["cash_balance"]),
-            f"Debt {fmt_cur(k['total_debt'])}",
-            "Balance sheet",
+            "Balance Sheet Flexibility",
+            "Shows the relationship between cash and debt.",
+            "Debt / Cash",
         )
 
 # ================================================================
@@ -949,61 +1131,20 @@ with tab_summary:
 # ================================================================
 
 with tab_kpi:
-    revenue = k["revenue"]
-    revenue_yoy = k["revenue_yoy_growth"]
-    gross_margin = k["gross_margin"]
-    operating_margin = k["operating_margin"]
-    net_margin = k["net_margin"]
-    fcf = k["free_cash_flow"]
-    cash_balance = k["cash_balance"]
-    total_debt = k["total_debt"]
-    debt_to_cash = total_debt / cash_balance if cash_balance else None
-
     render_section(
         "Executive KPI Intelligence",
-        "Compact indicators for scale, efficiency, cash generation, and financial flexibility.",
+        "Interpretive finance guidance for scale, efficiency, cash generation, and financial flexibility.",
         "CFO View",
     )
 
-    c1, c2, c3, c4 = st.columns(4, gap="medium")
-
-    with c1:
-        render_kpi_card(
-            "Revenue Intelligence",
-            f"FY{k['latest_period']} Revenue",
-            fmt_cur(revenue),
-            "Total reported revenue.",
-            f"{fmt_pct(revenue_yoy)} YoY",
-            "green",
-        )
-
-    with c2:
-        render_kpi_card(
-            "Profitability Signals",
-            "Operating Margin",
-            fmt_pct(operating_margin),
-            f"Gross {fmt_pct(gross_margin)} · Net {fmt_pct(net_margin)}",
-            "Margin profile",
-        )
-
-    with c3:
-        render_kpi_card(
-            "Cash Flow Engine",
-            "Free Cash Flow",
-            fmt_cur(fcf),
-            "Operating cash flow less capex.",
-            "Cash generative",
-            "green",
-        )
-
-    with c4:
-        render_kpi_card(
-            "Balance Sheet Health",
-            "Cash and Debt",
-            fmt_cur(cash_balance),
-            f"Debt {fmt_cur(total_debt)} · {debt_to_cash:.1f}x debt/cash",
-            "Liquidity",
-        )
+    render_insight(
+        "Intelligence Hub Overview",
+        (
+            "The Intelligence Hub explains how the platform interprets Microsoft's core financial signals. "
+            "The executive KPI cards now live in the Executive Summary tab so the presentation begins with "
+            "the most important metrics first."
+        ),
+    )
 
     render_section(
         "Performance Drivers",
