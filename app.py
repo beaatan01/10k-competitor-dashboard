@@ -883,7 +883,7 @@ with*tab_summary:
 *   render_section(
         "Strate*ic Platform Capabilities",
        *"A polished executive overview of *he dashboard's core finance, analy*ics, forecasting, and commentary l*yers.",
-        "Executive Summary*,
+        "Executive Summary*",
     )
 
     c1, c2, c3, c4 = st.c*lumns(4, gap="medium")
