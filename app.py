@@ -892,7 +892,7 @@ with*tab_summary:
         render_capability_card(
 *           "Finance Model",
       *     "Statement Intelligence",
-   *        "Transforms financial stat*ment data into structured income, *alance sheet, and cash flow views.*,
+   *        "Transforms financial stat*ment data into structured income, *alance sheet, and cash flow views.*",
         )
 
     with c2:
