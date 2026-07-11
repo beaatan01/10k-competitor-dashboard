@@ -737,432 +737,6 @@ safe_html(
         letter-spacing: 0.10em;
     }
 
-    .welcome-hero {
-        position: relative;
-        display: grid;
-        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
-        gap: 1rem;
-        align-items: stretch;
-        border-radius: 30px;
-        border: 1px solid rgba(255,255,255,0.14);
-        background:
-            radial-gradient(circle at 12% 18%, rgba(0,120,212,0.34), transparent 34%),
-            radial-gradient(circle at 88% 12%, rgba(127,186,0,0.16), transparent 32%),
-            linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.028)),
-            rgba(8, 14, 28, 0.48);
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        box-shadow: 0 28px 90px rgba(0,0,0,0.46);
-        padding: 1.35rem;
-        overflow: hidden;
-        margin-bottom: 1rem;
-    }
-
-    .welcome-hero::before {
-        content: "";
-        position: absolute;
-        inset: -2px;
-        background:
-            linear-gradient(90deg, transparent, rgba(0,120,212,0.16), transparent),
-            radial-gradient(circle at 72% 18%, rgba(0,120,212,0.22), transparent 30%);
-        opacity: 0.9;
-        pointer-events: none;
-        animation: welcomeGlow 9s ease-in-out infinite alternate;
-    }
-
-    @keyframes welcomeGlow {
-        0% { opacity: 0.45; transform: translateX(-1.2%); }
-        100% { opacity: 0.95; transform: translateX(1.2%); }
-    }
-
-    .welcome-hero-left,
-    .welcome-status-card {
-        position: relative;
-        z-index: 2;
-    }
-
-    .welcome-eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.48rem;
-        color: #DDF1FF;
-        font-size: 0.62rem;
-        font-weight: 800;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        margin-bottom: 0.75rem;
-    }
-
-    .welcome-product-mark {
-        width: 12px;
-        height: 12px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2px;
-    }
-
-    .welcome-product-mark span:nth-child(1) { background: #F25022; }
-    .welcome-product-mark span:nth-child(2) { background: #7FBA00; }
-    .welcome-product-mark span:nth-child(3) { background: #0078D4; }
-    .welcome-product-mark span:nth-child(4) { background: #FFB900; }
-
-    .welcome-headline {
-        color: #FFFFFF;
-        font-size: clamp(2rem, 4vw, 4.15rem);
-        line-height: 0.98;
-        letter-spacing: -0.055em;
-        font-weight: 780;
-        max-width: 760px;
-        margin-bottom: 0.92rem;
-    }
-
-    .welcome-subtitle {
-        color: #C9D4E5;
-        font-size: clamp(0.88rem, 1.15vw, 1.06rem);
-        line-height: 1.62;
-        max-width: 780px;
-        margin-bottom: 1.05rem;
-    }
-
-    .welcome-pills {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.48rem;
-    }
-
-    .welcome-pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.42rem 0.68rem;
-        border-radius: 999px;
-        color: #E6F4FF;
-        background: rgba(255,255,255,0.065);
-        border: 1px solid rgba(255,255,255,0.13);
-        font-size: 0.66rem;
-        font-weight: 760;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-    }
-
-    .welcome-pill.primary {
-        background: rgba(0,120,212,0.22);
-        border-color: rgba(0,120,212,0.50);
-        box-shadow: 0 0 26px rgba(0,120,212,0.16);
-    }
-
-    .welcome-status-card {
-        border-radius: 24px;
-        border: 1px solid rgba(255,255,255,0.16);
-        background:
-            linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.035)),
-            rgba(8, 15, 30, 0.54);
-        backdrop-filter: blur(34px);
-        -webkit-backdrop-filter: blur(34px);
-        box-shadow:
-            inset 0 1px 0 rgba(255,255,255,0.15),
-            0 24px 58px rgba(0,0,0,0.40),
-            0 0 42px rgba(0,120,212,0.14);
-        padding: 1rem;
-        min-height: 276px;
-    }
-
-    .status-title {
-        color: #FFFFFF;
-        font-size: 0.98rem;
-        font-weight: 780;
-        letter-spacing: -0.01em;
-        margin-bottom: 0.78rem;
-    }
-
-    .status-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
-        padding: 0.61rem 0;
-        border-bottom: 1px solid rgba(255,255,255,0.075);
-    }
-
-    .status-row:last-child {
-        border-bottom: 0;
-    }
-
-    .status-label {
-        color: #8E9AAB;
-        font-size: 0.62rem;
-        font-weight: 780;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-    }
-
-    .status-value {
-        color: #FFFFFF;
-        font-size: 0.75rem;
-        font-weight: 780;
-        text-align: right;
-    }
-
-    .status-active {
-        color: #E7FAC2;
-        background: rgba(127,186,0,0.15);
-        border: 1px solid rgba(127,186,0,0.34);
-        padding: 0.22rem 0.45rem;
-        border-radius: 999px;
-    }
-
-    .welcome-metric-card,
-    .welcome-exec-card,
-    .welcome-capability-card,
-    .journey-card,
-    .architecture-node,
-    .leadership-panel,
-    .ai-briefing-panel {
-        position: relative;
-        border-radius: 22px;
-        border: 1px solid rgba(255,255,255,0.13);
-        background:
-            linear-gradient(145deg, rgba(255,255,255,0.105), rgba(255,255,255,0.026)),
-            rgba(10, 16, 30, 0.42);
-        backdrop-filter: blur(28px);
-        -webkit-backdrop-filter: blur(28px);
-        box-shadow: 0 20px 54px rgba(0,0,0,0.36);
-        overflow: hidden;
-        transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
-    }
-
-    .welcome-metric-card:hover,
-    .welcome-exec-card:hover,
-    .welcome-capability-card:hover,
-    .journey-card:hover,
-    .architecture-node:hover {
-        transform: translateY(-4px);
-        border-color: rgba(0,120,212,0.52);
-        box-shadow: 0 28px 72px rgba(0,0,0,0.50), 0 0 34px rgba(0,120,212,0.12);
-    }
-
-    .welcome-metric-card {
-        min-height: 118px;
-        padding: 0.92rem;
-        margin-bottom: 0.78rem;
-    }
-
-    .welcome-metric-label {
-        color: #DDF1FF;
-        font-size: 0.56rem;
-        font-weight: 800;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        margin-bottom: 0.52rem;
-    }
-
-    .welcome-metric-value {
-        color: #FFFFFF;
-        font-size: 1.55rem;
-        line-height: 1;
-        font-weight: 800;
-        letter-spacing: -0.04em;
-        margin-bottom: 0.36rem;
-    }
-
-    .welcome-metric-sub {
-        color: #9EA8B9;
-        font-size: 0.66rem;
-        line-height: 1.38;
-        font-weight: 650;
-    }
-
-    .welcome-exec-card {
-        min-height: 156px;
-        padding: 1rem;
-        margin-bottom: 0.8rem;
-    }
-
-    .welcome-exec-label {
-        color: #DDF1FF;
-        font-size: 0.56rem;
-        font-weight: 800;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        margin-bottom: 0.52rem;
-    }
-
-    .welcome-exec-title {
-        color: #FFFFFF;
-        font-size: 1.05rem;
-        font-weight: 780;
-        letter-spacing: -0.02em;
-        line-height: 1.18;
-        margin-bottom: 0.46rem;
-    }
-
-    .welcome-exec-text {
-        color: #AEB8C8;
-        font-size: 0.70rem;
-        line-height: 1.55;
-    }
-
-    .architecture-wrap {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 0.72rem;
-        align-items: stretch;
-        margin-bottom: 0.9rem;
-    }
-
-    .architecture-node {
-        min-height: 112px;
-        padding: 0.88rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-
-    .architecture-step {
-        color: #8FCBFF;
-        font-size: 0.56rem;
-        font-weight: 800;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-    }
-
-    .architecture-title {
-        color: #FFFFFF;
-        font-size: 0.88rem;
-        font-weight: 780;
-        line-height: 1.2;
-    }
-
-    .architecture-flow {
-        color: rgba(221,241,255,0.78);
-        font-size: 0.66rem;
-        font-weight: 760;
-    }
-
-    .journey-wrap {
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 0.62rem;
-        margin-bottom: 0.95rem;
-    }
-
-    .journey-card {
-        min-height: 94px;
-        padding: 0.78rem;
-    }
-
-    .journey-number {
-        color: #8FCBFF;
-        font-size: 0.58rem;
-        font-weight: 800;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        margin-bottom: 0.46rem;
-    }
-
-    .journey-title {
-        color: #FFFFFF;
-        font-size: 0.78rem;
-        font-weight: 760;
-        line-height: 1.25;
-    }
-
-    .leadership-panel {
-        padding: 1.25rem;
-        margin-bottom: 0.95rem;
-        border-color: rgba(0,120,212,0.38);
-        background:
-            radial-gradient(circle at 10% 20%, rgba(0,120,212,0.25), transparent 30%),
-            linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03)),
-            rgba(8, 15, 31, 0.54);
-        box-shadow: 0 28px 80px rgba(0,0,0,0.46), 0 0 42px rgba(0,120,212,0.15);
-    }
-
-    .leadership-title {
-        color: #FFFFFF;
-        font-size: 1.32rem;
-        font-weight: 800;
-        letter-spacing: -0.035em;
-        margin-bottom: 0.68rem;
-    }
-
-    .leadership-text {
-        color: #D9E2EF;
-        font-size: 0.86rem;
-        line-height: 1.68;
-        max-width: 1050px;
-    }
-
-    .welcome-capability-card {
-        min-height: 144px;
-        padding: 1rem;
-        margin-bottom: 0.8rem;
-    }
-
-    .welcome-capability-title {
-        color: #FFFFFF;
-        font-size: 1.02rem;
-        font-weight: 800;
-        letter-spacing: -0.025em;
-        line-height: 1.2;
-        margin-bottom: 0.46rem;
-    }
-
-    .welcome-capability-text {
-        color: #AEB8C8;
-        font-size: 0.70rem;
-        line-height: 1.48;
-    }
-
-    .ai-briefing-panel {
-        padding: 1.25rem;
-        border-color: rgba(127,186,0,0.30);
-        background:
-            radial-gradient(circle at 88% 14%, rgba(127,186,0,0.16), transparent 28%),
-            radial-gradient(circle at 12% 82%, rgba(0,120,212,0.20), transparent 30%),
-            linear-gradient(145deg, rgba(255,255,255,0.11), rgba(255,255,255,0.026)),
-            rgba(8, 15, 31, 0.50);
-        box-shadow: 0 28px 80px rgba(0,0,0,0.44);
-        margin-bottom: 1rem;
-    }
-
-    .ai-briefing-label {
-        color: #E7FAC2;
-        font-size: 0.58rem;
-        font-weight: 820;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        margin-bottom: 0.56rem;
-    }
-
-    .ai-briefing-title {
-        color: #FFFFFF;
-        font-size: 1.18rem;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-        margin-bottom: 0.56rem;
-    }
-
-    .ai-briefing-text {
-        color: #D9E2EF;
-        font-size: 0.82rem;
-        line-height: 1.66;
-        max-width: 1050px;
-    }
-
-    @media (max-width: 1100px) {
-        .welcome-hero {
-            grid-template-columns: 1fr;
-        }
-
-        .architecture-wrap {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .journey-wrap {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-    }
-
     @media (max-width: 760px) {
         .block-container {
             padding: 1rem !important;
@@ -1181,20 +755,6 @@ safe_html(
             height: 42px;
             padding: 0 0.75rem;
             font-size: 0.82rem;
-        }
-
-        .welcome-hero {
-            padding: 1rem;
-            border-radius: 24px;
-        }
-
-        .welcome-headline {
-            font-size: 2.05rem;
-        }
-
-        .architecture-wrap,
-        .journey-wrap {
-            grid-template-columns: 1fr;
         }
     }
     </style>
@@ -1283,340 +843,122 @@ tab_welcome, tab_summary, tab_kpi, tab_revenue, tab_forecast, tab_financials, ta
 with tab_welcome:
     safe_html(
         """
-        <div class="welcome-hero">
-            <div class="welcome-hero-left">
-                <div class="welcome-eyebrow">
-                    <div class="welcome-product-mark">
+        <div class="hero">
+            <div class="hero-content">
+                <div class="hero-topline">
+                    <div class="logo-squares">
                         <span></span><span></span><span></span><span></span>
                     </div>
-                    Enterprise Financial Intelligence
+                    Microsoft Financial Intelligence Platform
                 </div>
-                <div class="welcome-headline">Microsoft Financial Intelligence Platform</div>
-                <div class="welcome-subtitle">
-                    Transforming Microsoft FY2023-FY2025 financial statements into executive intelligence
-                    through analytics, forecasting, and AI-driven commentary.
+                <div class="hero-title">Welcome to the Microsoft Financial Intelligence Platform</div>
+                <div class="hero-subtitle">
+                    A modern executive dashboard designed to transform Microsoft 10-K financial data into a clean,
+                    visual, presentation-ready intelligence experience. The platform combines financial statements,
+                    KPI interpretation, revenue analytics, forecasting scenarios, and AI-style commentary in one
+                    streamlined application.
                 </div>
-                <div class="welcome-pills">
-                    <span class="welcome-pill primary">Microsoft-Inspired</span>
-                    <span class="welcome-pill">Executive Analytics</span>
-                    <span class="welcome-pill">Financial Signals</span>
-                    <span class="welcome-pill">AI Commentary</span>
+                <div class="pill-row">
+                    <span class="pill blue">Executive Ready</span>
+                    <span class="pill">FY2023-FY2025</span>
+                    <span class="pill">10-K Analysis</span>
+                    <span class="pill">Forecasting Workflow</span>
+                    <span class="pill">Strategic Finance</span>
                 </div>
-            </div>
-
-            <div class="welcome-status-card">
-                <div class="status-title">Platform Status</div>
-                <div class="status-row">
-                    <div class="status-label">Dataset</div>
-                    <div class="status-value">FY2023-FY2025</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">Revenue Intelligence</div>
-                    <div class="status-value status-active">Active</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">Forecast Engine</div>
-                    <div class="status-value status-active">Active</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">AI Commentary</div>
-                    <div class="status-value status-active">Active</div>
-                </div>
-                <div class="status-row">
-                    <div class="status-label">Platform Version</div>
-                    <div class="status-value">1.0</div>
-                </div>
-            </div>
-        </div>
-        """
-    )
-
-    m1, m2, m3, m4 = st.columns(4, gap="medium")
-
-    with m1:
-        safe_html(
-            """
-            <div class="welcome-metric-card">
-                <div class="welcome-metric-label">Reporting Window</div>
-                <div class="welcome-metric-value">3</div>
-                <div class="welcome-metric-sub">Reporting years analyzed</div>
-            </div>
-            """
-        )
-
-    with m2:
-        safe_html(
-            f"""
-            <div class="welcome-metric-card">
-                <div class="welcome-metric-label">FY2025 Revenue</div>
-                <div class="welcome-metric-value">{py_html.escape(fmt_cur(k["revenue"]))}</div>
-                <div class="welcome-metric-sub">Latest annual revenue signal</div>
-            </div>
-            """
-        )
-
-    with m3:
-        safe_html(
-            f"""
-            <div class="welcome-metric-card">
-                <div class="welcome-metric-label">Service Mix</div>
-                <div class="welcome-metric-value">{py_html.escape(fmt_pct(k["service_revenue_mix"]))}</div>
-                <div class="welcome-metric-sub">Service and other revenue mix</div>
-            </div>
-            """
-        )
-
-    with m4:
-        safe_html(
-            f"""
-            <div class="welcome-metric-card">
-                <div class="welcome-metric-label">Free Cash Flow</div>
-                <div class="welcome-metric-value">{py_html.escape(fmt_cur(k["free_cash_flow"]))}</div>
-                <div class="welcome-metric-sub">Cash generation after capex</div>
-            </div>
-            """
-        )
-
-    render_section(
-        "Executive Operating Context",
-        "A product-style overview of why the platform exists and how it turns financial disclosures into business intelligence.",
-        "Platform Brief",
-    )
-
-    c1, c2, c3 = st.columns(3, gap="medium")
-
-    with c1:
-        safe_html(
-            """
-            <div class="welcome-exec-card">
-                <div class="welcome-exec-label">Purpose</div>
-                <div class="welcome-exec-title">Turn filings into executive clarity</div>
-                <div class="welcome-exec-text">
-                    Converts dense 10-K financial data into a streamlined decision-support experience for leadership review.
-                </div>
-            </div>
-            """
-        )
-
-    with c2:
-        safe_html(
-            """
-            <div class="welcome-exec-card">
-                <div class="welcome-exec-label">Dataset</div>
-                <div class="welcome-exec-title">FY2023-FY2025 financial statements</div>
-                <div class="welcome-exec-text">
-                    Uses a focused three-year window to show recent scale, mix, profitability, cash flow, and business momentum.
-                </div>
-            </div>
-            """
-        )
-
-    with c3:
-        safe_html(
-            """
-            <div class="welcome-exec-card">
-                <div class="welcome-exec-label">Intelligence Layer</div>
-                <div class="welcome-exec-title">KPIs and performance signals</div>
-                <div class="welcome-exec-text">
-                    Highlights the metrics that matter most for executive interpretation across revenue, margins, and liquidity.
-                </div>
-            </div>
-            """
-        )
-
-    c4, c5 = st.columns(2, gap="medium")
-
-    with c4:
-        safe_html(
-            """
-            <div class="welcome-exec-card">
-                <div class="welcome-exec-label">Forecast Layer</div>
-                <div class="welcome-exec-title">Scenario-based outlook modeling</div>
-                <div class="welcome-exec-text">
-                    Provides bear, base, and bull case revenue paths so leaders can discuss future outcomes with clear assumptions.
-                </div>
-            </div>
-            """
-        )
-
-    with c5:
-        safe_html(
-            """
-            <div class="welcome-exec-card">
-                <div class="welcome-exec-label">Narrative Layer</div>
-                <div class="welcome-exec-title">AI-style financial commentary</div>
-                <div class="welcome-exec-text">
-                    Translates financial results into concise executive language that supports storytelling and presentation flow.
-                </div>
-            </div>
-            """
-        )
-
-    render_section(
-        "Dashboard Architecture",
-        "The platform flow from source financial statements to executive-ready commentary.",
-        "Architecture",
-    )
-
-    safe_html(
-        """
-        <div class="architecture-wrap">
-            <div class="architecture-node">
-                <div class="architecture-step">Layer 01</div>
-                <div class="architecture-title">Financial Statements</div>
-                <div class="architecture-flow">Income, balance sheet, cash flow</div>
-            </div>
-            <div class="architecture-node">
-                <div class="architecture-step">Layer 02</div>
-                <div class="architecture-title">KPI Intelligence</div>
-                <div class="architecture-flow">Scale, margins, cash, liquidity</div>
-            </div>
-            <div class="architecture-node">
-                <div class="architecture-step">Layer 03</div>
-                <div class="architecture-title">Revenue Performance</div>
-                <div class="architecture-flow">Trend and revenue mix</div>
-            </div>
-            <div class="architecture-node">
-                <div class="architecture-step">Layer 04</div>
-                <div class="architecture-title">Forecasting</div>
-                <div class="architecture-flow">Bear, base, bull scenarios</div>
-            </div>
-            <div class="architecture-node">
-                <div class="architecture-step">Layer 05</div>
-                <div class="architecture-title">AI Commentary</div>
-                <div class="architecture-flow">Executive narrative output</div>
             </div>
         </div>
         """
     )
 
     render_section(
-        "Executive Presentation Journey",
-        "Recommended flow for presenting the dashboard to stakeholders.",
-        "Presentation Path",
+        "Platform Overview",
+        "Context for why this dashboard was built, how it is structured, and how it supports presentation workflows.",
+        "Welcome",
     )
 
-    safe_html(
-        """
-        <div class="journey-wrap">
-            <div class="journey-card">
-                <div class="journey-number">Step 01</div>
-                <div class="journey-title">Welcome</div>
-            </div>
-            <div class="journey-card">
-                <div class="journey-number">Step 02</div>
-                <div class="journey-title">Executive Summary</div>
-            </div>
-            <div class="journey-card">
-                <div class="journey-number">Step 03</div>
-                <div class="journey-title">Revenue Performance</div>
-            </div>
-            <div class="journey-card">
-                <div class="journey-number">Step 04</div>
-                <div class="journey-title">Forecasting</div>
-            </div>
-            <div class="journey-card">
-                <div class="journey-number">Step 05</div>
-                <div class="journey-title">Financial Statements</div>
-            </div>
-            <div class="journey-card">
-                <div class="journey-number">Step 06</div>
-                <div class="journey-title">AI Copilot</div>
-            </div>
-        </div>
-        """
-    )
+    w1, w2 = st.columns(2, gap="medium")
 
-    safe_html(
-        """
-        <div class="leadership-panel">
-            <div class="leadership-title">Why Leadership Should Care</div>
-            <div class="leadership-text">
-                This platform consolidates financial performance, profitability analysis, forecasting, and AI commentary
-                into a single executive decision-support experience.
-                <br><br>
-                Instead of navigating hundreds of pages of disclosures, leadership can identify key business signals
-                within minutes and move faster from financial reporting to strategic discussion.
-            </div>
-        </div>
-        """
-    )
+    with w1:
+        render_info_card(
+            "Why Built",
+            "Executive Financial Clarity",
+            (
+                "This platform was built to convert dense 10-K financial disclosures into an executive-ready "
+                "analytics experience. Instead of manually reviewing statement tables, users can quickly understand "
+                "performance, profitability, cash generation, balance sheet flexibility, and future revenue scenarios."
+            ),
+        )
+
+    with w2:
+        render_info_card(
+            "Why FY2023-FY2025",
+            "Three-Year Business Trend Window",
+            (
+                "The FY2023-FY2025 period provides a focused view of recent financial momentum. It is long enough "
+                "to show trend direction across revenue, margins, and segment mix, while staying recent enough to "
+                "support relevant executive interpretation."
+            ),
+        )
+
+    w3, w4 = st.columns(2, gap="medium")
+
+    with w3:
+        render_info_card(
+            "Dashboard Architecture",
+            "Layered Intelligence Design",
+            (
+                "The dashboard is organized into clear layers: welcome context, executive KPIs, business performance "
+                "drivers, revenue intelligence, scenario forecasting, statement tables, and AI-generated financial "
+                "commentary. Each tab serves a specific decision-support purpose."
+            ),
+        )
+
+    with w4:
+        render_info_card(
+            "Presentation Workflow",
+            "From Data to Boardroom Narrative",
+            (
+                "The workflow is designed for presentations: start with the Welcome page for context, move into the "
+                "Executive Summary for key signals, use Revenue Intelligence for performance evidence, show AI "
+                "Forecasting for forward-looking scenarios, then reference statements and commentary as support."
+            ),
+        )
 
     render_section(
         "Strategic Capabilities",
-        "Core product capabilities designed for executive finance, strategy, and presentation workflows.",
-        "Capability Stack",
+        "The core capabilities that make the platform useful for financial storytelling and executive analysis.",
+        "Capability Map",
     )
 
-    cap1, cap2, cap3, cap4 = st.columns(4, gap="medium")
+    sc1, sc2, sc3, sc4 = st.columns(4, gap="medium")
 
-    with cap1:
-        safe_html(
-            """
-            <div class="welcome-capability-card">
-                <div class="welcome-exec-label">Capability</div>
-                <div class="welcome-capability-title">Financial Intelligence</div>
-                <div class="welcome-capability-text">
-                    Converts statement data into clear business performance signals.
-                </div>
-            </div>
-            """
+    with sc1:
+        render_capability_card(
+            "Signal Detection",
+            "Performance Monitoring",
+            "Highlights revenue growth, profitability structure, free cash flow, liquidity, and debt positioning.",
         )
 
-    with cap2:
-        safe_html(
-            """
-            <div class="welcome-capability-card">
-                <div class="welcome-exec-label">Capability</div>
-                <div class="welcome-capability-title">Revenue Analytics</div>
-                <div class="welcome-capability-text">
-                    Visualizes growth, trend direction, and product versus service mix.
-                </div>
-            </div>
-            """
+    with sc2:
+        render_capability_card(
+            "Visual Analytics",
+            "Revenue Intelligence",
+            "Uses charts and structured views to explain historical growth and product versus service revenue mix.",
         )
 
-    with cap3:
-        safe_html(
-            """
-            <div class="welcome-capability-card">
-                <div class="welcome-exec-label">Capability</div>
-                <div class="welcome-capability-title">Forecast Engine</div>
-                <div class="welcome-capability-text">
-                    Models future revenue outcomes using adjustable growth assumptions.
-                </div>
-            </div>
-            """
+    with sc3:
+        render_capability_card(
+            "Scenario Planning",
+            "Forecast Modeling",
+            "Provides bear, base, and bull case revenue outcomes based on user-selected growth assumptions.",
         )
 
-    with cap4:
-        safe_html(
-            """
-            <div class="welcome-capability-card">
-                <div class="welcome-exec-label">Capability</div>
-                <div class="welcome-capability-title">AI Commentary</div>
-                <div class="welcome-capability-text">
-                    Generates concise financial narratives for executive discussion.
-                </div>
-            </div>
-            """
+    with sc4:
+        render_capability_card(
+            "Narrative Layer",
+            "AI-Style Commentary",
+            "Turns financial metrics into clear business commentary that can support executive summaries and presentations.",
         )
-
-    safe_html(
-        """
-        <div class="ai-briefing-panel">
-            <div class="ai-briefing-label">AI Executive Insight</div>
-            <div class="ai-briefing-title">Copilot-Style Financial Briefing</div>
-            <div class="ai-briefing-text">
-                Microsoft delivered strong FY2025 revenue growth supported by recurring service revenue,
-                strong profitability, and robust free cash flow generation.
-                <br><br>
-                The business maintains financial flexibility while continuing to support future investment initiatives,
-                giving leadership a strong foundation for strategic planning and forward-looking scenario discussion.
-            </div>
-        </div>
-        """
-    )
 
 # ================================================================
 # Executive Summary
