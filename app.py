@@ -19,760 +19,15 @@ st.set_page_config(
     page_title="Microsoft Financial Intelligence Platform",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ================================================================
-# Global CSS
+# Helpers
 # ================================================================
 
-st.markdown(
-    """
-    <style>
-    :root {
-        --ms-blue: #0078D4;
-        --ms-orange: #F25022;
-        --ms-green: #7FBA00;
-        --ms-yellow: #FFB900;
-        --ms-purple: #8661C5;
-
-        --bg: #070A12;
-        --bg-2: #0B0F1A;
-        --panel: #10141F;
-        --panel-2: #121826;
-        --panel-3: #151B2B;
-
-        --border: rgba(255,255,255,0.075);
-        --border-strong: rgba(0,120,212,0.5);
-
-        --text: #F3F2F1;
-        --muted: #AEB5C1;
-        --muted-2: #7E8797;
-
-        --shadow: 0 18px 52px rgba(0,0,0,0.45);
-        --shadow-soft: 0 10px 30px rgba(0,0,0,0.35);
-
-        --radius-lg: 24px;
-        --radius-md: 18px;
-        --radius-sm: 12px;
-    }
-
-    html, body, [data-testid="stAppViewContainer"], .stApp {
-        background:
-            radial-gradient(circle at 12% 5%, rgba(0,120,212,0.18), transparent 30%),
-            radial-gradient(circle at 90% 0%, rgba(127,186,0,0.10), transparent 28%),
-            linear-gradient(135deg, #070A12 0%, #0B0F1A 42%, #070A12 100%) !important;
-        color: var(--text) !important;
-        font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
-    }
-
-    .block-container {
-        max-width: 1540px !important;
-        padding-top: 1.8rem !important;
-        padding-left: 2.1rem !important;
-        padding-right: 2.1rem !important;
-        padding-bottom: 3rem !important;
-    }
-
-    #MainMenu, footer, header {
-        visibility: hidden;
-    }
-
-    h1, h2, h3, h4, h5, h6, p, span, div {
-        font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
-    }
-
-    /* ============================================================
-       Sidebar
-       ============================================================ */
-
-    [data-testid="stSidebar"] {
-        background:
-            linear-gradient(180deg, #080B13 0%, #0B0F1A 58%, #070A12 100%) !important;
-        border-right: 1px solid var(--border) !important;
-    }
-
-    [data-testid="stSidebarContent"] {
-        padding: 1.25rem 1rem !important;
-    }
-
-    .sidebar-brand {
-        padding: 1rem;
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        background: linear-gradient(145deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
-        box-shadow: var(--shadow-soft);
-        margin-bottom: 1rem;
-    }
-
-    .brand-kicker {
-        font-size: 0.68rem;
-        color: var(--muted-2);
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        font-weight: 800;
-        margin-bottom: 0.45rem;
-    }
-
-    .brand-title {
-        font-size: 1rem;
-        color: var(--text);
-        font-weight: 750;
-        line-height: 1.25;
-    }
-
-    .sidebar-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        padding: 0.46rem 0.66rem;
-        border-radius: 999px;
-        background: rgba(0,120,212,0.12);
-        border: 1px solid rgba(0,120,212,0.28);
-        color: #D5ECFF;
-        font-size: 0.74rem;
-        font-weight: 750;
-        margin-bottom: 1rem;
-    }
-
-    .sidebar-dot {
-        width: 7px;
-        height: 7px;
-        background: var(--ms-green);
-        border-radius: 999px;
-        box-shadow: 0 0 12px rgba(127,186,0,0.7);
-    }
-
-    .sidebar-note {
-        color:#7E8797;
-        font-size:0.76rem;
-        line-height:1.55;
-        padding:0.85rem;
-        border-radius:14px;
-        background:rgba(255,255,255,0.025);
-        border:1px solid rgba(255,255,255,0.06);
-    }
-
-    /* ============================================================
-       Inputs
-       ============================================================ */
-
-    .stTextInput label,
-    .stTextArea label,
-    .stSlider label {
-        color: var(--muted) !important;
-        font-size: 0.76rem !important;
-        font-weight: 800 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.11em;
-    }
-
-    .stTextInput input,
-    .stTextArea textarea {
-        background: #0F1422 !important;
-        color: var(--text) !important;
-        border: 1px solid rgba(255,255,255,0.09) !important;
-        border-radius: 12px !important;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.025);
-    }
-
-    .stTextInput input:focus,
-    .stTextArea textarea:focus {
-        border-color: rgba(0,120,212,0.75) !important;
-        box-shadow: 0 0 0 4px rgba(0,120,212,0.16) !important;
-    }
-
-    .stButton button,
-    .stDownloadButton button {
-        background: linear-gradient(135deg, #0078D4, #0A5EAA) !important;
-        color: white !important;
-        border: 1px solid rgba(255,255,255,0.10) !important;
-        border-radius: 12px !important;
-        font-weight: 750 !important;
-        transition: 0.18s ease !important;
-        box-shadow: 0 10px 24px rgba(0,120,212,0.22);
-    }
-
-    .stButton button:hover,
-    .stDownloadButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 16px 34px rgba(0,120,212,0.35);
-    }
-
-    /* ============================================================
-       Tabs
-       ============================================================ */
-
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 0.55rem;
-        background: rgba(255,255,255,0.025);
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 16px;
-        padding: 0.45rem;
-        margin-bottom: 1.35rem;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        height: 42px;
-        padding: 0 0.95rem;
-        border-radius: 12px;
-        color: #AEB5C1;
-        font-weight: 750;
-        font-size: 0.86rem;
-    }
-
-    .stTabs [aria-selected="true"] {
-        background: rgba(0,120,212,0.16) !important;
-        border: 1px solid rgba(0,120,212,0.34);
-        color: #D5ECFF !important;
-    }
-
-    /* ============================================================
-       Aurora Hero
-       ============================================================ */
-
-    .aurora-hero {
-        position: relative;
-        min-height: 330px;
-        border-radius: 28px;
-        padding: 2.3rem 2.25rem;
-        border: 1px solid rgba(255,255,255,0.08);
-        background:
-            linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015)),
-            #0B0F1A;
-        box-shadow: var(--shadow);
-        overflow: hidden;
-        margin-bottom: 1.7rem;
-    }
-
-    .aurora-hero:before {
-        content: "";
-        position: absolute;
-        inset: -35%;
-        background:
-            radial-gradient(circle at 20% 35%, rgba(0,120,212,0.38), transparent 26%),
-            radial-gradient(circle at 78% 18%, rgba(127,186,0,0.22), transparent 24%),
-            radial-gradient(circle at 65% 72%, rgba(134,97,197,0.26), transparent 28%),
-            radial-gradient(circle at 40% 84%, rgba(242,80,34,0.13), transparent 20%);
-        filter: blur(70px);
-        opacity: 0.85;
-        animation: auroraMove 18s ease-in-out infinite alternate;
-        z-index: 0;
-    }
-
-    .aurora-hero:after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background:
-            linear-gradient(180deg, rgba(7,10,18,0.06), rgba(7,10,18,0.72)),
-            radial-gradient(circle at 93% 0%, rgba(0,120,212,0.12), transparent 36%);
-        z-index: 1;
-    }
-
-    @keyframes auroraMove {
-        0% {
-            transform: translate3d(-2%, -2%, 0) scale(1);
-        }
-        50% {
-            transform: translate3d(4%, 3%, 0) scale(1.05);
-        }
-        100% {
-            transform: translate3d(-1%, 5%, 0) scale(1.02);
-        }
-    }
-
-    .aurora-content {
-        position: relative;
-        z-index: 2;
-        max-width: 1120px;
-    }
-
-    .hero-topline {
-        display: flex;
-        gap: 0.8rem;
-        align-items: center;
-        margin-bottom: 0.9rem;
-        color: #D5ECFF;
-        font-size: 0.74rem;
-        font-weight: 850;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-    }
-
-    .hero-logo {
-        width: 13px;
-        height: 13px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2px;
-    }
-
-    .hero-logo span:nth-child(1) { background: #F25022; }
-    .hero-logo span:nth-child(2) { background: #7FBA00; }
-    .hero-logo span:nth-child(3) { background: #0078D4; }
-    .hero-logo span:nth-child(4) { background: #FFB900; }
-
-    .hero-title {
-        font-size: clamp(2rem, 4vw, 3.85rem);
-        line-height: 1.02;
-        letter-spacing: -0.065em;
-        color: #FFFFFF;
-        font-weight: 800;
-        margin-bottom: 0.85rem;
-    }
-
-    .hero-subtitle {
-        color: #C2C8D2;
-        font-size: 1.04rem;
-        line-height: 1.68;
-        max-width: 1040px;
-    }
-
-    .hero-meta-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.7rem;
-        margin-top: 1.25rem;
-    }
-
-    .meta-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-        padding: 0.48rem 0.72rem;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,0.10);
-        background: rgba(255,255,255,0.045);
-        color: #D9DEE7;
-        font-size: 0.78rem;
-        font-weight: 750;
-        backdrop-filter: blur(12px);
-    }
-
-    .meta-pill.blue {
-        border-color: rgba(0,120,212,0.42);
-        background: rgba(0,120,212,0.18);
-        color: #D5ECFF;
-    }
-
-    /* ============================================================
-       Section Headers
-       ============================================================ */
-
-    .section-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: end;
-        margin: 1.65rem 0 0.85rem 0;
-        gap: 1rem;
-    }
-
-    .section-title {
-        font-size: 1.02rem;
-        font-weight: 800;
-        color: var(--text);
-        letter-spacing: -0.015em;
-    }
-
-    .section-subtitle {
-        margin-top: 0.25rem;
-        color: var(--muted-2);
-        font-size: 0.84rem;
-        line-height: 1.5;
-    }
-
-    .section-tag {
-        color: #D5ECFF;
-        background: rgba(0,120,212,0.12);
-        border: 1px solid rgba(0,120,212,0.28);
-        border-radius: 999px;
-        padding: 0.42rem 0.68rem;
-        font-size: 0.74rem;
-        font-weight: 800;
-        white-space: nowrap;
-    }
-
-    /* ============================================================
-       Dynamic Cards
-       ============================================================ */
-
-    .kpi-card,
-    .bento-card,
-    .info-card,
-    .scenario-card,
-    .insight-card,
-    .chart-shell {
-        position: relative;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border);
-        background:
-            linear-gradient(145deg, rgba(255,255,255,0.052), rgba(255,255,255,0.014)),
-            #10141F;
-        box-shadow: var(--shadow-soft);
-        overflow: hidden;
-        transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-    }
-
-    .kpi-card:hover,
-    .bento-card:hover,
-    .info-card:hover,
-    .scenario-card:hover,
-    .insight-card:hover {
-        transform: translateY(-6px) scale(1.012);
-        border-color: var(--border-strong);
-        box-shadow: 0 28px 70px rgba(0,0,0,0.48);
-    }
-
-    .kpi-card:before,
-    .bento-card:before,
-    .info-card:before,
-    .scenario-card:before,
-    .insight-card:before {
-        content: "";
-        position: absolute;
-        width: 260px;
-        height: 260px;
-        right: -90px;
-        top: -110px;
-        background: radial-gradient(circle, rgba(0,120,212,0.20), transparent 65%);
-        opacity: 0;
-        transition: opacity 0.22s ease;
-        pointer-events: none;
-    }
-
-    .kpi-card:hover:before,
-    .bento-card:hover:before,
-    .info-card:hover:before,
-    .scenario-card:hover:before,
-    .insight-card:hover:before {
-        opacity: 1;
-    }
-
-    .kpi-card {
-        min-height: 170px;
-        padding: 1rem;
-    }
-
-    .kpi-label {
-        color: var(--muted-2);
-        font-size: 0.68rem;
-        font-weight: 850;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        margin-bottom: 0.55rem;
-    }
-
-    .kpi-name {
-        color: #CBD2DC;
-        font-size: 0.88rem;
-        line-height: 1.35;
-        font-weight: 750;
-        margin-bottom: 0.55rem;
-    }
-
-    .kpi-value {
-        font-size: 1.9rem;
-        font-weight: 820;
-        color: #FFFFFF;
-        letter-spacing: -0.045em;
-        margin-bottom: 0.35rem;
-    }
-
-    .kpi-sub {
-        color: var(--muted);
-        font-size: 0.78rem;
-        line-height: 1.45;
-        margin-bottom: 0.75rem;
-    }
-
-    .kpi-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.44rem;
-        font-size: 0.72rem;
-        font-weight: 800;
-        padding: 0.38rem 0.58rem;
-        border-radius: 999px;
-        background: rgba(0,120,212,0.13);
-        color: #D5ECFF;
-        border: 1px solid rgba(0,120,212,0.28);
-    }
-
-    .kpi-badge.green {
-        background: rgba(127,186,0,0.12);
-        color: #DFF7B2;
-        border-color: rgba(127,186,0,0.28);
-    }
-
-    .kpi-badge.orange {
-        background: rgba(242,80,34,0.12);
-        color: #FFC1B6;
-        border-color: rgba(242,80,34,0.28);
-    }
-
-    .badge-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 999px;
-        background: currentColor;
-        box-shadow: 0 0 12px currentColor;
-    }
-
-    .bento-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
-        margin-bottom: 1.2rem;
-    }
-
-    .bento-card {
-        min-height: 150px;
-        padding: 1rem;
-    }
-
-    .bento-card.large {
-        grid-column: span 2;
-        min-height: 180px;
-    }
-
-    .bento-label {
-        color: #D5ECFF;
-        font-size: 0.71rem;
-        font-weight: 850;
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
-        margin-bottom: 1.25rem;
-    }
-
-    .bento-title {
-        color: #FFFFFF;
-        font-size: 1.14rem;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        margin-bottom: 0.45rem;
-    }
-
-    .bento-text {
-        color: #AEB5C1;
-        font-size: 0.86rem;
-        line-height: 1.5;
-    }
-
-    .info-card {
-        padding: 1rem;
-        min-height: 150px;
-    }
-
-    .info-title {
-        color: #FFFFFF;
-        font-size: 0.96rem;
-        font-weight: 800;
-        margin-bottom: 0.55rem;
-    }
-
-    .info-text {
-        color: #AEB5C1;
-        font-size: 0.84rem;
-        line-height: 1.55;
-    }
-
-    .formula {
-        color: #D5ECFF;
-        background: rgba(0,120,212,0.11);
-        border: 1px solid rgba(0,120,212,0.25);
-        border-radius: 12px;
-        padding: 0.55rem 0.7rem;
-        margin-top: 0.75rem;
-        font-size: 0.78rem;
-        font-weight: 750;
-    }
-
-    .chart-shell {
-        padding: 1rem 1rem 0.7rem 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .chart-heading {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        align-items: center;
-        margin-bottom: 0.55rem;
-    }
-
-    .chart-title {
-        color: var(--text);
-        font-size: 0.92rem;
-        font-weight: 800;
-        letter-spacing: -0.01em;
-    }
-
-    .chart-caption {
-        color: var(--muted-2);
-        font-size: 0.72rem;
-        font-weight: 750;
-    }
-
-    .scenario-card {
-        padding: 1rem;
-        min-height: 145px;
-    }
-
-    .scenario-label {
-        color: var(--muted-2);
-        font-size: 0.68rem;
-        font-weight: 850;
-        letter-spacing: .13em;
-        text-transform: uppercase;
-        margin-bottom: .55rem;
-    }
-
-    .scenario-title {
-        color: #FFFFFF;
-        font-size: 1rem;
-        font-weight: 800;
-        margin-bottom: .35rem;
-    }
-
-    .scenario-value {
-        color: #FFFFFF;
-        font-size: 1.65rem;
-        font-weight: 820;
-        letter-spacing: -0.04em;
-        margin-bottom: .35rem;
-    }
-
-    .scenario-text {
-        color: #AEB5C1;
-        font-size: .8rem;
-        line-height: 1.45;
-    }
-
-    .insight-card {
-        padding: 1.1rem 1.15rem;
-        margin-top: 0.5rem;
-        border-color: rgba(0,120,212,0.24);
-        background:
-            radial-gradient(circle at 0% 0%, rgba(0,120,212,0.17), transparent 38%),
-            linear-gradient(145deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018)),
-            #10141F;
-    }
-
-    .insight-title {
-        color: #D5ECFF;
-        font-size: 0.76rem;
-        font-weight: 850;
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
-        margin-bottom: 0.55rem;
-    }
-
-    .insight-text {
-        color: #D9DEE7;
-        line-height: 1.65;
-        font-size: 0.93rem;
-    }
-
-    .architecture {
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 0.65rem;
-        margin-top: 0.5rem;
-    }
-
-    .arch-step {
-        text-align: center;
-        padding: 0.85rem 0.6rem;
-        border-radius: 16px;
-        border: 1px solid rgba(255,255,255,0.07);
-        background: rgba(255,255,255,0.035);
-        color: #D9DEE7;
-        font-size: 0.78rem;
-        font-weight: 750;
-        min-height: 84px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* Dataframes */
-    [data-testid="stDataFrame"] {
-        border-radius: 16px !important;
-        overflow: hidden !important;
-        border: 1px solid var(--border) !important;
-        box-shadow: var(--shadow-soft);
-    }
-
-    [data-testid="stDataFrame"] div {
-        background-color: #10141F !important;
-        color: var(--text) !important;
-    }
-
-    h3 {
-        color: var(--text) !important;
-        font-size: 1rem !important;
-        font-weight: 800 !important;
-        margin-top: 0.6rem !important;
-        margin-bottom: 0.7rem !important;
-    }
-
-    @media (max-width: 1100px) {
-        .bento-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .bento-card.large {
-            grid-column: span 1;
-        }
-
-        .architecture {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 760px) {
-        .block-container {
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-        }
-
-        .aurora-hero {
-            padding: 1.4rem;
-            min-height: 290px;
-        }
-
-        .hero-title {
-            font-size: 2rem;
-        }
-
-        .bento-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .architecture {
-            grid-template-columns: 1fr;
-        }
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ================================================================
-# Data
-# ================================================================
-
-result = process_uploaded_file()
-company_results = {"Microsoft": result}
-benchmark_df = build_benchmark_dataframe(company_results)
-k = result["kpis"]
-ts = k["time_series"].copy()
-segment_revenue = k["segment_revenue"].copy()
-
-# ================================================================
-# Formatting Helpers
-# ================================================================
+def html(content):
+    st.markdown(content, unsafe_allow_html=True)
 
 def fmt_cur(v):
     if v is None:
@@ -789,17 +44,692 @@ def fmt_pct(v):
 def dataframe_to_csv(df):
     return df.to_csv(index=False).encode("utf-8")
 
-def style_fig(fig, height=330, showlegend=False):
+# ================================================================
+# Global CSS
+# ================================================================
+
+html(
+    """
+    <style>
+    :root {
+        --blue:#0078D4;
+        --green:#7FBA00;
+        --orange:#F25022;
+        --yellow:#FFB900;
+        --purple:#8661C5;
+
+        --text:#F3F2F1;
+        --muted:#A8AFBD;
+        --muted2:#7B8494;
+
+        --glass:rgba(16,20,31,.56);
+        --glass2:rgba(20,26,39,.48);
+        --border:rgba(255,255,255,.09);
+        --border-blue:rgba(0,120,212,.45);
+
+        --shadow:0 16px 42px rgba(0,0,0,.42);
+        --shadow-hover:0 22px 58px rgba(0,0,0,.55);
+    }
+
+    html, body, .stApp, [data-testid="stAppViewContainer"] {
+        background:#050814 !important;
+        color:var(--text) !important;
+        font-family:"Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+
+    /* TRUE MOVING AURORA BACKGROUND */
+    [data-testid="stAppViewContainer"]::before {
+        content:"";
+        position:fixed;
+        inset:-35%;
+        z-index:0;
+        pointer-events:none;
+        background:
+            radial-gradient(circle at 18% 28%, rgba(0,120,212,.42), transparent 26%),
+            radial-gradient(circle at 72% 18%, rgba(127,186,0,.22), transparent 24%),
+            radial-gradient(circle at 68% 72%, rgba(134,97,197,.34), transparent 26%),
+            radial-gradient(circle at 28% 82%, rgba(242,80,34,.13), transparent 22%);
+        filter:blur(80px);
+        opacity:.9;
+        animation: auroraFlow 18s ease-in-out infinite alternate;
+    }
+
+    [data-testid="stAppViewContainer"]::after {
+        content:"";
+        position:fixed;
+        inset:0;
+        z-index:0;
+        pointer-events:none;
+        background:
+            linear-gradient(180deg, rgba(5,8,20,.36), rgba(5,8,20,.82)),
+            radial-gradient(circle at 50% 0%, rgba(255,255,255,.04), transparent 38%);
+    }
+
+    @keyframes auroraFlow {
+        0% { transform:translate3d(-2%, -3%, 0) scale(1); }
+        45% { transform:translate3d(4%, 2%, 0) scale(1.06); }
+        100% { transform:translate3d(-1%, 5%, 0) scale(1.03); }
+    }
+
+    [data-testid="stAppViewContainer"] > .main {
+        position:relative;
+        z-index:1;
+    }
+
+    .block-container {
+        max-width:1520px !important;
+        padding:1.2rem 1.45rem 2.2rem 1.45rem !important;
+        position:relative;
+        z-index:2;
+    }
+
+    #MainMenu, footer, header {
+        visibility:hidden;
+    }
+
+    h1,h2,h3,h4,h5,h6,p,span,div,button,input,textarea {
+        font-family:"Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+
+    /* ============================================================
+       Tabs - compact
+       ============================================================ */
+
+    .stTabs [data-baseweb="tab-list"] {
+        gap:.35rem;
+        background:rgba(255,255,255,.035);
+        border:1px solid rgba(255,255,255,.06);
+        border-radius:12px;
+        padding:.28rem;
+        margin-bottom:1rem;
+        backdrop-filter:blur(18px);
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height:34px;
+        padding:0 .72rem;
+        border-radius:9px;
+        color:#AAB2C1;
+        font-weight:700;
+        font-size:.74rem;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background:rgba(0,120,212,.18) !important;
+        border:1px solid rgba(0,120,212,.45);
+        color:#E0F1FF !important;
+    }
+
+    /* ============================================================
+       Shared compact glass system
+       ============================================================ */
+
+    .glass,
+    .hero,
+    .mini-card,
+    .kpi-card,
+    .bento-card,
+    .info-card,
+    .scenario-card,
+    .insight-card,
+    .chart-shell {
+        position:relative;
+        border:1px solid var(--border);
+        background:
+            linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.018)),
+            var(--glass);
+        backdrop-filter:blur(22px);
+        -webkit-backdrop-filter:blur(22px);
+        box-shadow:var(--shadow);
+        overflow:hidden;
+    }
+
+    .kpi-card,
+    .bento-card,
+    .info-card,
+    .scenario-card,
+    .insight-card,
+    .chart-shell {
+        border-radius:16px;
+        transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .kpi-card:hover,
+    .bento-card:hover,
+    .info-card:hover,
+    .scenario-card:hover,
+    .insight-card:hover {
+        transform:translateY(-4px) scale(1.008);
+        border-color:var(--border-blue);
+        box-shadow:var(--shadow-hover);
+    }
+
+    .kpi-card::before,
+    .bento-card::before,
+    .info-card::before,
+    .scenario-card::before,
+    .insight-card::before {
+        content:"";
+        position:absolute;
+        width:220px;
+        height:220px;
+        right:-90px;
+        top:-100px;
+        background:radial-gradient(circle, rgba(0,120,212,.23), transparent 65%);
+        opacity:0;
+        transition:opacity .2s ease;
+        pointer-events:none;
+    }
+
+    .kpi-card:hover::before,
+    .bento-card:hover::before,
+    .info-card:hover::before,
+    .scenario-card:hover::before,
+    .insight-card:hover::before {
+        opacity:1;
+    }
+
+    /* ============================================================
+       Hero - intentionally much smaller
+       ============================================================ */
+
+    .hero {
+        border-radius:22px;
+        min-height:190px;
+        padding:1.15rem 1.35rem;
+        margin-bottom:1rem;
+    }
+
+    .hero::before {
+        content:"";
+        position:absolute;
+        inset:-40%;
+        background:
+            radial-gradient(circle at 20% 35%, rgba(0,120,212,.38), transparent 25%),
+            radial-gradient(circle at 80% 20%, rgba(127,186,0,.20), transparent 24%),
+            radial-gradient(circle at 65% 70%, rgba(134,97,197,.30), transparent 25%);
+        filter:blur(52px);
+        animation: heroAura 14s ease-in-out infinite alternate;
+        opacity:.85;
+    }
+
+    @keyframes heroAura {
+        from { transform:translate(-2%, -2%) scale(1); }
+        to { transform:translate(4%, 5%) scale(1.05); }
+    }
+
+    .hero-content {
+        position:relative;
+        z-index:2;
+        max-width:1050px;
+    }
+
+    .hero-topline {
+        display:flex;
+        align-items:center;
+        gap:.55rem;
+        text-transform:uppercase;
+        letter-spacing:.15em;
+        font-weight:800;
+        color:#D7EDFF;
+        font-size:.62rem;
+        margin-bottom:.55rem;
+    }
+
+    .logo-squares {
+        width:11px;
+        height:11px;
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:2px;
+    }
+
+    .logo-squares span:nth-child(1){background:#F25022;}
+    .logo-squares span:nth-child(2){background:#7FBA00;}
+    .logo-squares span:nth-child(3){background:#0078D4;}
+    .logo-squares span:nth-child(4){background:#FFB900;}
+
+    .hero-title {
+        color:white;
+        font-size:clamp(1.55rem, 2.35vw, 2.35rem);
+        line-height:1.03;
+        letter-spacing:-.055em;
+        font-weight:820;
+        margin-bottom:.5rem;
+    }
+
+    .hero-subtitle {
+        color:#C5CBD5;
+        font-size:.80rem;
+        line-height:1.55;
+        max-width:1040px;
+    }
+
+    .pill-row {
+        display:flex;
+        flex-wrap:wrap;
+        gap:.45rem;
+        margin-top:.85rem;
+    }
+
+    .pill {
+        display:inline-flex;
+        align-items:center;
+        padding:.32rem .55rem;
+        border-radius:999px;
+        border:1px solid rgba(255,255,255,.10);
+        background:rgba(255,255,255,.045);
+        color:#D5DBE6;
+        font-size:.66rem;
+        font-weight:750;
+        backdrop-filter:blur(14px);
+    }
+
+    .pill.blue {
+        background:rgba(0,120,212,.17);
+        border-color:rgba(0,120,212,.38);
+        color:#D8EEFF;
+    }
+
+    /* ============================================================
+       Sections
+       ============================================================ */
+
+    .section-head {
+        display:flex;
+        align-items:end;
+        justify-content:space-between;
+        gap:1rem;
+        margin:1rem 0 .55rem 0;
+    }
+
+    .section-title {
+        color:white;
+        font-size:.86rem;
+        font-weight:820;
+        letter-spacing:-.02em;
+    }
+
+    .section-subtitle {
+        color:var(--muted2);
+        font-size:.70rem;
+        line-height:1.45;
+        margin-top:.18rem;
+    }
+
+    .section-tag {
+        color:#D8EEFF;
+        background:rgba(0,120,212,.14);
+        border:1px solid rgba(0,120,212,.35);
+        border-radius:999px;
+        padding:.30rem .52rem;
+        font-size:.64rem;
+        font-weight:800;
+        white-space:nowrap;
+    }
+
+    /* ============================================================
+       Compact Cards
+       ============================================================ */
+
+    .kpi-card {
+        min-height:108px;
+        padding:.72rem;
+    }
+
+    .kpi-label {
+        color:#9DA6B7;
+        font-size:.56rem;
+        font-weight:850;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+        margin-bottom:.35rem;
+    }
+
+    .kpi-name {
+        color:#D4DAE4;
+        font-size:.68rem;
+        font-weight:760;
+        line-height:1.25;
+        margin-bottom:.42rem;
+    }
+
+    .kpi-value {
+        color:white;
+        font-size:1.18rem;
+        font-weight:840;
+        letter-spacing:-.045em;
+        margin-bottom:.25rem;
+    }
+
+    .kpi-sub {
+        color:#AAB1BF;
+        font-size:.61rem;
+        line-height:1.35;
+        margin-bottom:.45rem;
+    }
+
+    .badge {
+        display:inline-flex;
+        align-items:center;
+        gap:.32rem;
+        padding:.27rem .44rem;
+        border-radius:999px;
+        font-size:.58rem;
+        font-weight:820;
+        color:#DDEFFF;
+        border:1px solid rgba(0,120,212,.32);
+        background:rgba(0,120,212,.15);
+    }
+
+    .badge.green {
+        color:#E4F8BA;
+        border-color:rgba(127,186,0,.36);
+        background:rgba(127,186,0,.13);
+    }
+
+    .badge.orange {
+        color:#FFC5BA;
+        border-color:rgba(242,80,34,.35);
+        background:rgba(242,80,34,.13);
+    }
+
+    .dot {
+        display:inline-block;
+        width:6px;
+        height:6px;
+        border-radius:50%;
+        background:currentColor;
+        box-shadow:0 0 10px currentColor;
+    }
+
+    .bento-grid {
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0,1fr));
+        gap:.65rem;
+        margin-bottom:.9rem;
+    }
+
+    .bento-card {
+        min-height:96px;
+        padding:.72rem;
+    }
+
+    .bento-card.large {
+        grid-column:span 2;
+    }
+
+    .bento-label {
+        color:#D8EEFF;
+        font-size:.56rem;
+        font-weight:850;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+        margin-bottom:.52rem;
+    }
+
+    .bento-title {
+        color:white;
+        font-size:.81rem;
+        font-weight:820;
+        margin-bottom:.28rem;
+        letter-spacing:-.02em;
+    }
+
+    .bento-text {
+        color:#AAB1BF;
+        font-size:.64rem;
+        line-height:1.42;
+    }
+
+    .info-card {
+        min-height:96px;
+        padding:.72rem;
+    }
+
+    .info-title {
+        color:white;
+        font-size:.78rem;
+        font-weight:820;
+        margin-bottom:.35rem;
+    }
+
+    .info-text {
+        color:#AAB1BF;
+        font-size:.64rem;
+        line-height:1.45;
+    }
+
+    .formula {
+        margin-top:.48rem;
+        padding:.38rem .48rem;
+        border-radius:10px;
+        color:#DAEEFF;
+        background:rgba(0,120,212,.12);
+        border:1px solid rgba(0,120,212,.28);
+        font-size:.58rem;
+        font-weight:760;
+    }
+
+    .scenario-card {
+        min-height:98px;
+        padding:.72rem;
+    }
+
+    .scenario-label {
+        color:#9DA6B7;
+        font-size:.56rem;
+        font-weight:850;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+        margin-bottom:.34rem;
+    }
+
+    .scenario-title {
+        color:#D9DEE8;
+        font-size:.68rem;
+        font-weight:780;
+        margin-bottom:.28rem;
+    }
+
+    .scenario-value {
+        color:white;
+        font-size:1.12rem;
+        font-weight:840;
+        letter-spacing:-.04em;
+        margin-bottom:.22rem;
+    }
+
+    .scenario-text {
+        color:#AAB1BF;
+        font-size:.60rem;
+        line-height:1.35;
+    }
+
+    .insight-card {
+        padding:.78rem .85rem;
+        margin-top:.55rem;
+        border-color:rgba(0,120,212,.28);
+    }
+
+    .insight-title {
+        color:#D8EEFF;
+        font-size:.58rem;
+        font-weight:850;
+        letter-spacing:.14em;
+        text-transform:uppercase;
+        margin-bottom:.35rem;
+    }
+
+    .insight-text {
+        color:#D8DDE7;
+        font-size:.68rem;
+        line-height:1.5;
+    }
+
+    .chart-shell {
+        padding:.72rem .72rem .18rem .72rem;
+        margin-bottom:.7rem;
+    }
+
+    .chart-heading {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom:.35rem;
+        gap:1rem;
+    }
+
+    .chart-title {
+        color:white;
+        font-size:.72rem;
+        font-weight:820;
+    }
+
+    .chart-caption {
+        color:#8C95A5;
+        font-size:.58rem;
+        font-weight:760;
+    }
+
+    .architecture {
+        display:grid;
+        grid-template-columns:repeat(6, minmax(0,1fr));
+        gap:.45rem;
+        margin-top:.4rem;
+    }
+
+    .arch-step {
+        min-height:58px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        padding:.45rem;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.08);
+        background:rgba(255,255,255,.045);
+        backdrop-filter:blur(18px);
+        color:#D8DDE7;
+        font-size:.60rem;
+        font-weight:760;
+    }
+
+    /* Streamlit native things */
+    h3 {
+        color:white !important;
+        font-size:.86rem !important;
+        font-weight:820 !important;
+        margin:.65rem 0 .45rem 0 !important;
+    }
+
+    .stDataFrame {
+        border-radius:14px !important;
+        overflow:hidden !important;
+    }
+
+    [data-testid="stDataFrame"] {
+        border:1px solid rgba(255,255,255,.10) !important;
+        border-radius:14px !important;
+        overflow:hidden !important;
+        box-shadow:var(--shadow);
+        background:rgba(16,20,31,.50) !important;
+    }
+
+    .stDownloadButton button,
+    .stButton button {
+        font-size:.68rem !important;
+        padding:.42rem .7rem !important;
+        border-radius:10px !important;
+        color:white !important;
+        background:linear-gradient(135deg, #0078D4, #0B5EA8) !important;
+        border:1px solid rgba(255,255,255,.10) !important;
+        box-shadow:0 10px 22px rgba(0,120,212,.24);
+    }
+
+    .stTextArea textarea,
+    .stTextInput input {
+        background:rgba(16,20,31,.60) !important;
+        color:#F3F2F1 !important;
+        border:1px solid rgba(255,255,255,.10) !important;
+        border-radius:12px !important;
+        font-size:.72rem !important;
+    }
+
+    .stTextArea label,
+    .stTextInput label,
+    .stSlider label {
+        color:#AAB1BF !important;
+        font-size:.64rem !important;
+        font-weight:800 !important;
+        letter-spacing:.08em;
+        text-transform:uppercase;
+    }
+
+    .stSlider {
+        padding-top:.3rem;
+    }
+
+    @media (max-width:1100px) {
+        .bento-grid {
+            grid-template-columns:repeat(2, minmax(0,1fr));
+        }
+
+        .bento-card.large {
+            grid-column:span 1;
+        }
+
+        .architecture {
+            grid-template-columns:repeat(3, minmax(0,1fr));
+        }
+    }
+
+    @media (max-width:760px) {
+        .block-container {
+            padding:1rem !important;
+        }
+
+        .hero {
+            min-height:210px;
+            padding:1rem;
+        }
+
+        .bento-grid,
+        .architecture {
+            grid-template-columns:1fr;
+        }
+    }
+    </style>
+    """
+)
+
+# ================================================================
+# Data
+# ================================================================
+
+result = process_uploaded_file()
+company_results = {"Microsoft": result}
+benchmark_df = build_benchmark_dataframe(company_results)
+
+k = result["kpis"]
+ts = k["time_series"].copy()
+segment_revenue = k["segment_revenue"].copy()
+
+# ================================================================
+# Plotly Theme Helper
+# ================================================================
+
+def style_fig(fig, height=240, showlegend=False):
     fig.update_layout(
         height=height,
-        paper_bgcolor="#10141F",
-        plot_bgcolor="#10141F",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         font=dict(
             family="Segoe UI, Inter, sans-serif",
-            color="#C8CCD2",
-            size=12,
+            color="#C7CEDA",
+            size=10,
         ),
-        margin=dict(l=42, r=24, t=18, b=42),
+        margin=dict(l=34, r=18, t=10, b=32),
         hovermode="x unified",
         showlegend=showlegend,
         legend=dict(
@@ -808,48 +738,26 @@ def style_fig(fig, height=330, showlegend=False):
             y=1.02,
             xanchor="right",
             x=1,
-            font=dict(color="#C8CCD2", size=11),
+            font=dict(color="#C7CEDA", size=9),
         ),
         xaxis=dict(
             showgrid=False,
             zeroline=False,
             showline=True,
             linewidth=1,
-            linecolor="rgba(255,255,255,0.10)",
-            tickfont=dict(color="#8A92A0", size=11),
+            linecolor="rgba(255,255,255,.10)",
+            tickfont=dict(color="#8993A3", size=9),
         ),
         yaxis=dict(
             showgrid=True,
             gridwidth=1,
-            gridcolor="rgba(255,255,255,0.055)",
+            gridcolor="rgba(255,255,255,.055)",
             zeroline=False,
             showline=False,
-            tickfont=dict(color="#8A92A0", size=11),
+            tickfont=dict(color="#8993A3", size=9),
         ),
     )
     return fig
-
-# ================================================================
-# Sidebar
-# ================================================================
-
-with st.sidebar:
-    st.markdown(
-        """
-        <div class="sidebar-brand">
-            <div class="brand-kicker">AI Finance Product</div>
-            <div class="brand-title">Microsoft Financial<br/>Intelligence Platform</div>
-        </div>
-        <div class="sidebar-chip">
-            <span class="sidebar-dot"></span>
-            FY2025 10-K View
-        </div>
-        <div class="sidebar-note">
-            This project transforms Microsoft 10-K financial statement data into a modern AI-style executive analytics experience.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 # ================================================================
 # Tabs
@@ -867,17 +775,17 @@ tab_summary, tab_kpi, tab_revenue, tab_forecast, tab_financials, tab_ai = st.tab
 )
 
 # ================================================================
-# Tab 1: Executive Summary
+# Executive Summary
 # ================================================================
 
 with tab_summary:
 
-    st.markdown(
+    html(
         """
-        <div class="aurora-hero">
-            <div class="aurora-content">
+        <div class="hero">
+            <div class="hero-content">
                 <div class="hero-topline">
-                    <div class="hero-logo">
+                    <div class="logo-squares">
                         <span></span><span></span><span></span><span></span>
                     </div>
                     Microsoft Fluent UI Inspired Financial Intelligence
@@ -885,46 +793,39 @@ with tab_summary:
                 <div class="hero-title">Microsoft Financial Intelligence Platform</div>
                 <div class="hero-subtitle">
                     An AI-style financial analytics application built from Microsoft's FY2025 10-K data.
-                    The platform converts traditional financial statements into executive KPIs, interactive revenue analytics,
-                    forecasting scenarios, and natural-language financial commentary.
+                    The platform converts traditional financial statements into compact executive KPIs,
+                    revenue intelligence, forecasting scenarios, and natural-language financial commentary.
                 </div>
-                <div class="hero-meta-row">
-                    <span class="meta-pill blue">FY2025</span>
-                    <span class="meta-pill">10-K Analysis</span>
-                    <span class="meta-pill">Revenue Intelligence</span>
-                    <span class="meta-pill">AI Forecasting</span>
-                    <span class="meta-pill">Executive Finance View</span>
+                <div class="pill-row">
+                    <span class="pill blue">FY2025</span>
+                    <span class="pill">10-K Analysis</span>
+                    <span class="pill">Revenue Intelligence</span>
+                    <span class="pill">AI Forecasting</span>
+                    <span class="pill">Glass UI</span>
                 </div>
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    st.markdown(
+    html(
         """
         <div class="section-head">
             <div>
                 <div class="section-title">What This Project Demonstrates</div>
                 <div class="section-subtitle">
-                    A portfolio-style finance product combining financial analysis, KPI modeling, forecasting, data visualization, and AI-style storytelling.
+                    A compact finance product combining statement analysis, KPI modeling, forecasting, visualization, and AI-style storytelling.
                 </div>
             </div>
             <div class="section-tag">Project Overview</div>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
-    st.markdown(
-        """
         <div class="bento-grid">
             <div class="bento-card large">
                 <div class="bento-label">Overview</div>
                 <div class="bento-title">Financial Statement Intelligence</div>
                 <div class="bento-text">
-                    This dashboard converts Microsoft's annual financial statement data into a clean executive reporting experience.
-                    It focuses on revenue, profitability, cash flow, balance sheet health, and forward-looking forecasting.
+                    Converts Microsoft's annual financial statement data into a polished executive analytics experience focused on revenue, profitability, cash flow, and liquidity.
                 </div>
             </div>
 
@@ -932,7 +833,7 @@ with tab_summary:
                 <div class="bento-label">KPI Engine</div>
                 <div class="bento-title">Executive Metrics</div>
                 <div class="bento-text">
-                    Revenue growth, gross margin, operating margin, net margin, free cash flow, cash balance, and total debt.
+                    Revenue growth, margins, free cash flow, cash, and debt are calculated into concise finance KPIs.
                 </div>
             </div>
 
@@ -940,15 +841,15 @@ with tab_summary:
                 <div class="bento-label">Revenue</div>
                 <div class="bento-title">Revenue Intelligence</div>
                 <div class="bento-text">
-                    Trend analysis and revenue mix views help explain growth and business composition over time.
+                    Trend and mix views show how total revenue and category revenue evolved over time.
                 </div>
             </div>
 
             <div class="bento-card">
                 <div class="bento-label">Forecasting</div>
-                <div class="bento-title">Scenario Modeling</div>
+                <div class="bento-title">Scenario Engine</div>
                 <div class="bento-text">
-                    Interactive growth assumptions generate forward revenue scenarios for bear, base, and bull cases.
+                    Growth assumptions produce bear, base, and bull revenue cases.
                 </div>
             </div>
 
@@ -956,107 +857,44 @@ with tab_summary:
                 <div class="bento-label">AI Copilot</div>
                 <div class="bento-title">Narrative Commentary</div>
                 <div class="bento-text">
-                    A simple AI-style Q&A layer turns financial metrics into plain-English business commentary.
+                    Plain-English commentary translates financial metrics into business interpretation.
                 </div>
             </div>
 
             <div class="bento-card">
                 <div class="bento-label">Design</div>
-                <div class="bento-title">Fluent + AI Startup Feel</div>
+                <div class="bento-title">Aurora Glass UI</div>
                 <div class="bento-text">
-                    The interface blends Microsoft Fluent UI, Azure-inspired depth, and modern AI product design patterns.
+                    Uses moving ambient gradients, compact glass tiles, and subtle hover lift for a premium AI-product feel.
                 </div>
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    st.markdown(
+    html(
         """
         <div class="section-head">
             <div>
-                <div class="section-title">How To Navigate The Platform</div>
-                <div class="section-subtitle">
-                    Each tab is designed like a product module instead of a single long scrolling dashboard.
-                </div>
+                <div class="section-title">Platform Workflow</div>
+                <div class="section-subtitle">How the application moves from financial data to executive insights.</div>
             </div>
-            <div class="section-tag">User Guide</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    nav1, nav2, nav3 = st.columns(3, gap="large")
-
-    with nav1:
-        st.markdown(
-            """
-            <div class="info-card">
-                <div class="info-title">1. Intelligence Hub</div>
-                <div class="info-text">
-                    Start here to understand the core KPIs: revenue, profitability, free cash flow, and liquidity.
-                    This section explains what each metric means and why leadership would care about it.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with nav2:
-        st.markdown(
-            """
-            <div class="info-card">
-                <div class="info-title">2. Revenue Intelligence</div>
-                <div class="info-text">
-                    Use this tab to review historical revenue trends, product versus services revenue mix,
-                    and commentary around growth patterns.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with nav3:
-        st.markdown(
-            """
-            <div class="info-card">
-                <div class="info-title">3. AI Forecasting</div>
-                <div class="info-text">
-                    Adjust growth assumptions and immediately see how future revenue scenarios change
-                    across bear, base, and bull cases.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown(
-        """
-        <div class="section-head">
-            <div>
-                <div class="section-title">Project Architecture</div>
-                <div class="section-subtitle">
-                    A simple view of how the application moves from financial statements to executive insights.
-                </div>
-            </div>
-            <div class="section-tag">Workflow</div>
+            <div class="section-tag">Architecture</div>
         </div>
 
         <div class="architecture">
-            <div class="arch-step">10-K Financial Data</div>
+            <div class="arch-step">10-K Data</div>
             <div class="arch-step">Statement Tables</div>
             <div class="arch-step">KPI Engine</div>
             <div class="arch-step">Revenue Analytics</div>
-            <div class="arch-step">Forecast Modeling</div>
+            <div class="arch-step">Forecast Model</div>
             <div class="arch-step">AI Commentary</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 # ================================================================
-# Tab 2: Intelligence Hub
+# Intelligence Hub
 # ================================================================
 
 with tab_kpi:
@@ -1071,247 +909,205 @@ with tab_kpi:
     total_debt = k["total_debt"]
     debt_to_cash = total_debt / cash_balance if cash_balance else None
 
-    st.markdown(
+    html(
         """
         <div class="section-head">
             <div>
                 <div class="section-title">Executive KPI Intelligence</div>
-                <div class="section-subtitle">
-                    High-level indicators for scale, growth, profitability, cash generation, and balance sheet flexibility.
-                </div>
+                <div class="section-subtitle">Compact indicators for scale, efficiency, cash generation, and financial flexibility.</div>
             </div>
             <div class="section-tag">CFO View</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    c1, c2, c3, c4 = st.columns(4, gap="large")
+    c1, c2, c3, c4 = st.columns(4, gap="medium")
 
     with c1:
-        st.markdown(
+        html(
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Revenue Intelligence</div>
-                <div class="kpi-name">Fiscal Year {k['latest_period']}</div>
+                <div class="kpi-name">FY{k['latest_period']} Revenue</div>
                 <div class="kpi-value">{fmt_cur(revenue)}</div>
-                <div class="kpi-sub">Total reported revenue for the latest fiscal year.</div>
-                <div class="kpi-badge {'orange' if revenue_yoy < 0 else 'green'}">
-                    <span class="badge-dot"></span>{fmt_pct(revenue_yoy)} YoY
-                </div>
+                <div class="kpi-sub">Total reported revenue.</div>
+                <div class="badge green"><span class="dot"></span>{fmt_pct(revenue_yoy)} YoY</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with c2:
-        st.markdown(
+        html(
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Profitability Signals</div>
                 <div class="kpi-name">Operating Margin</div>
                 <div class="kpi-value">{fmt_pct(operating_margin)}</div>
-                <div class="kpi-sub">Gross margin {fmt_pct(gross_margin)} · Net margin {fmt_pct(net_margin)}</div>
-                <div class="kpi-badge">
-                    <span class="badge-dot"></span>Margin profile
-                </div>
+                <div class="kpi-sub">Gross {fmt_pct(gross_margin)} · Net {fmt_pct(net_margin)}</div>
+                <div class="badge"><span class="dot"></span>Margin profile</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with c3:
-        st.markdown(
+        html(
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Cash Flow Engine</div>
                 <div class="kpi-name">Free Cash Flow</div>
                 <div class="kpi-value">{fmt_cur(fcf)}</div>
-                <div class="kpi-sub">Operating cash flow less capital expenditures.</div>
-                <div class="kpi-badge green">
-                    <span class="badge-dot"></span>Cash generative
-                </div>
+                <div class="kpi-sub">OCF less capex.</div>
+                <div class="badge green"><span class="dot"></span>Cash generative</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with c4:
-        st.markdown(
+        html(
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Balance Sheet Health</div>
                 <div class="kpi-name">Cash and Debt</div>
                 <div class="kpi-value">{fmt_cur(cash_balance)}</div>
-                <div class="kpi-sub">Total debt {fmt_cur(total_debt)} · Debt/cash {debt_to_cash:.1f}x</div>
-                <div class="kpi-badge">
-                    <span class="badge-dot"></span>Liquidity view
-                </div>
+                <div class="kpi-sub">Debt {fmt_cur(total_debt)} · {debt_to_cash:.1f}x debt/cash</div>
+                <div class="badge"><span class="dot"></span>Liquidity</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-    st.markdown(
+    html(
         """
         <div class="section-head">
             <div>
-                <div class="section-title">How To Read These KPIs</div>
-                <div class="section-subtitle">
-                    Each KPI gives a different view of company performance.
-                </div>
+                <div class="section-title">How To Read The KPIs</div>
+                <div class="section-subtitle">Short explanations for what each metric means.</div>
             </div>
             <div class="section-tag">Metric Guide</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    e1, e2 = st.columns(2, gap="large")
+    e1, e2, e3, e4 = st.columns(4, gap="medium")
 
     with e1:
-        st.markdown(
+        html(
             """
             <div class="info-card">
                 <div class="info-title">Revenue</div>
-                <div class="info-text">
-                    Revenue shows the scale of the business. Year-over-year growth helps answer whether the company is expanding,
-                    slowing, or becoming more mature.
-                </div>
-                <div class="formula">Revenue Growth = Current Year Revenue / Prior Year Revenue - 1</div>
+                <div class="info-text">Measures business scale and top-line growth.</div>
+                <div class="formula">Growth = Current / Prior - 1</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with e2:
-        st.markdown(
+        html(
             """
             <div class="info-card">
                 <div class="info-title">Operating Margin</div>
-                <div class="info-text">
-                    Operating margin measures how efficiently the company turns revenue into operating income after core expenses.
-                    It is one of the most important profitability indicators for leadership.
-                </div>
-                <div class="formula">Operating Margin = Operating Income / Revenue</div>
+                <div class="info-text">Shows efficiency after operating expenses.</div>
+                <div class="formula">Operating Income / Revenue</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-    e3, e4 = st.columns(2, gap="large")
-
     with e3:
-        st.markdown(
+        html(
             """
             <div class="info-card">
                 <div class="info-title">Free Cash Flow</div>
-                <div class="info-text">
-                    Free cash flow shows how much cash remains after funding capital expenditures.
-                    Strong free cash flow gives the company flexibility to invest, return capital, or strengthen the balance sheet.
-                </div>
-                <div class="formula">Free Cash Flow = Operating Cash Flow - Capital Expenditures</div>
+                <div class="info-text">Cash available after capital spending.</div>
+                <div class="formula">OCF - Capex</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with e4:
-        st.markdown(
+        html(
             """
             <div class="info-card">
                 <div class="info-title">Liquidity</div>
-                <div class="info-text">
-                    Cash and debt provide a quick view of financial flexibility and risk.
-                    A strong cash position can support strategic investments, acquisitions, and resilience during uncertainty.
-                </div>
-                <div class="formula">Debt / Cash = Total Debt / Cash Balance</div>
+                <div class="info-text">Shows flexibility from cash and debt position.</div>
+                <div class="formula">Debt / Cash</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
 # ================================================================
-# Tab 3: Revenue Intelligence
+# Revenue Intelligence
 # ================================================================
 
 with tab_revenue:
 
-    st.markdown(
+    latest_product = k["product_revenue"]
+    latest_services = k["service_revenue"]
+    services_mix = k["service_revenue_mix"]
+    growth_spread = k["revenue"] - k["prior_year_revenue"]
+
+    html(
         """
         <div class="section-head">
             <div>
                 <div class="section-title">Revenue Intelligence</div>
-                <div class="section-subtitle">
-                    Historical revenue trend, revenue mix, and business interpretation.
-                </div>
+                <div class="section-subtitle">Historical revenue trend, mix, and growth interpretation.</div>
             </div>
             <div class="section-tag">Growth Analytics</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    r1, r2, r3 = st.columns(3, gap="large")
-
-    latest_product = segment_revenue.loc[segment_revenue["period"] == "2025", "Product Revenue"].iloc[0]
-    latest_services = segment_revenue.loc[segment_revenue["period"] == "2025", "Service and Other Revenue"].iloc[0]
-    services_mix = latest_services / (latest_product + latest_services)
+    r1, r2, r3 = st.columns(3, gap="medium")
 
     with r1:
-        st.markdown(
+        html(
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">FY2025 Revenue</div>
                 <div class="kpi-name">Total Revenue</div>
                 <div class="kpi-value">{fmt_cur(k['revenue'])}</div>
-                <div class="kpi-sub">Latest annual revenue from the financial statement dataset.</div>
-                <div class="kpi-badge green"><span class="badge-dot"></span>{fmt_pct(k['revenue_yoy_growth'])} YoY</div>
+                <div class="kpi-sub">Latest annual revenue.</div>
+                <div class="badge green"><span class="dot"></span>{fmt_pct(k['revenue_yoy_growth'])} YoY</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with r2:
-        st.markdown(
+        html(
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Revenue Mix</div>
-                <div class="kpi-name">Service and Other Revenue</div>
+                <div class="kpi-name">Service and Other</div>
                 <div class="kpi-value">{fmt_pct(services_mix)}</div>
-                <div class="kpi-sub">Share of FY2025 revenue from service and other revenue categories.</div>
-                <div class="kpi-badge"><span class="badge-dot"></span>Largest mix driver</div>
+                <div class="kpi-sub">Share of FY2025 revenue.</div>
+                <div class="badge"><span class="dot"></span>Largest category</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with r3:
-        st.markdown(
+        html(
             f"""
             <div class="kpi-card">
                 <div class="kpi-label">Growth Spread</div>
                 <div class="kpi-name">2025 vs 2024</div>
-                <div class="kpi-value">{fmt_cur(k['revenue'] - ts.loc[ts['period'] == '2024', 'revenue'].iloc[0])}</div>
-                <div class="kpi-sub">Incremental revenue added from FY2024 to FY2025.</div>
-                <div class="kpi-badge green"><span class="badge-dot"></span>Expansion</div>
+                <div class="kpi-value">{fmt_cur(growth_spread)}</div>
+                <div class="kpi-sub">Incremental revenue added.</div>
+                <div class="badge green"><span class="dot"></span>Expansion</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-    left, right = st.columns(2, gap="large")
+    left, right = st.columns(2, gap="medium")
 
     with left:
-        st.markdown(
+        html(
             """
             <div class="chart-shell">
                 <div class="chart-heading">
                     <div class="chart-title">Revenue Over Time</div>
                     <div class="chart-caption">FY2023-FY2025</div>
                 </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
         fig_ts = px.line(
@@ -1321,26 +1117,27 @@ with tab_revenue:
             markers=True,
             color_discrete_sequence=["#0078D4"],
         )
+
         fig_ts.update_traces(
             line=dict(width=3, shape="spline"),
-            marker=dict(size=9, color="#0078D4", line=dict(width=2, color="#D5ECFF")),
+            marker=dict(size=7, color="#0078D4", line=dict(width=1.5, color="#D8EEFF")),
             hovertemplate="<b>%{x}</b><br>Revenue: $%{y:,.0f}M<extra></extra>",
         )
+
         fig_ts.update_yaxes(tickprefix="$", ticksuffix="M")
-        fig_ts = style_fig(fig_ts, height=330)
+        fig_ts = style_fig(fig_ts, height=235)
         st.plotly_chart(fig_ts, use_container_width=True, config={"displayModeBar": False})
-        st.markdown("</div>", unsafe_allow_html=True)
+        html("</div>")
 
     with right:
-        st.markdown(
+        html(
             """
             <div class="chart-shell">
                 <div class="chart-heading">
                     <div class="chart-title">Revenue Mix by Category</div>
                     <div class="chart-caption">Product vs Service</div>
                 </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
         seg_long = segment_revenue.melt(
@@ -1361,65 +1158,66 @@ with tab_revenue:
                 "Service and Other Revenue": "#7FBA00",
             },
         )
+
         fig_seg.update_traces(
             marker_line_width=0,
             hovertemplate="<b>%{x}</b><br>%{fullData.name}: $%{y:,.0f}M<extra></extra>",
         )
-        fig_seg.update_yaxes(tickprefix="$", ticksuffix="M")
-        fig_seg = style_fig(fig_seg, height=330, showlegend=True)
-        st.plotly_chart(fig_seg, use_container_width=True, config={"displayModeBar": False})
-        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown(
+        fig_seg.update_yaxes(tickprefix="$", ticksuffix="M")
+        fig_seg = style_fig(fig_seg, height=235, showlegend=True)
+        st.plotly_chart(fig_seg, use_container_width=True, config={"displayModeBar": False})
+        html("</div>")
+
+    html(
         f"""
         <div class="insight-card">
             <div class="insight-title">Revenue Commentary</div>
             <div class="insight-text">
                 Microsoft generated {fmt_cur(k['revenue'])} in FY2025 revenue, representing {fmt_pct(k['revenue_yoy_growth'])}
-                year-over-year growth. Service and other revenue represented approximately {fmt_pct(services_mix)} of total revenue,
-                making it the dominant revenue category in this simplified 10-K dataset.
+                year-over-year growth. Service and other revenue represented approximately {fmt_pct(services_mix)} of total revenue.
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 # ================================================================
-# Tab 4: AI Forecasting
+# AI Forecasting
 # ================================================================
 
 with tab_forecast:
 
-    st.markdown(
+    html(
         """
         <div class="section-head">
             <div>
                 <div class="section-title">AI Forecasting Simulator</div>
-                <div class="section-subtitle">
-                    Adjust forward revenue growth assumptions and compare scenario outcomes.
-                </div>
+                <div class="section-subtitle">Adjust revenue growth assumptions and compare scenario outcomes.</div>
             </div>
             <div class="section-tag">Scenario Model</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    growth_rate_pct = st.slider(
-        "Base Case Revenue Growth Assumption",
-        min_value=0,
-        max_value=30,
-        value=12,
-        step=1,
-    )
+    c1, c2 = st.columns([1, 1], gap="medium")
 
-    forecast_years = st.slider(
-        "Forecast Horizon",
-        min_value=1,
-        max_value=5,
-        value=3,
-        step=1,
-    )
+    with c1:
+        growth_rate_pct = st.slider(
+            "Base Case Revenue Growth Assumption",
+            min_value=0,
+            max_value=30,
+            value=12,
+            step=1,
+        )
+
+    with c2:
+        forecast_years = st.slider(
+            "Forecast Horizon",
+            min_value=1,
+            max_value=5,
+            value=3,
+            step=1,
+        )
 
     base_growth = growth_rate_pct / 100
 
@@ -1439,75 +1237,60 @@ with tab_forecast:
         bull_growth=base_growth + 0.05,
     )
 
-    latest_forecast = forecast_df.iloc[-1]
+    bear_last = scenario_df[scenario_df["scenario"] == "Bear Case"].sort_values("year").iloc[-1]
+    base_last = scenario_df[scenario_df["scenario"] == "Base Case"].sort_values("year").iloc[-1]
+    bull_last = scenario_df[scenario_df["scenario"] == "Bull Case"].sort_values("year").iloc[-1]
 
-    s1, s2, s3 = st.columns(3, gap="large")
-
-    bear_last = scenario_df[
-        (scenario_df["scenario"] == "Bear Case")
-    ].sort_values("year").iloc[-1]
-
-    base_last = scenario_df[
-        (scenario_df["scenario"] == "Base Case")
-    ].sort_values("year").iloc[-1]
-
-    bull_last = scenario_df[
-        (scenario_df["scenario"] == "Bull Case")
-    ].sort_values("year").iloc[-1]
+    s1, s2, s3 = st.columns(3, gap="medium")
 
     with s1:
-        st.markdown(
+        html(
             f"""
             <div class="scenario-card">
                 <div class="scenario-label">Bear Case</div>
                 <div class="scenario-title">Conservative Growth</div>
                 <div class="scenario-value">{fmt_cur(bear_last['revenue'])}</div>
-                <div class="scenario-text">Projected revenue by FY{int(bear_last['year'])} assuming slower growth.</div>
+                <div class="scenario-text">Projected FY{int(bear_last['year'])} revenue.</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with s2:
-        st.markdown(
+        html(
             f"""
             <div class="scenario-card">
                 <div class="scenario-label">Base Case</div>
                 <div class="scenario-title">Selected Assumption</div>
                 <div class="scenario-value">{fmt_cur(base_last['revenue'])}</div>
-                <div class="scenario-text">Projected revenue by FY{int(base_last['year'])} using the selected growth rate.</div>
+                <div class="scenario-text">Projected FY{int(base_last['year'])} revenue.</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
     with s3:
-        st.markdown(
+        html(
             f"""
             <div class="scenario-card">
                 <div class="scenario-label">Bull Case</div>
                 <div class="scenario-title">Upside Growth</div>
                 <div class="scenario-value">{fmt_cur(bull_last['revenue'])}</div>
-                <div class="scenario-text">Projected revenue by FY{int(bull_last['year'])} assuming stronger growth.</div>
+                <div class="scenario-text">Projected FY{int(bull_last['year'])} revenue.</div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-    st.markdown(
+    html(
         """
         <div class="chart-shell">
             <div class="chart-heading">
                 <div class="chart-title">Historical Revenue + Forecast Scenarios</div>
                 <div class="chart-caption">Historical and projected revenue</div>
             </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     hist_df = ts[["period", "revenue"]].copy()
     hist_df["year"] = hist_df["period"].astype(int)
-    hist_df["scenario"] = "Historical"
 
     fig_forecast = go.Figure()
 
@@ -1518,7 +1301,7 @@ with tab_forecast:
             mode="lines+markers",
             name="Historical",
             line=dict(color="#0078D4", width=3),
-            marker=dict(size=8),
+            marker=dict(size=7),
             hovertemplate="<b>FY%{x}</b><br>Revenue: $%{y:,.0f}M<extra></extra>",
         )
     )
@@ -1537,59 +1320,56 @@ with tab_forecast:
                 y=subset["revenue"],
                 mode="lines+markers",
                 name=scenario,
-                line=dict(color=color, width=3, dash="dash"),
-                marker=dict(size=8),
+                line=dict(color=color, width=2.5, dash="dash"),
+                marker=dict(size=6),
                 hovertemplate="<b>FY%{x}</b><br>Revenue: $%{y:,.0f}M<extra></extra>",
             )
         )
 
     fig_forecast.update_yaxes(tickprefix="$", ticksuffix="M")
-    fig_forecast = style_fig(fig_forecast, height=380, showlegend=True)
+    fig_forecast = style_fig(fig_forecast, height=260, showlegend=True)
     st.plotly_chart(fig_forecast, use_container_width=True, config={"displayModeBar": False})
-    st.markdown("</div>", unsafe_allow_html=True)
+    html("</div>")
 
-    st.markdown(
+    latest_forecast = forecast_df.iloc[-1]
+
+    html(
         f"""
         <div class="insight-card">
             <div class="insight-title">Forecast Narrative</div>
             <div class="insight-text">
                 Using a base growth assumption of {growth_rate_pct:.0f}%, projected revenue reaches {fmt_cur(latest_forecast['revenue'])}
-                by FY{int(latest_forecast['year'])}. This is a simplified scenario model designed to show how revenue could evolve
-                under different growth assumptions, not a formal valuation or investment forecast.
+                by FY{int(latest_forecast['year'])}. This is a simplified scenario simulator, not a formal investment forecast.
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 # ================================================================
-# Tab 5: Financial Statements
+# Financial Statements
 # ================================================================
 
 with tab_financials:
 
-    st.markdown(
+    financials = result["financials"]
+
+    html(
         """
         <div class="section-head">
             <div>
                 <div class="section-title">Financial Statements</div>
-                <div class="section-subtitle">
-                    Core financial statement data used by the KPI engine.
-                </div>
+                <div class="section-subtitle">Core statement tables used by the KPI engine.</div>
             </div>
             <div class="section-tag">Statement Tables</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    financials = result["financials"]
-
-    f1, f2 = st.columns(2, gap="large")
+    f1, f2 = st.columns(2, gap="medium")
 
     with f1:
         st.subheader("Income Statement")
-        st.dataframe(financials["income"], use_container_width=True, hide_index=True)
+        st.dataframe(financials["income"], use_container_width=True, hide_index=True, height=230)
         st.download_button(
             label="Download Income Statement CSV",
             data=dataframe_to_csv(financials["income"]),
@@ -1599,7 +1379,7 @@ with tab_financials:
 
     with f2:
         st.subheader("Balance Sheet")
-        st.dataframe(financials["balance"], use_container_width=True, hide_index=True)
+        st.dataframe(financials["balance"], use_container_width=True, hide_index=True, height=160)
         st.download_button(
             label="Download Balance Sheet CSV",
             data=dataframe_to_csv(financials["balance"]),
@@ -1608,7 +1388,7 @@ with tab_financials:
         )
 
     st.subheader("Cash Flow Statement")
-    st.dataframe(financials["cashflow"], use_container_width=True, hide_index=True)
+    st.dataframe(financials["cashflow"], use_container_width=True, hide_index=True, height=160)
     st.download_button(
         label="Download Cash Flow Statement CSV",
         data=dataframe_to_csv(financials["cashflow"]),
@@ -1617,52 +1397,46 @@ with tab_financials:
     )
 
 # ================================================================
-# Tab 6: AI Copilot
+# AI Copilot
 # ================================================================
 
 with tab_ai:
 
-    st.markdown(
+    html(
         """
         <div class="section-head">
             <div>
                 <div class="section-title">AI Copilot for Financial Commentary</div>
-                <div class="section-subtitle">
-                    Ask a plain-English question about revenue, margins, cash flow, liquidity, or forecasting.
-                </div>
+                <div class="section-subtitle">Ask about revenue, margins, cash flow, liquidity, or forecasting.</div>
             </div>
             <div class="section-tag">Narrative AI</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     question = st.text_area(
         "Ask a financial question",
         value="Summarize Microsoft revenue, margins, and cash flow.",
-        height=100,
+        height=90,
     )
 
     response = answer_question(question, benchmark_df, kpis=k)
 
-    st.markdown(
+    html(
         f"""
         <div class="insight-card">
             <div class="insight-title">Generated Financial Commentary</div>
             <div class="insight-text">{response}</div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    st.markdown(
+    html(
         """
         <div class="section-head">
             <div>
                 <div class="section-title">Example Questions</div>
-                <div class="section-subtitle">
-                    Try these prompts to test the financial commentary engine.
-                </div>
+                <div class="section-subtitle">Use these prompts to test the commentary engine.</div>
             </div>
             <div class="section-tag">Prompt Ideas</div>
         </div>
@@ -1671,21 +1445,20 @@ with tab_ai:
             <div class="bento-card">
                 <div class="bento-label">Revenue</div>
                 <div class="bento-title">Explain revenue growth</div>
-                <div class="bento-text">Ask: "How did Microsoft's revenue perform year over year?"</div>
+                <div class="bento-text">Try: How did Microsoft's revenue perform year over year?</div>
             </div>
 
             <div class="bento-card">
                 <div class="bento-label">Margins</div>
                 <div class="bento-title">Review profitability</div>
-                <div class="bento-text">Ask: "What do the margins say about profitability?"</div>
+                <div class="bento-text">Try: What do the margins say about profitability?</div>
             </div>
 
             <div class="bento-card">
                 <div class="bento-label">Cash Flow</div>
                 <div class="bento-title">Analyze cash generation</div>
-                <div class="bento-text">Ask: "Summarize free cash flow and liquidity."</div>
+                <div class="bento-text">Try: Summarize free cash flow and liquidity.</div>
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
