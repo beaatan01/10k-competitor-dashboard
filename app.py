@@ -79,10 +79,9 @@ def render_info_card(label, title, text, formula=None):
     safe_html(card)
 
 
-def render_bento_card(label, title, text, large=False):
-    large_class = "large-card" if large else ""
+def render_bento_card(label, title, text):
     card = f"""
-    <div class="bento-card {large_class}">
+    <div class="bento-card">
         <div class="card-label">{py_html.escape(label)}</div>
         <div class="bento-title">{py_html.escape(title)}</div>
         <div class="bento-text">{py_html.escape(text)}</div>
@@ -173,6 +172,93 @@ def render_financial_table(title, df, note=None):
     safe_html(table_html)
 
 
+def render_timeline():
+    timeline_html = """
+    <div class="timeline-shell">
+        <div class="timeline-line"></div>
+
+        <div class="timeline-step">
+            <div class="timeline-dot">1</div>
+            <div class="timeline-card">
+                <div class="timeline-label">Start</div>
+                <div class="timeline-title">Executive Summary</div>
+                <div class="timeline-text">Introduces the purpose, structure, and product flow of the dashboard.</div>
+                <div class="timeline-detail">
+                    <b>What this means:</b><br>
+                    This is the landing page. It explains what was built, why it matters, and how to move through the experience.
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-step">
+            <div class="timeline-dot">2</div>
+            <div class="timeline-card">
+                <div class="timeline-label">Analyze</div>
+                <div class="timeline-title">Intelligence Hub</div>
+                <div class="timeline-text">Reviews executive KPIs for growth, margins, cash flow, and liquidity.</div>
+                <div class="timeline-detail">
+                    <b>What this means:</b><br>
+                    This tab explains the core metrics a finance leader would scan first to understand business performance.
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-step">
+            <div class="timeline-dot">3</div>
+            <div class="timeline-card">
+                <div class="timeline-label">Explore</div>
+                <div class="timeline-title">Revenue Intelligence</div>
+                <div class="timeline-text">Shows revenue trend, mix, growth spread, and revenue commentary.</div>
+                <div class="timeline-detail">
+                    <b>What this means:</b><br>
+                    This tab focuses on top-line performance and helps explain where revenue is coming from.
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-step">
+            <div class="timeline-dot">4</div>
+            <div class="timeline-card">
+                <div class="timeline-label">Simulate</div>
+                <div class="timeline-title">AI Forecasting</div>
+                <div class="timeline-text">Uses growth assumptions to produce bear, base, and bull revenue scenarios.</div>
+                <div class="timeline-detail">
+                    <b>What this means:</b><br>
+                    This section helps the user see how future revenue changes under different assumptions.
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-step">
+            <div class="timeline-dot">5</div>
+            <div class="timeline-card">
+                <div class="timeline-label">Validate</div>
+                <div class="timeline-title">Financial Statements</div>
+                <div class="timeline-text">Displays the income statement, balance sheet, and cash flow statement.</div>
+                <div class="timeline-detail">
+                    <b>What this means:</b><br>
+                    This tab provides the raw statement data that powers the KPIs and visuals.
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-step">
+            <div class="timeline-dot">6</div>
+            <div class="timeline-card">
+                <div class="timeline-label">Explain</div>
+                <div class="timeline-title">AI Copilot</div>
+                <div class="timeline-text">Turns financial metrics into plain-English executive commentary.</div>
+                <div class="timeline-detail">
+                    <b>What this means:</b><br>
+                    This is the narrative layer. It helps explain revenue, margins, cash flow, liquidity, and forecasts.
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+    safe_html(timeline_html)
+
+
 # ================================================================
 # CSS
 # ================================================================
@@ -191,116 +277,87 @@ safe_html(
         --muted: #AEB6C5;
         --muted2: #7D8798;
 
-        --glass: rgba(16, 21, 34, 0.34);
-        --glass-strong: rgba(18, 23, 36, 0.48);
-        --glass-soft: rgba(255, 255, 255, 0.045);
+        --glass: rgba(14, 19, 32, 0.24);
+        --glass-strong: rgba(17, 23, 38, 0.34);
+        --glass-soft: rgba(255, 255, 255, 0.050);
 
-        --border: rgba(255, 255, 255, 0.10);
+        --border: rgba(255, 255, 255, 0.115);
         --border-blue: rgba(0, 120, 212, 0.46);
 
-        --shadow: 0 16px 42px rgba(0, 0, 0, 0.38);
-        --shadow-hover: 0 24px 64px rgba(0, 0, 0, 0.55);
+        --shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
+        --shadow-hover: 0 24px 64px rgba(0, 0, 0, 0.48);
     }
 
     html, body, .stApp {
-        background: #040816 !important;
+        background: #030814 !important;
         color: var(--text) !important;
         font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* ------------------------------------------------------------
-       Reliable moving aurora background
-       ------------------------------------------------------------ */
-    .aurora-bg {
+    .stApp {
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* ============================================================
+       TRUE FULL-PAGE MOVING AURORA BACKGROUND
+       ============================================================ */
+
+    .stApp::before {
+        content: "";
         position: fixed;
-        inset: 0;
-        overflow: hidden;
+        inset: -28%;
         z-index: 0;
         pointer-events: none;
         background:
-            radial-gradient(circle at 20% 0%, rgba(0, 120, 212, 0.12), transparent 32%),
-            linear-gradient(135deg, #04111f 0%, #050817 45%, #06120d 100%);
-    }
-
-    .aurora-blob {
-        position: absolute;
-        width: 58vw;
-        height: 58vw;
-        min-width: 560px;
-        min-height: 560px;
-        border-radius: 999px;
-        filter: blur(92px);
-        opacity: 0.62;
+            radial-gradient(circle at 12% 18%, rgba(0,120,212,0.72), transparent 24%),
+            radial-gradient(circle at 86% 18%, rgba(127,186,0,0.42), transparent 22%),
+            radial-gradient(circle at 68% 76%, rgba(134,97,197,0.68), transparent 26%),
+            radial-gradient(circle at 26% 82%, rgba(242,80,34,0.28), transparent 20%);
+        filter: blur(110px);
+        opacity: 0.88;
         mix-blend-mode: screen;
-        will-change: transform;
+        animation: fullAuraMove 16s ease-in-out infinite alternate;
     }
 
-    .aurora-blob.one {
-        left: -15%;
-        top: -22%;
-        background: radial-gradient(circle, rgba(0,120,212,0.75), rgba(0,120,212,0.10), transparent 66%);
-        animation: driftOne 18s ease-in-out infinite alternate;
-    }
-
-    .aurora-blob.two {
-        right: -18%;
-        top: -20%;
-        background: radial-gradient(circle, rgba(127,186,0,0.45), rgba(127,186,0,0.08), transparent 64%);
-        animation: driftTwo 22s ease-in-out infinite alternate;
-    }
-
-    .aurora-blob.three {
-        left: 28%;
-        bottom: -34%;
-        background: radial-gradient(circle, rgba(134,97,197,0.62), rgba(134,97,197,0.10), transparent 64%);
-        animation: driftThree 24s ease-in-out infinite alternate;
-    }
-
-    .aurora-blob.four {
-        right: 18%;
-        bottom: -36%;
-        background: radial-gradient(circle, rgba(242,80,34,0.26), rgba(242,80,34,0.07), transparent 66%);
-        animation: driftFour 20s ease-in-out infinite alternate;
-    }
-
-    .aurora-vignette {
-        position: absolute;
+    .stApp::after {
+        content: "";
+        position: fixed;
         inset: 0;
+        z-index: 0;
+        pointer-events: none;
         background:
-            linear-gradient(180deg, rgba(4,8,22,0.08), rgba(4,8,22,0.78)),
-            radial-gradient(circle at 50% 6%, rgba(255,255,255,0.055), transparent 36%);
-        z-index: 2;
+            linear-gradient(180deg, rgba(3,8,20,0.18), rgba(3,8,20,0.82)),
+            radial-gradient(circle at 50% 0%, rgba(255,255,255,0.045), transparent 36%);
     }
 
-    @keyframes driftOne {
-        from { transform: translate3d(-2%, -3%, 0) scale(1.00); }
-        to   { transform: translate3d(12%, 9%, 0) scale(1.10); }
-    }
-
-    @keyframes driftTwo {
-        from { transform: translate3d(3%, -2%, 0) scale(1.00); }
-        to   { transform: translate3d(-10%, 12%, 0) scale(1.08); }
-    }
-
-    @keyframes driftThree {
-        from { transform: translate3d(-4%, 4%, 0) scale(1.00); }
-        to   { transform: translate3d(8%, -8%, 0) scale(1.12); }
-    }
-
-    @keyframes driftFour {
-        from { transform: translate3d(5%, 6%, 0) scale(1.00); }
-        to   { transform: translate3d(-8%, -7%, 0) scale(1.08); }
+    @keyframes fullAuraMove {
+        0% {
+            transform: translate3d(-4%, -3%, 0) scale(1.00) rotate(0deg);
+        }
+        40% {
+            transform: translate3d(7%, 5%, 0) scale(1.16) rotate(8deg);
+        }
+        100% {
+            transform: translate3d(-2%, 9%, 0) scale(1.26) rotate(-6deg);
+        }
     }
 
     [data-testid="stAppViewContainer"] {
         background: transparent !important;
     }
 
+    [data-testid="stAppViewContainer"] > .main {
+        background: transparent !important;
+        position: relative;
+        z-index: 2;
+    }
+
     .block-container {
         position: relative;
-        z-index: 3;
-        max-width: 1520px !important;
-        padding: 1.10rem 1.45rem 2.2rem 1.45rem !important;
+        z-index: 5;
+        max-width: 1500px !important;
+        padding: 1.05rem 1.35rem 2.25rem 1.35rem !important;
     }
 
     #MainMenu, footer, header {
@@ -311,96 +368,80 @@ safe_html(
         font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* ------------------------------------------------------------
-       Tabs - rounded pill hover and active state
-       ------------------------------------------------------------ */
+    /* ============================================================
+       TABS
+       ============================================================ */
+
     .stTabs [data-baseweb="tab-list"] {
-        gap: 0.42rem;
-        background: rgba(255,255,255,0.035);
+        gap: 0.34rem;
+        background: rgba(255,255,255,0.030);
         border: 1px solid rgba(255,255,255,0.075);
         border-radius: 999px;
-        padding: 0.32rem;
-        margin-bottom: 1.05rem;
-        backdrop-filter: blur(22px);
-        -webkit-backdrop-filter: blur(22px);
+        padding: 0.30rem;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
     }
 
     .stTabs [data-baseweb="tab"] {
         height: 34px;
-        padding: 0 0.76rem;
+        padding: 0 0.72rem;
         border-radius: 999px !important;
-        color: rgba(215,222,234,0.58);
-        font-weight: 720;
-        font-size: 0.74rem;
+        color: rgba(218,226,238,0.62);
+        font-weight: 680;
+        font-size: 0.735rem;
         transition: all 0.16s ease !important;
         border: 1px solid transparent;
     }
 
     .stTabs [data-baseweb="tab"]:hover {
         border-radius: 999px !important;
-        background: rgba(255,255,255,0.075) !important;
-        color: #E5F3FF !important;
-        border-color: rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.070) !important;
+        color: #E6F4FF !important;
+        border-color: rgba(255,255,255,0.13);
     }
 
     .stTabs [aria-selected="true"] {
         border-radius: 999px !important;
         background: rgba(0,120,212,0.20) !important;
         border: 1px solid rgba(0,120,212,0.48) !important;
-        color: #E5F3FF !important;
-        box-shadow: 0 0 24px rgba(0,120,212,0.18);
+        color: #E6F4FF !important;
+        box-shadow: 0 0 24px rgba(0,120,212,0.20);
     }
 
-    /* ------------------------------------------------------------
-       Hero
-       ------------------------------------------------------------ */
+    /* ============================================================
+       HERO: GLASS ONLY
+       ============================================================ */
+
     .hero {
         position: relative;
-        min-height: 152px;
+        min-height: 148px;
         border-radius: 24px;
-        border: 1px solid rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.13);
         background:
-            linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.025)),
-            rgba(15,20,34,0.36);
-        backdrop-filter: blur(28px);
-        -webkit-backdrop-filter: blur(28px);
+            linear-gradient(145deg, rgba(255,255,255,0.105), rgba(255,255,255,0.026)),
+            rgba(10, 15, 28, 0.24);
+        backdrop-filter: blur(32px);
+        -webkit-backdrop-filter: blur(32px);
         box-shadow: var(--shadow);
-        padding: 1.05rem 1.25rem;
+        padding: 1rem 1.2rem;
         overflow: hidden;
-        margin-bottom: 1.05rem;
-    }
-
-    .hero::before {
-        content: "";
-        position: absolute;
-        inset: -60%;
-        background:
-            radial-gradient(circle at 18% 32%, rgba(0,120,212,0.52), transparent 28%),
-            radial-gradient(circle at 78% 22%, rgba(127,186,0,0.25), transparent 24%),
-            radial-gradient(circle at 66% 72%, rgba(134,97,197,0.38), transparent 28%);
-        filter: blur(70px);
-        opacity: 0.78;
-        animation: heroGlow 16s ease-in-out infinite alternate;
-    }
-
-    @keyframes heroGlow {
-        from { transform: translate3d(-2%, -2%, 0) scale(1.0); }
-        to   { transform: translate3d(5%, 4%, 0) scale(1.06); }
+        margin-bottom: 1rem;
     }
 
     .hero-content {
         position: relative;
         z-index: 2;
-        max-width: 920px;
+        max-width: 900px;
     }
 
     .hero-topline {
         display: flex;
         align-items: center;
-        gap: 0.50rem;
-        color: #D8EEFF;
-        font-size: 0.58rem;
-        font-weight: 820;
+        gap: 0.48rem;
+        color: #D9EEFF;
+        font-size: 0.57rem;
+        font-weight: 760;
         letter-spacing: 0.145em;
         text-transform: uppercase;
         margin-bottom: 0.46rem;
@@ -422,104 +463,108 @@ safe_html(
 
     .hero-title {
         color: #FFFFFF;
-        font-size: clamp(1.42rem, 1.95vw, 2.02rem);
-        font-weight: 760;
-        letter-spacing: -0.028em;
-        line-height: 1.15;
-        margin-bottom: 0.42rem;
-        max-width: 780px;
+        font-size: clamp(1.46rem, 1.86vw, 1.95rem);
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        line-height: 1.24;
+        margin-bottom: 0.43rem;
+        max-width: 640px;
     }
 
     .hero-subtitle {
         color: #C8CED9;
-        font-size: 0.72rem;
-        line-height: 1.55;
-        max-width: 930px;
+        font-size: 0.715rem;
+        line-height: 1.58;
+        max-width: 900px;
     }
 
     .pill-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.42rem;
-        margin-top: 0.72rem;
+        gap: 0.38rem;
+        margin-top: 0.70rem;
     }
 
     .pill {
         display: inline-flex;
         align-items: center;
-        padding: 0.28rem 0.50rem;
+        padding: 0.27rem 0.48rem;
         border-radius: 999px;
-        color: #DDE4EF;
-        background: rgba(255,255,255,0.060);
-        border: 1px solid rgba(255,255,255,0.12);
+        color: #DDE5F0;
+        background: rgba(255,255,255,0.055);
+        border: 1px solid rgba(255,255,255,0.115);
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
-        font-size: 0.60rem;
-        font-weight: 740;
+        font-size: 0.595rem;
+        font-weight: 700;
     }
 
     .pill.blue {
-        color: #DDF1FF;
-        background: rgba(0,120,212,0.18);
-        border-color: rgba(0,120,212,0.40);
+        color: #E0F2FF;
+        background: rgba(0,120,212,0.17);
+        border-color: rgba(0,120,212,0.42);
     }
 
-    /* ------------------------------------------------------------
-       Sections
-       ------------------------------------------------------------ */
+    /* ============================================================
+       SECTIONS
+       ============================================================ */
+
     .section-head {
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
-        gap: 1rem;
-        margin: 1.05rem 0 0.62rem 0;
+        gap: 0.85rem;
+        margin: 1rem 0 0.54rem 0;
     }
 
     .section-title {
         color: #FFFFFF;
-        font-size: 0.84rem;
-        font-weight: 820;
-        letter-spacing: -0.015em;
+        font-size: 0.835rem;
+        font-weight: 740;
+        letter-spacing: 0.002em;
+        line-height: 1.32;
     }
 
     .section-subtitle {
         color: var(--muted2);
-        font-size: 0.68rem;
-        line-height: 1.45;
+        font-size: 0.665rem;
+        line-height: 1.48;
         margin-top: 0.16rem;
     }
 
     .section-tag {
         color: #DDF1FF;
-        background: rgba(0,120,212,0.16);
-        border: 1px solid rgba(0,120,212,0.38);
+        background: rgba(0,120,212,0.145);
+        border: 1px solid rgba(0,120,212,0.36);
         border-radius: 999px;
-        padding: 0.30rem 0.52rem;
-        font-size: 0.61rem;
-        font-weight: 820;
+        padding: 0.28rem 0.50rem;
+        font-size: 0.60rem;
+        font-weight: 740;
         white-space: nowrap;
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
     }
 
-    /* ------------------------------------------------------------
-       Glass Cards
-       ------------------------------------------------------------ */
+    /* ============================================================
+       GLASS CARDS
+       ============================================================ */
+
     .kpi-card,
     .bento-card,
     .info-card,
     .scenario-card,
     .insight-card,
     .chart-title-card,
-    .table-card {
+    .table-card,
+    .timeline-card {
         position: relative;
         border-radius: 18px;
-        border: 1px solid rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.125);
         background:
-            linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.025)),
-            rgba(15,20,34,0.34);
-        backdrop-filter: blur(26px);
-        -webkit-backdrop-filter: blur(26px);
+            linear-gradient(145deg, rgba(255,255,255,0.095), rgba(255,255,255,0.022)),
+            rgba(12, 18, 31, 0.24);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
         box-shadow: var(--shadow);
         overflow: hidden;
         transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
@@ -529,12 +574,13 @@ safe_html(
     .bento-card:hover,
     .info-card:hover,
     .scenario-card:hover,
-    .insight-card:hover {
+    .insight-card:hover,
+    .timeline-card:hover {
         transform: translateY(-4px);
-        border-color: rgba(0,120,212,0.52);
+        border-color: rgba(0,120,212,0.55);
         background:
-            linear-gradient(145deg, rgba(255,255,255,0.11), rgba(255,255,255,0.035)),
-            rgba(16,22,38,0.42);
+            linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.035)),
+            rgba(14, 21, 37, 0.34);
         box-shadow: var(--shadow-hover);
     }
 
@@ -542,13 +588,14 @@ safe_html(
     .bento-card::before,
     .info-card::before,
     .scenario-card::before,
-    .insight-card::before {
+    .insight-card::before,
+    .timeline-card::before {
         content: "";
         position: absolute;
-        width: 230px;
-        height: 230px;
+        width: 220px;
+        height: 220px;
         right: -92px;
-        top: -108px;
+        top: -104px;
         background: radial-gradient(circle, rgba(0,120,212,0.25), transparent 68%);
         opacity: 0;
         transition: opacity 0.18s ease;
@@ -559,73 +606,75 @@ safe_html(
     .bento-card:hover::before,
     .info-card:hover::before,
     .scenario-card:hover::before,
-    .insight-card:hover::before {
+    .insight-card:hover::before,
+    .timeline-card:hover::before {
         opacity: 1;
     }
 
     .kpi-card {
-        min-height: 118px;
-        padding: 0.78rem;
-        margin-bottom: 0.95rem;
+        min-height: 114px;
+        padding: 0.76rem;
+        margin-bottom: 0.72rem;
     }
 
     .bento-card,
     .info-card,
     .scenario-card {
-        min-height: 108px;
-        padding: 0.78rem;
-        margin-bottom: 0.95rem;
+        min-height: 104px;
+        padding: 0.76rem;
+        margin-bottom: 0.72rem;
     }
 
     .card-label {
-        color: #D8EEFF;
-        font-size: 0.55rem;
-        font-weight: 850;
+        color: #D9EEFF;
+        font-size: 0.54rem;
+        font-weight: 780;
         letter-spacing: 0.145em;
         text-transform: uppercase;
-        margin-bottom: 0.38rem;
+        margin-bottom: 0.36rem;
     }
 
     .card-title {
         color: #D8DEE9;
         font-size: 0.70rem;
-        font-weight: 760;
-        line-height: 1.25;
-        margin-bottom: 0.38rem;
+        font-weight: 700;
+        line-height: 1.32;
+        letter-spacing: 0.003em;
+        margin-bottom: 0.36rem;
     }
 
     .card-value {
         color: #FFFFFF;
-        font-size: 1.16rem;
-        font-weight: 820;
-        letter-spacing: -0.035em;
-        margin-bottom: 0.25rem;
+        font-size: 1.14rem;
+        font-weight: 780;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.24rem;
     }
 
     .card-sub {
         color: #AAB2C1;
         font-size: 0.60rem;
-        line-height: 1.36;
-        margin-bottom: 0.48rem;
+        line-height: 1.38;
+        margin-bottom: 0.46rem;
     }
 
     .badge {
         display: inline-flex;
         align-items: center;
-        gap: 0.32rem;
-        padding: 0.25rem 0.42rem;
+        gap: 0.31rem;
+        padding: 0.245rem 0.415rem;
         border-radius: 999px;
         color: #DDF1FF;
         border: 1px solid rgba(0,120,212,0.34);
-        background: rgba(0,120,212,0.16);
-        font-size: 0.56rem;
-        font-weight: 820;
+        background: rgba(0,120,212,0.15);
+        font-size: 0.555rem;
+        font-weight: 760;
     }
 
     .badge.green {
         color: #E7FAC2;
         border-color: rgba(127,186,0,0.38);
-        background: rgba(127,186,0,0.15);
+        background: rgba(127,186,0,0.145);
     }
 
     .badge.orange {
@@ -648,9 +697,10 @@ safe_html(
     .scenario-title {
         color: #FFFFFF;
         font-size: 0.78rem;
-        font-weight: 820;
+        font-weight: 720;
         margin-bottom: 0.30rem;
-        letter-spacing: -0.015em;
+        letter-spacing: 0.006em;
+        line-height: 1.35;
     }
 
     .bento-text,
@@ -658,14 +708,14 @@ safe_html(
     .scenario-text {
         color: #AAB2C1;
         font-size: 0.63rem;
-        line-height: 1.44;
+        line-height: 1.46;
     }
 
     .scenario-value {
         color: #FFFFFF;
         font-size: 1.12rem;
-        font-weight: 820;
-        letter-spacing: -0.035em;
+        font-weight: 780;
+        letter-spacing: -0.028em;
         margin-bottom: 0.24rem;
     }
 
@@ -677,20 +727,20 @@ safe_html(
         border: 1px solid rgba(0,120,212,0.30);
         border-radius: 10px;
         font-size: 0.56rem;
-        font-weight: 760;
+        font-weight: 700;
     }
 
     .insight-card {
         padding: 0.78rem 0.85rem;
         margin-top: 0.35rem;
-        margin-bottom: 0.95rem;
+        margin-bottom: 0.72rem;
         border-color: rgba(0,120,212,0.30);
     }
 
     .insight-label {
         color: #DDF1FF;
         font-size: 0.56rem;
-        font-weight: 850;
+        font-weight: 780;
         letter-spacing: 0.145em;
         text-transform: uppercase;
         margin-bottom: 0.36rem;
@@ -699,16 +749,116 @@ safe_html(
     .insight-text {
         color: #DDE3EE;
         font-size: 0.66rem;
-        line-height: 1.52;
+        line-height: 1.54;
     }
 
-    /* ------------------------------------------------------------
-       Charts
-       ------------------------------------------------------------ */
+    /* ============================================================
+       TIMELINE / WORKFLOW
+       ============================================================ */
+
+    .timeline-shell {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.62rem;
+        margin-top: 0.52rem;
+        margin-bottom: 1rem;
+    }
+
+    .timeline-line {
+        position: absolute;
+        top: 21px;
+        left: 6%;
+        right: 6%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(0,120,212,0.55), rgba(127,186,0,0.35), transparent);
+        z-index: 0;
+    }
+
+    .timeline-step {
+        position: relative;
+        z-index: 2;
+    }
+
+    .timeline-dot {
+        width: 42px;
+        height: 42px;
+        margin: 0 auto 0.48rem auto;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #E6F4FF;
+        font-size: 0.68rem;
+        font-weight: 760;
+        background: rgba(0,120,212,0.22);
+        border: 1px solid rgba(0,120,212,0.48);
+        box-shadow: 0 0 28px rgba(0,120,212,0.24);
+        backdrop-filter: blur(20px);
+    }
+
+    .timeline-card {
+        min-height: 146px;
+        padding: 0.76rem;
+    }
+
+    .timeline-label {
+        color: #D9EEFF;
+        font-size: 0.54rem;
+        font-weight: 760;
+        letter-spacing: 0.145em;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+    }
+
+    .timeline-title {
+        color: #FFFFFF;
+        font-size: 0.75rem;
+        font-weight: 720;
+        line-height: 1.32;
+        letter-spacing: 0.006em;
+        margin-bottom: 0.28rem;
+    }
+
+    .timeline-text {
+        color: #AAB2C1;
+        font-size: 0.61rem;
+        line-height: 1.42;
+    }
+
+    .timeline-detail {
+        position: absolute;
+        left: 0.62rem;
+        right: 0.62rem;
+        bottom: 0.62rem;
+        padding: 0.54rem;
+        border-radius: 12px;
+        color: #DDEAF7;
+        background: rgba(5, 10, 22, 0.62);
+        border: 1px solid rgba(255,255,255,0.10);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        font-size: 0.58rem;
+        line-height: 1.42;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.18s ease;
+        pointer-events: none;
+    }
+
+    .timeline-card:hover .timeline-detail {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* ============================================================
+       CHARTS
+       ============================================================ */
+
     .chart-title-card {
-        min-height: 48px;
-        padding: 0.62rem 0.72rem;
-        margin-bottom: 0.55rem;
+        min-height: 46px;
+        padding: 0.60rem 0.70rem;
+        margin-bottom: 0.50rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -717,48 +867,24 @@ safe_html(
     .chart-title {
         color: #FFFFFF;
         font-size: 0.70rem;
-        font-weight: 820;
+        font-weight: 720;
+        line-height: 1.32;
+        letter-spacing: 0.004em;
     }
 
     .chart-caption {
         color: #8F99AA;
         font-size: 0.57rem;
-        font-weight: 760;
+        font-weight: 680;
     }
 
-    /* ------------------------------------------------------------
-       Architecture
-       ------------------------------------------------------------ */
-    .architecture-grid {
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 0.62rem;
-        margin-top: 0.45rem;
-    }
+    /* ============================================================
+       FINANCIAL TABLES
+       ============================================================ */
 
-    .arch-step {
-        min-height: 58px;
-        border-radius: 14px;
-        border: 1px solid rgba(255,255,255,0.11);
-        background: rgba(255,255,255,0.052);
-        backdrop-filter: blur(22px);
-        -webkit-backdrop-filter: blur(22px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #DDE3EE;
-        font-size: 0.60rem;
-        font-weight: 760;
-        text-align: center;
-        padding: 0.45rem;
-    }
-
-    /* ------------------------------------------------------------
-       Financial tables - no white Streamlit dataframes
-       ------------------------------------------------------------ */
     .table-card {
         padding: 0.82rem;
-        margin-bottom: 1.15rem;
+        margin-bottom: 0.9rem;
     }
 
     .table-card-head {
@@ -771,8 +897,9 @@ safe_html(
     .table-title {
         color: #FFFFFF;
         font-size: 0.78rem;
-        font-weight: 820;
-        letter-spacing: -0.015em;
+        font-weight: 720;
+        letter-spacing: 0.006em;
+        line-height: 1.35;
     }
 
     .table-note {
@@ -785,7 +912,7 @@ safe_html(
         overflow-x: auto;
         border-radius: 13px;
         border: 1px solid rgba(255,255,255,0.08);
-        background: rgba(5,8,18,0.30);
+        background: rgba(5,8,18,0.24);
     }
 
     table.finance-table {
@@ -797,18 +924,18 @@ safe_html(
     }
 
     .finance-table th {
-        background: rgba(255,255,255,0.060);
+        background: rgba(255,255,255,0.055);
         color: #DDF1FF;
         text-align: left;
-        font-weight: 820;
-        padding: 0.48rem 0.56rem;
+        font-weight: 720;
+        padding: 0.46rem 0.54rem;
         border-bottom: 1px solid rgba(255,255,255,0.09);
         white-space: nowrap;
     }
 
     .finance-table td {
-        padding: 0.48rem 0.56rem;
-        border-bottom: 1px solid rgba(255,255,255,0.065);
+        padding: 0.46rem 0.54rem;
+        border-bottom: 1px solid rgba(255,255,255,0.060);
         color: #D6DCE7;
         white-space: nowrap;
     }
@@ -817,23 +944,24 @@ safe_html(
         background: rgba(0,120,212,0.08);
     }
 
-    /* ------------------------------------------------------------
-       Streamlit native UI
-       ------------------------------------------------------------ */
+    /* ============================================================
+       STREAMLIT NATIVE UI
+       ============================================================ */
+
     h3 {
         color: #FFFFFF !important;
         font-size: 0.82rem !important;
-        font-weight: 820 !important;
-        margin: 0.55rem 0 0.45rem 0 !important;
+        font-weight: 720 !important;
+        margin: 0.52rem 0 0.42rem 0 !important;
     }
 
     .stDownloadButton button,
     .stButton button {
         font-size: 0.62rem !important;
-        padding: 0.36rem 0.62rem !important;
+        padding: 0.35rem 0.60rem !important;
         border-radius: 999px !important;
         color: #FFFFFF !important;
-        background: rgba(0,120,212,0.70) !important;
+        background: rgba(0,120,212,0.68) !important;
         border: 1px solid rgba(255,255,255,0.12) !important;
         box-shadow: 0 10px 22px rgba(0,120,212,0.20);
         backdrop-filter: blur(18px);
@@ -842,7 +970,7 @@ safe_html(
     .stTextArea textarea,
     .stTextInput input {
         color: #F3F2F1 !important;
-        background: rgba(15,20,34,0.40) !important;
+        background: rgba(15,20,34,0.30) !important;
         border: 1px solid rgba(255,255,255,0.12) !important;
         border-radius: 16px !important;
         font-size: 0.70rem !important;
@@ -860,14 +988,18 @@ safe_html(
     .stSlider label {
         color: #AAB2C1 !important;
         font-size: 0.62rem !important;
-        font-weight: 820 !important;
+        font-weight: 720 !important;
         text-transform: uppercase;
         letter-spacing: 0.10em;
     }
 
-    @media (max-width: 1100px) {
-        .architecture-grid {
+    @media (max-width: 1180px) {
+        .timeline-shell {
             grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .timeline-line {
+            display: none;
         }
     }
 
@@ -882,30 +1014,14 @@ safe_html(
         }
 
         .hero-title {
-            font-size: 1.45rem;
+            font-size: 1.42rem;
         }
 
-        .architecture-grid {
+        .timeline-shell {
             grid-template-columns: 1fr;
         }
     }
     </style>
-    """
-)
-
-# ================================================================
-# Actual Aurora HTML Layer
-# ================================================================
-
-safe_html(
-    """
-    <div class="aurora-bg">
-        <div class="aurora-blob one"></div>
-        <div class="aurora-blob two"></div>
-        <div class="aurora-blob three"></div>
-        <div class="aurora-blob four"></div>
-        <div class="aurora-vignette"></div>
-    </div>
     """
 )
 
@@ -967,7 +1083,6 @@ def style_fig(fig, height=236, showlegend=False):
     )
     return fig
 
-
 # ================================================================
 # Tabs
 # ================================================================
@@ -1009,7 +1124,7 @@ with tab_summary:
                     <span class="pill">10-K Analysis</span>
                     <span class="pill">Revenue Intelligence</span>
                     <span class="pill">AI Forecasting</span>
-                    <span class="pill">Aurora Glass UI</span>
+                    <span class="pill">Glass UI</span>
                 </div>
             </div>
         </div>
@@ -1017,64 +1132,41 @@ with tab_summary:
     )
 
     render_section(
-        "What This Project Demonstrates",
-        "A compact finance product combining statement analysis, KPI modeling, forecasting, visualization, and AI-style storytelling.",
-        "Project Overview",
+        "Platform Experience Timeline",
+        "A guided walkthrough of how the dashboard moves from financial statements to executive commentary.",
+        "Workflow",
     )
 
-    top1, top2 = st.columns([2, 1], gap="large")
-    with top1:
-        render_bento_card(
-            "Overview",
-            "Financial Statement Intelligence",
-            "Converts Microsoft's annual financial statement data into a polished executive analytics experience focused on revenue, profitability, cash flow, and liquidity.",
-            large=True,
-        )
-    with top2:
-        render_bento_card(
-            "KPI Engine",
-            "Executive Metrics",
-            "Calculates growth, margins, free cash flow, cash, debt, and revenue mix into concise finance KPIs.",
-        )
-
-    b1, b2, b3 = st.columns(3, gap="large")
-    with b1:
-        render_bento_card(
-            "Revenue",
-            "Revenue Intelligence",
-            "Trend and mix views show how total revenue and category revenue evolved over time.",
-        )
-    with b2:
-        render_bento_card(
-            "Forecasting",
-            "Scenario Engine",
-            "Growth assumptions produce bear, base, and bull revenue cases.",
-        )
-    with b3:
-        render_bento_card(
-            "AI Copilot",
-            "Narrative Commentary",
-            "Plain-English commentary translates financial metrics into business interpretation.",
-        )
+    render_timeline()
 
     render_section(
-        "Platform Workflow",
-        "How the application moves from financial data to executive insights.",
-        "Architecture",
+        "What This Project Demonstrates",
+        "A finance-focused AI product experience combining statement analysis, KPI modeling, visualization, forecasting, and commentary.",
+        "Capabilities",
     )
 
-    safe_html(
-        """
-        <div class="architecture-grid">
-            <div class="arch-step">10-K Data</div>
-            <div class="arch-step">Statement Tables</div>
-            <div class="arch-step">KPI Engine</div>
-            <div class="arch-step">Revenue Analytics</div>
-            <div class="arch-step">Forecast Model</div>
-            <div class="arch-step">AI Commentary</div>
-        </div>
-        """
-    )
+    a1, a2, a3 = st.columns(3, gap="medium")
+
+    with a1:
+        render_bento_card(
+            "Data Foundation",
+            "Financial Statement Modeling",
+            "Hard-coded financial statement data is transformed into structured tables and calculated metrics.",
+        )
+
+    with a2:
+        render_bento_card(
+            "Analytics Layer",
+            "Revenue and KPI Intelligence",
+            "The dashboard converts raw financial data into executive-level signals for growth, profitability, and cash flow.",
+        )
+
+    with a3:
+        render_bento_card(
+            "Narrative Layer",
+            "AI-Style Financial Commentary",
+            "The Copilot section translates metrics into plain-English business commentary.",
+        )
 
 # ================================================================
 # Intelligence Hub
@@ -1097,7 +1189,8 @@ with tab_kpi:
         "CFO View",
     )
 
-    c1, c2, c3, c4 = st.columns(4, gap="large")
+    c1, c2, c3, c4 = st.columns(4, gap="medium")
+
     with c1:
         render_kpi_card(
             "Revenue Intelligence",
@@ -1107,6 +1200,7 @@ with tab_kpi:
             f"{fmt_pct(revenue_yoy)} YoY",
             "green",
         )
+
     with c2:
         render_kpi_card(
             "Profitability Signals",
@@ -1115,6 +1209,7 @@ with tab_kpi:
             f"Gross {fmt_pct(gross_margin)} · Net {fmt_pct(net_margin)}",
             "Margin profile",
         )
+
     with c3:
         render_kpi_card(
             "Cash Flow Engine",
@@ -1124,6 +1219,7 @@ with tab_kpi:
             "Cash generative",
             "green",
         )
+
     with c4:
         render_kpi_card(
             "Balance Sheet Health",
@@ -1139,7 +1235,8 @@ with tab_kpi:
         "Metric Guide",
     )
 
-    e1, e2, e3, e4 = st.columns(4, gap="large")
+    e1, e2, e3, e4 = st.columns(4, gap="medium")
+
     with e1:
         render_info_card(
             "Revenue",
@@ -1147,6 +1244,7 @@ with tab_kpi:
             "Measures top-line size and growth momentum.",
             "Growth = Current / Prior - 1",
         )
+
     with e2:
         render_info_card(
             "Margin",
@@ -1154,6 +1252,7 @@ with tab_kpi:
             "Shows how efficiently revenue turns into operating income.",
             "Operating Income / Revenue",
         )
+
     with e3:
         render_info_card(
             "Cash Flow",
@@ -1161,6 +1260,7 @@ with tab_kpi:
             "Shows cash available after capital spending.",
             "OCF - Capex",
         )
+
     with e4:
         render_info_card(
             "Liquidity",
@@ -1183,7 +1283,8 @@ with tab_revenue:
         "Growth Analytics",
     )
 
-    r1, r2, r3 = st.columns(3, gap="large")
+    r1, r2, r3 = st.columns(3, gap="medium")
+
     with r1:
         render_kpi_card(
             "FY2025 Revenue",
@@ -1193,6 +1294,7 @@ with tab_revenue:
             f"{fmt_pct(k['revenue_yoy_growth'])} YoY",
             "green",
         )
+
     with r2:
         render_kpi_card(
             "Revenue Mix",
@@ -1201,6 +1303,7 @@ with tab_revenue:
             "Share of FY2025 revenue.",
             "Largest category",
         )
+
     with r3:
         render_kpi_card(
             "Growth Spread",
@@ -1211,10 +1314,11 @@ with tab_revenue:
             "green",
         )
 
-    left, right = st.columns(2, gap="large")
+    left, right = st.columns(2, gap="medium")
 
     with left:
         render_chart_title("Revenue Over Time", "FY2023-FY2025")
+
         fig_ts = px.line(
             ts,
             x="period",
@@ -1222,23 +1326,27 @@ with tab_revenue:
             markers=True,
             color_discrete_sequence=["#0078D4"],
         )
+
         fig_ts.update_traces(
             line=dict(width=3, shape="spline"),
             marker=dict(size=7, color="#0078D4", line=dict(width=1.5, color="#DDF1FF")),
             hovertemplate="<b>%{x}</b><br>Revenue: $%{y:,.0f}M<extra></extra>",
         )
+
         fig_ts.update_yaxes(tickprefix="$", ticksuffix="M")
         fig_ts = style_fig(fig_ts, height=238)
         st.plotly_chart(fig_ts, use_container_width=True, config={"displayModeBar": False})
 
     with right:
         render_chart_title("Revenue Mix by Category", "Product vs Service")
+
         seg_long = segment_revenue.melt(
             id_vars=["period"],
             value_vars=["Product Revenue", "Service and Other Revenue"],
             var_name="category",
             value_name="revenue",
         )
+
         fig_seg = px.bar(
             seg_long,
             x="period",
@@ -1250,10 +1358,12 @@ with tab_revenue:
                 "Service and Other Revenue": "#7FBA00",
             },
         )
+
         fig_seg.update_traces(
             marker_line_width=0,
             hovertemplate="<b>%{x}</b><br>%{fullData.name}: $%{y:,.0f}M<extra></extra>",
         )
+
         fig_seg.update_yaxes(tickprefix="$", ticksuffix="M")
         fig_seg = style_fig(fig_seg, height=238, showlegend=True)
         st.plotly_chart(fig_seg, use_container_width=True, config={"displayModeBar": False})
@@ -1278,7 +1388,8 @@ with tab_forecast:
         "Scenario Model",
     )
 
-    s_col1, s_col2 = st.columns(2, gap="large")
+    s_col1, s_col2 = st.columns(2, gap="medium")
+
     with s_col1:
         growth_rate_pct = st.slider(
             "Base Case Revenue Growth Assumption",
@@ -1287,6 +1398,7 @@ with tab_forecast:
             value=12,
             step=1,
         )
+
     with s_col2:
         forecast_years = st.slider(
             "Forecast Horizon",
@@ -1318,7 +1430,8 @@ with tab_forecast:
     base_last = scenario_df[scenario_df["scenario"] == "Base Case"].sort_values("year").iloc[-1]
     bull_last = scenario_df[scenario_df["scenario"] == "Bull Case"].sort_values("year").iloc[-1]
 
-    f1, f2, f3 = st.columns(3, gap="large")
+    f1, f2, f3 = st.columns(3, gap="medium")
+
     with f1:
         render_scenario_card(
             "Bear Case",
@@ -1326,6 +1439,7 @@ with tab_forecast:
             fmt_cur(bear_last["revenue"]),
             f"Projected FY{int(bear_last['year'])} revenue.",
         )
+
     with f2:
         render_scenario_card(
             "Base Case",
@@ -1333,6 +1447,7 @@ with tab_forecast:
             fmt_cur(base_last["revenue"]),
             f"Projected FY{int(base_last['year'])} revenue.",
         )
+
     with f3:
         render_scenario_card(
             "Bull Case",
@@ -1347,6 +1462,7 @@ with tab_forecast:
     hist_df["year"] = hist_df["period"].astype(int)
 
     fig_forecast = go.Figure()
+
     fig_forecast.add_trace(
         go.Scatter(
             x=hist_df["year"],
@@ -1407,7 +1523,7 @@ with tab_financials:
         "Statement Tables",
     )
 
-    f1, f2 = st.columns(2, gap="large")
+    f1, f2 = st.columns(2, gap="medium")
 
     with f1:
         render_financial_table(
@@ -1415,6 +1531,7 @@ with tab_financials:
             financials["income"],
             "Values shown in millions.",
         )
+
         st.download_button(
             label="Download Income Statement CSV",
             data=dataframe_to_csv(financials["income"]),
@@ -1428,6 +1545,7 @@ with tab_financials:
             financials["balance"],
             "Values shown in millions.",
         )
+
         st.download_button(
             label="Download Balance Sheet CSV",
             data=dataframe_to_csv(financials["balance"]),
@@ -1440,6 +1558,7 @@ with tab_financials:
         financials["cashflow"],
         "Values shown in millions.",
     )
+
     st.download_button(
         label="Download Cash Flow Statement CSV",
         data=dataframe_to_csv(financials["cashflow"]),
@@ -1477,7 +1596,7 @@ with tab_ai:
         "Prompt Ideas",
     )
 
-    p1, p2, p3 = st.columns(3, gap="large")
+    p1, p2, p3 = st.columns(3, gap="medium")
 
     with p1:
         render_bento_card(
