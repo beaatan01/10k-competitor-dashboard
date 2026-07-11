@@ -49,18 +49,19 @@ def dataframe_to_csv(df):
 
 
 def render_kpi_card(label, title, value, subtext, badge, badge_class=""):
-    card = f"""
-    <div class="kpi-card">
-        <div class="card-label">{py_html.escape(label)}</div>
-        <div class="card-title">{py_html.escape(title)}</div>
-        <div class="card-value">{py_html.escape(value)}</div>
-        <div class="card-sub">{py_html.escape(subtext)}</div>
-        <div class="badge {badge_class}">
-            <span class="dot"></span>{py_html.escape(badge)}
+    safe_html(
+        f"""
+        <div class="kpi-card">
+            <div class="card-label">{py_html.escape(label)}</div>
+            <div class="card-title">{py_html.escape(title)}</div>
+            <div class="card-value">{py_html.escape(value)}</div>
+            <div class="card-sub">{py_html.escape(subtext)}</div>
+            <div class="badge {badge_class}">
+                <span class="dot"></span>{py_html.escape(badge)}
+            </div>
         </div>
-    </div>
-    """
-    safe_html(card)
+        """
+    )
 
 
 def render_info_card(label, title, text, formula=None):
@@ -68,48 +69,52 @@ def render_info_card(label, title, text, formula=None):
     if formula:
         formula_html = f'<div class="formula">{py_html.escape(formula)}</div>'
 
-    card = f"""
-    <div class="info-card">
-        <div class="card-label">{py_html.escape(label)}</div>
-        <div class="info-title">{py_html.escape(title)}</div>
-        <div class="info-text">{py_html.escape(text)}</div>
-        {formula_html}
-    </div>
-    """
-    safe_html(card)
+    safe_html(
+        f"""
+        <div class="info-card">
+            <div class="card-label">{py_html.escape(label)}</div>
+            <div class="info-title">{py_html.escape(title)}</div>
+            <div class="info-text">{py_html.escape(text)}</div>
+            {formula_html}
+        </div>
+        """
+    )
 
 
 def render_bento_card(label, title, text):
-    card = f"""
-    <div class="bento-card">
-        <div class="card-label">{py_html.escape(label)}</div>
-        <div class="bento-title">{py_html.escape(title)}</div>
-        <div class="bento-text">{py_html.escape(text)}</div>
-    </div>
-    """
-    safe_html(card)
+    safe_html(
+        f"""
+        <div class="bento-card">
+            <div class="card-label">{py_html.escape(label)}</div>
+            <div class="bento-title">{py_html.escape(title)}</div>
+            <div class="bento-text">{py_html.escape(text)}</div>
+        </div>
+        """
+    )
 
 
 def render_scenario_card(label, title, value, text):
-    card = f"""
-    <div class="scenario-card">
-        <div class="card-label">{py_html.escape(label)}</div>
-        <div class="scenario-title">{py_html.escape(title)}</div>
-        <div class="scenario-value">{py_html.escape(value)}</div>
-        <div class="scenario-text">{py_html.escape(text)}</div>
-    </div>
-    """
-    safe_html(card)
+    safe_html(
+        f"""
+        <div class="scenario-card">
+            <div class="card-label">{py_html.escape(label)}</div>
+            <div class="scenario-title">{py_html.escape(title)}</div>
+            <div class="scenario-value">{py_html.escape(value)}</div>
+            <div class="scenario-text">{py_html.escape(text)}</div>
+        </div>
+        """
+    )
 
 
 def render_insight(title, text):
-    card = f"""
-    <div class="insight-card">
-        <div class="insight-label">{py_html.escape(title)}</div>
-        <div class="insight-text">{py_html.escape(text)}</div>
-    </div>
-    """
-    safe_html(card)
+    safe_html(
+        f"""
+        <div class="insight-card">
+            <div class="insight-label">{py_html.escape(title)}</div>
+            <div class="insight-text">{py_html.escape(text)}</div>
+        </div>
+        """
+    )
 
 
 def render_section(title, subtitle, tag):
@@ -149,114 +154,116 @@ def render_financial_table(title, df, note=None):
     if note:
         note_html = f'<div class="table-note">{py_html.escape(note)}</div>'
 
-    table_html = f"""
-    <div class="table-card">
-        <div class="table-card-head">
-            <div>
-                <div class="table-title">{py_html.escape(title)}</div>
-                {note_html}
+    safe_html(
+        f"""
+        <div class="table-card">
+            <div class="table-card-head">
+                <div>
+                    <div class="table-title">{py_html.escape(title)}</div>
+                    {note_html}
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="finance-table">
+                    <thead>
+                        <tr>{headers}</tr>
+                    </thead>
+                    <tbody>
+                        {rows}
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="table-wrap">
-            <table class="finance-table">
-                <thead>
-                    <tr>{headers}</tr>
-                </thead>
-                <tbody>
-                    {rows}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    """
-    safe_html(table_html)
+        """
+    )
 
 
 def render_timeline():
-    timeline_html = """
-    <div class="timeline-shell">
-        <div class="timeline-line"></div>
+    safe_html(
+        """
+        <div class="timeline-shell">
+            <div class="timeline-line"></div>
 
-        <div class="timeline-step">
-            <div class="timeline-dot">1</div>
-            <div class="timeline-card">
-                <div class="timeline-label">Start</div>
-                <div class="timeline-title">Executive Summary</div>
-                <div class="timeline-text">Introduces the purpose, structure, and product flow of the dashboard.</div>
-                <div class="timeline-detail">
-                    <b>What this means:</b><br>
-                    This is the landing page. It explains what was built, why it matters, and how to move through the experience.
+            <div class="timeline-step">
+                <div class="timeline-dot">1</div>
+                <div class="timeline-card">
+                    <div class="timeline-label">Start</div>
+                    <div class="timeline-title">Executive Summary</div>
+                    <div class="timeline-text">Introduces what was built and how to navigate the platform.</div>
+                    <div class="timeline-detail">
+                        <b>What this means:</b><br>
+                        This is the landing page. It explains the purpose, structure, and flow of the dashboard.
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-dot">2</div>
+                <div class="timeline-card">
+                    <div class="timeline-label">Analyze</div>
+                    <div class="timeline-title">Intelligence Hub</div>
+                    <div class="timeline-text">Reviews executive KPIs for growth, profitability, liquidity, and cash flow.</div>
+                    <div class="timeline-detail">
+                        <b>What this means:</b><br>
+                        This tab explains the key finance metrics a leader would scan first.
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-dot">3</div>
+                <div class="timeline-card">
+                    <div class="timeline-label">Explore</div>
+                    <div class="timeline-title">Revenue Intelligence</div>
+                    <div class="timeline-text">Shows revenue trend, revenue mix, and revenue growth commentary.</div>
+                    <div class="timeline-detail">
+                        <b>What this means:</b><br>
+                        This tab focuses on top-line performance and where revenue is coming from.
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-dot">4</div>
+                <div class="timeline-card">
+                    <div class="timeline-label">Simulate</div>
+                    <div class="timeline-title">AI Forecasting</div>
+                    <div class="timeline-text">Creates bear, base, and bull case revenue scenarios.</div>
+                    <div class="timeline-detail">
+                        <b>What this means:</b><br>
+                        This tab lets users adjust assumptions and see how forward revenue changes.
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-dot">5</div>
+                <div class="timeline-card">
+                    <div class="timeline-label">Validate</div>
+                    <div class="timeline-title">Financial Statements</div>
+                    <div class="timeline-text">Displays the statement tables behind the KPI engine.</div>
+                    <div class="timeline-detail">
+                        <b>What this means:</b><br>
+                        This tab shows the income statement, balance sheet, and cash flow statement.
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-step">
+                <div class="timeline-dot">6</div>
+                <div class="timeline-card">
+                    <div class="timeline-label">Explain</div>
+                    <div class="timeline-title">AI Copilot</div>
+                    <div class="timeline-text">Turns financial metrics into plain-English commentary.</div>
+                    <div class="timeline-detail">
+                        <b>What this means:</b><br>
+                        This tab creates narrative explanations for revenue, margins, cash flow, liquidity, and forecasting.
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div class="timeline-step">
-            <div class="timeline-dot">2</div>
-            <div class="timeline-card">
-                <div class="timeline-label">Analyze</div>
-                <div class="timeline-title">Intelligence Hub</div>
-                <div class="timeline-text">Reviews executive KPIs for growth, margins, cash flow, and liquidity.</div>
-                <div class="timeline-detail">
-                    <b>What this means:</b><br>
-                    This tab explains the core metrics a finance leader would scan first to understand business performance.
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-step">
-            <div class="timeline-dot">3</div>
-            <div class="timeline-card">
-                <div class="timeline-label">Explore</div>
-                <div class="timeline-title">Revenue Intelligence</div>
-                <div class="timeline-text">Shows revenue trend, mix, growth spread, and revenue commentary.</div>
-                <div class="timeline-detail">
-                    <b>What this means:</b><br>
-                    This tab focuses on top-line performance and helps explain where revenue is coming from.
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-step">
-            <div class="timeline-dot">4</div>
-            <div class="timeline-card">
-                <div class="timeline-label">Simulate</div>
-                <div class="timeline-title">AI Forecasting</div>
-                <div class="timeline-text">Uses growth assumptions to produce bear, base, and bull revenue scenarios.</div>
-                <div class="timeline-detail">
-                    <b>What this means:</b><br>
-                    This section helps the user see how future revenue changes under different assumptions.
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-step">
-            <div class="timeline-dot">5</div>
-            <div class="timeline-card">
-                <div class="timeline-label">Validate</div>
-                <div class="timeline-title">Financial Statements</div>
-                <div class="timeline-text">Displays the income statement, balance sheet, and cash flow statement.</div>
-                <div class="timeline-detail">
-                    <b>What this means:</b><br>
-                    This tab provides the raw statement data that powers the KPIs and visuals.
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-step">
-            <div class="timeline-dot">6</div>
-            <div class="timeline-card">
-                <div class="timeline-label">Explain</div>
-                <div class="timeline-title">AI Copilot</div>
-                <div class="timeline-text">Turns financial metrics into plain-English executive commentary.</div>
-                <div class="timeline-detail">
-                    <b>What this means:</b><br>
-                    This is the narrative layer. It helps explain revenue, margins, cash flow, liquidity, and forecasts.
-                </div>
-            </div>
-        </div>
-    </div>
-    """
-    safe_html(timeline_html)
+        """
+    )
 
 
 # ================================================================
@@ -277,74 +284,96 @@ safe_html(
         --muted: #AEB6C5;
         --muted2: #7D8798;
 
-        --glass: rgba(14, 19, 32, 0.24);
-        --glass-strong: rgba(17, 23, 38, 0.34);
-        --glass-soft: rgba(255, 255, 255, 0.050);
-
-        --border: rgba(255, 255, 255, 0.115);
-        --border-blue: rgba(0, 120, 212, 0.46);
+        --glass: rgba(14, 19, 32, 0.26);
+        --glass-strong: rgba(17, 23, 38, 0.36);
+        --border: rgba(255, 255, 255, 0.12);
+        --border-blue: rgba(0, 120, 212, 0.48);
 
         --shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
         --shadow-hover: 0 24px 64px rgba(0, 0, 0, 0.48);
     }
 
     html, body, .stApp {
-        background: #030814 !important;
+        background: transparent !important;
         color: var(--text) !important;
         font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    .stApp {
-        position: relative;
-        overflow-x: hidden;
+    body {
+        background: #030814 !important;
     }
 
-    /* ============================================================
-       TRUE FULL-PAGE MOVING AURORA BACKGROUND
-       ============================================================ */
-
-    .stApp::before {
-        content: "";
-        position: fixed;
-        inset: -28%;
-        z-index: 0;
-        pointer-events: none;
-        background:
-            radial-gradient(circle at 12% 18%, rgba(0,120,212,0.72), transparent 24%),
-            radial-gradient(circle at 86% 18%, rgba(127,186,0,0.42), transparent 22%),
-            radial-gradient(circle at 68% 76%, rgba(134,97,197,0.68), transparent 26%),
-            radial-gradient(circle at 26% 82%, rgba(242,80,34,0.28), transparent 20%);
-        filter: blur(110px);
-        opacity: 0.88;
-        mix-blend-mode: screen;
-        animation: fullAuraMove 16s ease-in-out infinite alternate;
-    }
-
-    .stApp::after {
-        content: "";
+    .aurora-bg {
         position: fixed;
         inset: 0;
+        overflow: hidden;
         z-index: 0;
         pointer-events: none;
         background:
-            linear-gradient(180deg, rgba(3,8,20,0.18), rgba(3,8,20,0.82)),
-            radial-gradient(circle at 50% 0%, rgba(255,255,255,0.045), transparent 36%);
+            radial-gradient(circle at 15% 15%, rgba(0,120,212,0.22), transparent 28%),
+            radial-gradient(circle at 88% 12%, rgba(127,186,0,0.14), transparent 24%),
+            linear-gradient(135deg, #031021 0%, #050817 45%, #06120d 100%);
     }
 
-    @keyframes fullAuraMove {
-        0% {
-            transform: translate3d(-4%, -3%, 0) scale(1.00) rotate(0deg);
-        }
-        40% {
-            transform: translate3d(7%, 5%, 0) scale(1.16) rotate(8deg);
-        }
-        100% {
-            transform: translate3d(-2%, 9%, 0) scale(1.26) rotate(-6deg);
-        }
+    .aurora-orb {
+        position: absolute;
+        width: 760px;
+        height: 760px;
+        border-radius: 50%;
+        filter: blur(105px);
+        opacity: 0.82;
+        mix-blend-mode: screen;
+        will-change: transform;
+    }
+
+    .aurora-orb.blue {
+        left: -220px;
+        top: -220px;
+        background: radial-gradient(circle, rgba(0,120,212,0.82), rgba(0,120,212,0.16), transparent 68%);
+        animation: orbBlue 14s ease-in-out infinite alternate;
+    }
+
+    .aurora-orb.green {
+        right: -260px;
+        top: -160px;
+        background: radial-gradient(circle, rgba(127,186,0,0.54), rgba(127,186,0,0.10), transparent 68%);
+        animation: orbGreen 17s ease-in-out infinite alternate;
+    }
+
+    .aurora-orb.purple {
+        left: 30%;
+        bottom: -360px;
+        background: radial-gradient(circle, rgba(134,97,197,0.76), rgba(134,97,197,0.14), transparent 68%);
+        animation: orbPurple 19s ease-in-out infinite alternate;
+    }
+
+    .aurora-shade {
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(180deg, rgba(3,8,20,0.10), rgba(3,8,20,0.84)),
+            radial-gradient(circle at 50% 0%, rgba(255,255,255,0.04), transparent 36%);
+    }
+
+    @keyframes orbBlue {
+        0% { transform: translate3d(0, 0, 0) scale(1); }
+        100% { transform: translate3d(360px, 230px, 0) scale(1.25); }
+    }
+
+    @keyframes orbGreen {
+        0% { transform: translate3d(0, 0, 0) scale(1); }
+        100% { transform: translate3d(-320px, 260px, 0) scale(1.20); }
+    }
+
+    @keyframes orbPurple {
+        0% { transform: translate3d(0, 0, 0) scale(1); }
+        100% { transform: translate3d(200px, -260px, 0) scale(1.30); }
     }
 
     [data-testid="stAppViewContainer"] {
         background: transparent !important;
+        position: relative;
+        z-index: 1;
     }
 
     [data-testid="stAppViewContainer"] > .main {
@@ -368,14 +397,10 @@ safe_html(
         font-family: "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* ============================================================
-       TABS
-       ============================================================ */
-
     .stTabs [data-baseweb="tab-list"] {
         gap: 0.34rem;
         background: rgba(255,255,255,0.030);
-        border: 1px solid rgba(255,255,255,0.075);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 999px;
         padding: 0.30rem;
         margin-bottom: 1rem;
@@ -387,7 +412,7 @@ safe_html(
         height: 34px;
         padding: 0 0.72rem;
         border-radius: 999px !important;
-        color: rgba(218,226,238,0.62);
+        color: rgba(218,226,238,0.66);
         font-weight: 680;
         font-size: 0.735rem;
         transition: all 0.16s ease !important;
@@ -408,10 +433,6 @@ safe_html(
         color: #E6F4FF !important;
         box-shadow: 0 0 24px rgba(0,120,212,0.20);
     }
-
-    /* ============================================================
-       HERO: GLASS ONLY
-       ============================================================ */
 
     .hero {
         position: relative;
@@ -505,10 +526,6 @@ safe_html(
         border-color: rgba(0,120,212,0.42);
     }
 
-    /* ============================================================
-       SECTIONS
-       ============================================================ */
-
     .section-head {
         display: flex;
         align-items: flex-end;
@@ -545,10 +562,6 @@ safe_html(
         -webkit-backdrop-filter: blur(18px);
     }
 
-    /* ============================================================
-       GLASS CARDS
-       ============================================================ */
-
     .kpi-card,
     .bento-card,
     .info-card,
@@ -582,33 +595,6 @@ safe_html(
             linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.035)),
             rgba(14, 21, 37, 0.34);
         box-shadow: var(--shadow-hover);
-    }
-
-    .kpi-card::before,
-    .bento-card::before,
-    .info-card::before,
-    .scenario-card::before,
-    .insight-card::before,
-    .timeline-card::before {
-        content: "";
-        position: absolute;
-        width: 220px;
-        height: 220px;
-        right: -92px;
-        top: -104px;
-        background: radial-gradient(circle, rgba(0,120,212,0.25), transparent 68%);
-        opacity: 0;
-        transition: opacity 0.18s ease;
-        pointer-events: none;
-    }
-
-    .kpi-card:hover::before,
-    .bento-card:hover::before,
-    .info-card:hover::before,
-    .scenario-card:hover::before,
-    .insight-card:hover::before,
-    .timeline-card:hover::before {
-        opacity: 1;
     }
 
     .kpi-card {
@@ -752,10 +738,6 @@ safe_html(
         line-height: 1.54;
     }
 
-    /* ============================================================
-       TIMELINE / WORKFLOW
-       ============================================================ */
-
     .timeline-shell {
         position: relative;
         display: grid;
@@ -816,7 +798,6 @@ safe_html(
         font-size: 0.75rem;
         font-weight: 720;
         line-height: 1.32;
-        letter-spacing: 0.006em;
         margin-bottom: 0.28rem;
     }
 
@@ -834,10 +815,9 @@ safe_html(
         padding: 0.54rem;
         border-radius: 12px;
         color: #DDEAF7;
-        background: rgba(5, 10, 22, 0.62);
+        background: rgba(5, 10, 22, 0.66);
         border: 1px solid rgba(255,255,255,0.10);
         backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
         font-size: 0.58rem;
         line-height: 1.42;
         opacity: 0;
@@ -850,10 +830,6 @@ safe_html(
         opacity: 1;
         transform: translateY(0);
     }
-
-    /* ============================================================
-       CHARTS
-       ============================================================ */
 
     .chart-title-card {
         min-height: 46px;
@@ -869,7 +845,6 @@ safe_html(
         font-size: 0.70rem;
         font-weight: 720;
         line-height: 1.32;
-        letter-spacing: 0.004em;
     }
 
     .chart-caption {
@@ -877,10 +852,6 @@ safe_html(
         font-size: 0.57rem;
         font-weight: 680;
     }
-
-    /* ============================================================
-       FINANCIAL TABLES
-       ============================================================ */
 
     .table-card {
         padding: 0.82rem;
@@ -898,7 +869,6 @@ safe_html(
         color: #FFFFFF;
         font-size: 0.78rem;
         font-weight: 720;
-        letter-spacing: 0.006em;
         line-height: 1.35;
     }
 
@@ -943,10 +913,6 @@ safe_html(
     .finance-table tr:hover td {
         background: rgba(0,120,212,0.08);
     }
-
-    /* ============================================================
-       STREAMLIT NATIVE UI
-       ============================================================ */
 
     h3 {
         color: #FFFFFF !important;
@@ -1022,6 +988,21 @@ safe_html(
         }
     }
     </style>
+    """
+)
+
+# ================================================================
+# Safe Aurora HTML Layer
+# ================================================================
+
+safe_html(
+    """
+    <div class="aurora-bg">
+        <div class="aurora-orb blue"></div>
+        <div class="aurora-orb green"></div>
+        <div class="aurora-orb purple"></div>
+        <div class="aurora-shade"></div>
+    </div>
     """
 )
 
@@ -1335,7 +1316,7 @@ with tab_revenue:
 
         fig_ts.update_yaxes(tickprefix="$", ticksuffix="M")
         fig_ts = style_fig(fig_ts, height=238)
-        st.plotly_chart(fig_ts, use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(fig_ts, width="stretch", config={"displayModeBar": False})
 
     with right:
         render_chart_title("Revenue Mix by Category", "Product vs Service")
@@ -1366,7 +1347,7 @@ with tab_revenue:
 
         fig_seg.update_yaxes(tickprefix="$", ticksuffix="M")
         fig_seg = style_fig(fig_seg, height=238, showlegend=True)
-        st.plotly_chart(fig_seg, use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(fig_seg, width="stretch", config={"displayModeBar": False})
 
     render_insight(
         "Revenue Commentary",
@@ -1497,7 +1478,7 @@ with tab_forecast:
 
     fig_forecast.update_yaxes(tickprefix="$", ticksuffix="M")
     fig_forecast = style_fig(fig_forecast, height=260, showlegend=True)
-    st.plotly_chart(fig_forecast, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig_forecast, width="stretch", config={"displayModeBar": False})
 
     latest_forecast = forecast_df.iloc[-1]
 
