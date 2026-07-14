@@ -511,7 +511,7 @@ with tab_forecast:
     fig_fc.update_yaxes(tickprefix="$", ticksuffix="M")
     st.plotly_chart(style_fig(fig_fc, 260, True), width="stretch", config={"displayModeBar": False})
 
-        render_chart_title("Monte Carlo Fan Chart", f"500 simulations · μ={growth_rate_pct}% σ={volatility_pct}%")
+    render_chart_title("Monte Carlo Fan Chart", f"500 simulations · μ={growth_rate_pct}% σ={volatility_pct}%")
     mc = monte_carlo_forecast(k["revenue"], base_growth, vol, 2026, forecast_years, 500)
     fig_mc = go.Figure()
     fig_mc.add_trace(go.Scatter(x=hist_df["year"], y=hist_df["revenue"], mode="lines+markers", name="Historical",
