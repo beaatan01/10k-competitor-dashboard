@@ -2,111 +2,101 @@ import pandas as pd
 import numpy as np
 
 # ============================================================
-# Hard-coded financials (Microsoft + peers)
-# Values in millions of USD.
+# Microsoft — VERIFIED numbers from FY2025 10-K (June 30 FYE)
+# All values in $ millions. Source: MSFT_FY25q4_10K.pdf
 # ============================================================
 
 def microsoft_fallback_financials():
     income = pd.DataFrame([
-        {"line_item": "Product Revenue", "2025": 63946.0, "2024": 64773.0, "2023": 64699.0},
-        {"line_item": "Service and Other Revenue", "2025": 217778.0, "2024": 180349.0, "2023": 147216.0},
-        {"line_item": "Total Revenue", "2025": 281724.0, "2024": 245122.0, "2023": 211915.0},
-        {"line_item": "Total Cost of Revenue", "2025": 87831.0, "2024": 74114.0, "2023": 65863.0},
-        {"line_item": "Gross Margin", "2025": 193893.0, "2024": 171008.0, "2023": 146052.0},
-        {"line_item": "Operating Income", "2025": 128528.0, "2024": 109433.0, "2023": 88523.0},
-        {"line_item": "Net Income", "2025": 101832.0, "2024": 88136.0, "2023": 72361.0},
+        {"line_item": "Product Revenue",             "2025": 63946.0,  "2024": 64773.0,  "2023": 64699.0},
+        {"line_item": "Service and Other Revenue",   "2025": 217778.0, "2024": 180349.0, "2023": 147216.0},
+        {"line_item": "Total Revenue",               "2025": 281724.0, "2024": 245122.0, "2023": 211915.0},
+        {"line_item": "Total Cost of Revenue",       "2025": 87831.0,  "2024": 74114.0,  "2023": 65863.0},
+        {"line_item": "Gross Margin",                "2025": 193893.0, "2024": 171008.0, "2023": 146052.0},
+        {"line_item": "Research and Development",    "2025": 32488.0,  "2024": 29510.0,  "2023": 27195.0},
+        {"line_item": "Sales and Marketing",         "2025": 25654.0,  "2024": 24456.0,  "2023": 22759.0},
+        {"line_item": "General and Administrative",  "2025": 7223.0,   "2024": 7609.0,   "2023": 7575.0},
+        {"line_item": "Operating Income",            "2025": 128528.0, "2024": 109433.0, "2023": 88523.0},
+        {"line_item": "Other Income (Expense), net", "2025": -4901.0,  "2024": -1646.0,  "2023": 788.0},
+        {"line_item": "Income Before Income Taxes",  "2025": 123627.0, "2024": 107787.0, "2023": 89311.0},
+        {"line_item": "Provision for Income Taxes",  "2025": 21795.0,  "2024": 19651.0,  "2023": 16950.0},
+        {"line_item": "Net Income",                  "2025": 101832.0, "2024": 88136.0,  "2023": 72361.0},
     ])
+    # Balance sheet: 10-K only reports FY25 & FY24. FY23 cash from CF stmt end-of-period.
     balance = pd.DataFrame([
-        {"line_item": "Cash and Cash Equivalents", "2025": 17489.0, "2024": 19101.0, "2023": 19501.0},
-        {"line_item": "Total Debt", "2025": 43986.0, "2024": 43986.0, "2023": 43986.0},
+        {"line_item": "Cash and Cash Equivalents",   "2025": 30242.0,  "2024": 18315.0,  "2023": 34704.0},
+        {"line_item": "Short-Term Investments",      "2025": 64323.0,  "2024": 57228.0,  "2023": 76558.0},
+        {"line_item": "Total Cash + ST Investments", "2025": 94565.0,  "2024": 75543.0,  "2023": 111262.0},
+        {"line_item": "Total Assets",                "2025": 619003.0, "2024": 512163.0, "2023": 411976.0},
+        {"line_item": "Short-Term Debt",             "2025": 0.0,      "2024": 6693.0,   "2023": 0.0},
+        {"line_item": "Current Portion of LT Debt",  "2025": 2999.0,   "2024": 2249.0,   "2023": 5247.0},
+        {"line_item": "Long-Term Debt",              "2025": 40152.0,  "2024": 42688.0,  "2023": 41990.0},
+        {"line_item": "Total Debt",                  "2025": 43151.0,  "2024": 51630.0,  "2023": 47237.0},
+        {"line_item": "Stockholders' Equity",        "2025": 343479.0, "2024": 268477.0, "2023": 206223.0},
     ])
     cashflow = pd.DataFrame([
-        {"line_item": "Operating Cash Flow", "2025": 117000.0, "2024": 110000.0, "2023": 96000.0},
-        {"line_item": "Capital Expenditures", "2025": -35000.0, "2024": -30000.0, "2023": -25000.0},
+        {"line_item": "Net Income",                     "2025": 101832.0, "2024": 88136.0,  "2023": 72361.0},
+        {"line_item": "Depreciation & Amortization",    "2025": 34153.0,  "2024": 22287.0,  "2023": 13861.0},
+        {"line_item": "Stock-Based Compensation",       "2025": 11974.0,  "2024": 10734.0,  "2023": 9611.0},
+        {"line_item": "Operating Cash Flow",            "2025": 136162.0, "2024": 118548.0, "2023": 87582.0},
+        {"line_item": "Capital Expenditures",           "2025": -64551.0, "2024": -44477.0, "2023": -28107.0},
+        {"line_item": "Acquisitions (net)",             "2025": -5978.0,  "2024": -69132.0, "2023": -1670.0},
+        {"line_item": "Common Stock Repurchased",       "2025": -18420.0, "2024": -17254.0, "2023": -22245.0},
+        {"line_item": "Dividends Paid",                 "2025": -24082.0, "2024": -21771.0, "2023": -19800.0},
+        {"line_item": "Net Change in Cash",             "2025": 11927.0,  "2024": -16389.0, "2023": 20773.0},
     ])
-    return {"income": income, "balance": balance, "cashflow": cashflow}
-
-
-def peer_financials():
-    return {
-        "Apple": {
-            "income": pd.DataFrame([
-                {"line_item": "Product Revenue", "2025": 294000.0, "2024": 294866.0, "2023": 298085.0},
-                {"line_item": "Service and Other Revenue", "2025": 108000.0, "2024": 96169.0, "2023": 85200.0},
-                {"line_item": "Total Revenue", "2025": 402000.0, "2024": 391035.0, "2023": 383285.0},
-                {"line_item": "Total Cost of Revenue", "2025": 220000.0, "2024": 210352.0, "2023": 214137.0},
-                {"line_item": "Gross Margin", "2025": 182000.0, "2024": 180683.0, "2023": 169148.0},
-                {"line_item": "Operating Income", "2025": 125000.0, "2024": 123216.0, "2023": 114301.0},
-                {"line_item": "Net Income", "2025": 97000.0, "2024": 93736.0, "2023": 96995.0},
-            ]),
-            "balance": pd.DataFrame([
-                {"line_item": "Cash and Cash Equivalents", "2025": 30000.0, "2024": 29943.0, "2023": 29965.0},
-                {"line_item": "Total Debt", "2025": 100000.0, "2024": 106629.0, "2023": 111088.0},
-            ]),
-            "cashflow": pd.DataFrame([
-                {"line_item": "Operating Cash Flow", "2025": 120000.0, "2024": 118254.0, "2023": 110543.0},
-                {"line_item": "Capital Expenditures", "2025": -11000.0, "2024": -9447.0, "2023": -10959.0},
-            ]),
-        },
-        "Alphabet": {
-            "income": pd.DataFrame([
-                {"line_item": "Product Revenue", "2025": 40000.0, "2024": 37000.0, "2023": 34000.0},
-                {"line_item": "Service and Other Revenue", "2025": 320000.0, "2024": 313000.0, "2023": 273000.0},
-                {"line_item": "Total Revenue", "2025": 360000.0, "2024": 350018.0, "2023": 307394.0},
-                {"line_item": "Total Cost of Revenue", "2025": 150000.0, "2024": 146000.0, "2023": 133332.0},
-                {"line_item": "Gross Margin", "2025": 210000.0, "2024": 204018.0, "2023": 174062.0},
-                {"line_item": "Operating Income", "2025": 118000.0, "2024": 112390.0, "2023": 84293.0},
-                {"line_item": "Net Income", "2025": 105000.0, "2024": 100118.0, "2023": 73795.0},
-            ]),
-            "balance": pd.DataFrame([
-                {"line_item": "Cash and Cash Equivalents", "2025": 25000.0, "2024": 23466.0, "2023": 24048.0},
-                {"line_item": "Total Debt", "2025": 13000.0, "2024": 12849.0, "2023": 13253.0},
-            ]),
-            "cashflow": pd.DataFrame([
-                {"line_item": "Operating Cash Flow", "2025": 130000.0, "2024": 125299.0, "2023": 101746.0},
-                {"line_item": "Capital Expenditures", "2025": -55000.0, "2024": -52535.0, "2023": -32251.0},
-            ]),
-        },
-        "Amazon": {
-            "income": pd.DataFrame([
-                {"line_item": "Product Revenue", "2025": 260000.0, "2024": 255000.0, "2023": 242000.0},
-                {"line_item": "Service and Other Revenue", "2025": 380000.0, "2024": 344975.0, "2023": 332000.0},
-                {"line_item": "Total Revenue", "2025": 640000.0, "2024": 599975.0, "2023": 574785.0},
-                {"line_item": "Total Cost of Revenue", "2025": 320000.0, "2024": 304739.0, "2023": 304739.0},
-                {"line_item": "Gross Margin", "2025": 320000.0, "2024": 295236.0, "2023": 270046.0},
-                {"line_item": "Operating Income", "2025": 75000.0, "2024": 68593.0, "2023": 36852.0},
-                {"line_item": "Net Income", "2025": 65000.0, "2024": 59248.0, "2023": 30425.0},
-            ]),
-            "balance": pd.DataFrame([
-                {"line_item": "Cash and Cash Equivalents", "2025": 80000.0, "2024": 73890.0, "2023": 73387.0},
-                {"line_item": "Total Debt", "2025": 55000.0, "2024": 54882.0, "2023": 67150.0},
-            ]),
-            "cashflow": pd.DataFrame([
-                {"line_item": "Operating Cash Flow", "2025": 120000.0, "2024": 115000.0, "2023": 84946.0},
-                {"line_item": "Capital Expenditures", "2025": -85000.0, "2024": -77000.0, "2023": -52729.0},
-            ]),
-        },
+    # Segments — verified from Note 18
+    segments = pd.DataFrame([
+        {"segment": "Productivity and Business Processes",
+         "rev_2025": 120810.0, "rev_2024": 106820.0, "rev_2023": 94151.0,
+         "opi_2025": 69773.0,  "opi_2024": 59661.0,  "opi_2023": 50074.0},
+        {"segment": "Intelligent Cloud",
+         "rev_2025": 106265.0, "rev_2024": 87464.0,  "rev_2023": 72944.0,
+         "opi_2025": 44589.0,  "opi_2024": 37813.0,  "opi_2023": 28411.0},
+        {"segment": "More Personal Computing",
+         "rev_2025": 54649.0,  "rev_2024": 50838.0,  "rev_2023": 44820.0,
+         "opi_2025": 14166.0,  "opi_2024": 11959.0,  "opi_2023": 10038.0},
+    ])
+    geographic = pd.DataFrame([
+        {"region": "United States",  "2025": 144546.0, "2024": 124704.0, "2023": 106744.0},
+        {"region": "Other Countries", "2025": 137178.0, "2024": 120418.0, "2023": 105171.0},
+    ])
+    per_share = {
+        "diluted_eps": {"2025": 13.64, "2024": 11.80, "2023": 9.68},
+        "diluted_shares_millions": {"2025": 7465.0, "2024": 7469.0, "2023": 7472.0},
     }
+    return {"income": income, "balance": balance, "cashflow": cashflow,
+            "segments": segments, "geographic": geographic, "per_share": per_share}
 
+
+# ============================================================
+# Utility Functions
+# ============================================================
 
 def safe_div(n, d):
-    if n is None or d is None or d == 0:
-        return None
+    if n is None or d is None or d == 0: return None
     return n / d
 
-
 def fmt_cur(v):
-    if v is None:
-        return "N/A"
-    if abs(v) >= 1000:
-        return f"${v / 1000:,.1f}B"
+    if v is None: return "N/A"
+    if abs(v) >= 1000: return f"${v/1000:,.1f}B"
     return f"${v:,.0f}M"
 
-
 def fmt_pct(v):
-    if v is None:
-        return "N/A"
-    return f"{v * 100:.1f}%"
+    if v is None: return "N/A"
+    return f"{v*100:.1f}%"
+
+def fmt_ratio(v, suffix="x"):
+    if v is None: return "N/A"
+    return f"{v:.2f}{suffix}"
+
+
+# ============================================================
+# KPI Computation — expanded with real analyst metrics
+# ============================================================
+
+def _row(df, col_name, col_val):
+    return df.loc[df[col_name] == col_val].iloc[0]
 
 
 def compute_kpis(financials):
@@ -114,70 +104,143 @@ def compute_kpis(financials):
     balance = financials["balance"]
     cashflow = financials["cashflow"]
 
-    revenue = income.loc[income["line_item"] == "Total Revenue"].iloc[0]
-    product_revenue = income.loc[income["line_item"] == "Product Revenue"].iloc[0]
-    service_revenue = income.loc[income["line_item"] == "Service and Other Revenue"].iloc[0]
-    gross_margin = income.loc[income["line_item"] == "Gross Margin"].iloc[0]
-    operating_income = income.loc[income["line_item"] == "Operating Income"].iloc[0]
-    net_income = income.loc[income["line_item"] == "Net Income"].iloc[0]
-    cash = balance.loc[balance["line_item"] == "Cash and Cash Equivalents"].iloc[0]
-    debt = balance.loc[balance["line_item"] == "Total Debt"].iloc[0]
-    ocf = cashflow.loc[cashflow["line_item"] == "Operating Cash Flow"].iloc[0]
-    capex = cashflow.loc[cashflow["line_item"] == "Capital Expenditures"].iloc[0]
+    total_rev  = _row(income, "line_item", "Total Revenue")
+    prod_rev   = _row(income, "line_item", "Product Revenue")
+    svc_rev    = _row(income, "line_item", "Service and Other Revenue")
+    gross      = _row(income, "line_item", "Gross Margin")
+    rd         = _row(income, "line_item", "Research and Development")
+    op_inc     = _row(income, "line_item", "Operating Income")
+    pretax     = _row(income, "line_item", "Income Before Income Taxes")
+    tax        = _row(income, "line_item", "Provision for Income Taxes")
+    net_inc    = _row(income, "line_item", "Net Income")
+
+    cash       = _row(balance, "line_item", "Cash and Cash Equivalents")
+    st_inv     = _row(balance, "line_item", "Short-Term Investments")
+    debt       = _row(balance, "line_item", "Total Debt")
+    equity     = _row(balance, "line_item", "Stockholders' Equity")
+    tot_assets = _row(balance, "line_item", "Total Assets")
+
+    da         = _row(cashflow, "line_item", "Depreciation & Amortization")
+    ocf        = _row(cashflow, "line_item", "Operating Cash Flow")
+    capex      = _row(cashflow, "line_item", "Capital Expenditures")
+    buybacks   = _row(cashflow, "line_item", "Common Stock Repurchased")
+    dividends  = _row(cashflow, "line_item", "Dividends Paid")
+    acq        = _row(cashflow, "line_item", "Acquisitions (net)")
 
     periods = ["2025", "2024", "2023"]
     latest = "2025"
 
     ts_rows = []
     for p in periods:
-        rev = revenue[p]
-        gm = gross_margin[p]
-        op = operating_income[p]
-        ni = net_income[p]
-        operating_cf = ocf[p]
-        capex_amt = abs(capex[p])
-        fcf = operating_cf - capex_amt
+        rev = total_rev[p]; opi = op_inc[p]; ni = net_inc[p]
+        ocf_v = ocf[p]; cx = abs(capex[p]); fcf = ocf_v - cx
+        ebitda = opi + da[p]
+        # Effective tax rate
+        etr = safe_div(tax[p], pretax[p])
+        # Rule of 40 — need prior year for growth (skip earliest)
         ts_rows.append({
-            "period": p, "revenue": rev,
-            "gross_margin": safe_div(gm, rev),
-            "operating_margin": safe_div(op, rev),
+            "period": p,
+            "revenue": rev,
+            "gross_margin": safe_div(gross[p], rev),
+            "operating_margin": safe_div(opi, rev),
             "net_margin": safe_div(ni, rev),
-            "cash_balance": cash[p], "total_debt": debt[p],
-            "operating_cash_flow": operating_cf,
-            "capex": capex_amt, "free_cash_flow": fcf,
+            "ebitda": ebitda,
+            "ebitda_margin": safe_div(ebitda, rev),
+            "fcf_margin": safe_div(fcf, rev),
+            "rd_intensity": safe_div(rd[p], rev),
+            "capex_intensity": safe_div(cx, rev),
+            "effective_tax_rate": etr,
+            "cash_balance": cash[p],
+            "cash_plus_st_inv": cash[p] + st_inv[p],
+            "total_debt": debt[p],
+            "net_debt": debt[p] - cash[p],
+            "net_debt_ebitda": safe_div(debt[p] - cash[p], ebitda),
+            "operating_cash_flow": ocf_v,
+            "capex": cx,
+            "free_cash_flow": fcf,
+            "dividends_paid": abs(dividends[p]),
+            "buybacks": abs(buybacks[p]),
+            "acquisitions": abs(acq[p]),
         })
     ts = pd.DataFrame(ts_rows)
 
+    # Add YoY growth + Rule of 40 (needs prior year)
+    ts = ts.sort_values("period").reset_index(drop=True)
+    ts["revenue_growth"] = ts["revenue"].pct_change()
+    ts["rule_of_40"] = ts["revenue_growth"] + ts["fcf_margin"]
+
     segment_revenue = pd.DataFrame([
-        {"period": p,
-         "Product Revenue": product_revenue[p],
-         "Service and Other Revenue": service_revenue[p]}
+        {"period": p, "Product Revenue": prod_rev[p], "Service and Other Revenue": svc_rev[p]}
         for p in periods
     ])
 
-    yoy_growth = (revenue["2025"] - revenue["2024"]) / revenue["2024"]
     latest_ts = ts.loc[ts["period"] == latest].iloc[0]
+    yoy_growth = (total_rev["2025"] - total_rev["2024"]) / total_rev["2024"]
+
+    # ROIC = NOPAT / (Debt + Equity)
+    nopat = op_inc[latest] * (1 - latest_ts["effective_tax_rate"])
+    invested_capital = debt[latest] + equity[latest]
+    roic = safe_div(nopat, invested_capital)
+    roe  = safe_div(net_inc[latest], equity[latest])
+    roa  = safe_div(net_inc[latest], tot_assets[latest])
+
+    # Capital allocation total FY25
+    cap_allocation = {
+        "capex": abs(capex[latest]),
+        "acquisitions": abs(acq[latest]),
+        "dividends": abs(dividends[latest]),
+        "buybacks": abs(buybacks[latest]),
+    }
+    cap_allocation["total_returned_to_shareholders"] = cap_allocation["dividends"] + cap_allocation["buybacks"]
+    cap_allocation["total_deployed"] = sum(cap_allocation[k] for k in ("capex","acquisitions","dividends","buybacks"))
 
     return {
         "latest_period": latest, "periods": periods,
         "time_series": ts, "segment_revenue": segment_revenue,
-        "revenue": revenue[latest], "prior_year_revenue": revenue["2024"],
+        "segments": financials["segments"],
+        "geographic": financials["geographic"],
+        "per_share": financials["per_share"],
+
+        "revenue": total_rev[latest],
+        "prior_year_revenue": total_rev["2024"],
         "revenue_yoy_growth": yoy_growth,
-        "product_revenue": product_revenue[latest],
-        "service_revenue": service_revenue[latest],
-        "product_revenue_prior": product_revenue["2024"],
-        "service_revenue_prior": service_revenue["2024"],
-        "product_revenue_mix": product_revenue[latest] / revenue[latest],
-        "service_revenue_mix": service_revenue[latest] / revenue[latest],
+        "product_revenue": prod_rev[latest],
+        "service_revenue": svc_rev[latest],
+        "product_revenue_prior": prod_rev["2024"],
+        "service_revenue_prior": svc_rev["2024"],
+        "product_revenue_mix": prod_rev[latest] / total_rev[latest],
+        "service_revenue_mix": svc_rev[latest] / total_rev[latest],
+
         "gross_margin": latest_ts["gross_margin"],
         "operating_margin": latest_ts["operating_margin"],
         "net_margin": latest_ts["net_margin"],
-        "gross_margin_dollars": gross_margin[latest],
-        "operating_income": operating_income[latest],
-        "net_income": net_income[latest],
-        "cash_balance": cash[latest], "total_debt": debt[latest],
+        "ebitda": latest_ts["ebitda"],
+        "ebitda_margin": latest_ts["ebitda_margin"],
+
+        "gross_margin_dollars": gross[latest],
+        "operating_income": op_inc[latest],
+        "net_income": net_inc[latest],
+
+        "effective_tax_rate": latest_ts["effective_tax_rate"],
+        "rd_intensity": latest_ts["rd_intensity"],
+        "capex_intensity": latest_ts["capex_intensity"],
+
+        "cash_balance": cash[latest],
+        "cash_plus_st_inv": latest_ts["cash_plus_st_inv"],
+        "total_debt": debt[latest],
+        "net_debt": latest_ts["net_debt"],
+        "net_debt_ebitda": latest_ts["net_debt_ebitda"],
+        "stockholders_equity": equity[latest],
+
         "operating_cash_flow": latest_ts["operating_cash_flow"],
-        "capex": latest_ts["capex"], "free_cash_flow": latest_ts["free_cash_flow"],
+        "capex": latest_ts["capex"],
+        "free_cash_flow": latest_ts["free_cash_flow"],
+        "fcf_margin": latest_ts["fcf_margin"],
+
+        "rule_of_40": latest_ts["rule_of_40"],
+        "roic": roic, "roe": roe, "roa": roa,
+
+        "cap_allocation": cap_allocation,
     }
 
 
@@ -185,19 +248,11 @@ def process_uploaded_file(_file=None):
     financials = microsoft_fallback_financials()
     kpis = compute_kpis(financials)
     return {"company": "Microsoft", "financials": financials, "kpis": kpis,
-            "raw_tables": [], "table_count": 0,
-            "manual_selection_applied": False,
-            "confidence": "Microsoft Hard-Coded Financials"}
+            "confidence": "Sourced from MSFT FY2025 10-K (June 30, 2025)"}
 
 
 def process_peers(peer_names):
-    all_peers = peer_financials()
-    out = {}
-    for name in peer_names:
-        if name in all_peers:
-            fin = all_peers[name]
-            out[name] = {"company": name, "financials": fin, "kpis": compute_kpis(fin)}
-    return out
+    return {}  # peers disabled until we have real 10-Ks for them
 
 
 def build_benchmark_dataframe(results):
@@ -208,11 +263,11 @@ def build_benchmark_dataframe(results):
             "company": company, "year": k["latest_period"],
             "revenue": k["revenue"], "prior_year_revenue": k["prior_year_revenue"],
             "revenue_yoy_growth": k["revenue_yoy_growth"],
-            "product_revenue": k["product_revenue"], "service_revenue": k["service_revenue"],
             "product_revenue_mix": k["product_revenue_mix"],
             "service_revenue_mix": k["service_revenue_mix"],
-            "gross_margin": k["gross_margin"], "operating_margin": k["operating_margin"],
-            "net_margin": k["net_margin"], "gross_margin_dollars": k["gross_margin_dollars"],
+            "gross_margin": k["gross_margin"],
+            "operating_margin": k["operating_margin"],
+            "net_margin": k["net_margin"],
             "operating_income": k["operating_income"], "net_income": k["net_income"],
             "cash_balance": k["cash_balance"], "total_debt": k["total_debt"],
             "operating_cash_flow": k["operating_cash_flow"], "capex": k["capex"],
@@ -223,11 +278,11 @@ def build_benchmark_dataframe(results):
 
 def build_forecast_dataframe(starting_revenue, growth_rate, start_year=2026, periods=3):
     rows = []
-    revenue = starting_revenue
+    rev = starting_revenue
     for i in range(periods):
         year = start_year + i
-        revenue = revenue * (1 + growth_rate)
-        rows.append({"year": year, "revenue": revenue, "growth_rate": growth_rate})
+        rev = rev * (1 + growth_rate)
+        rows.append({"year": year, "revenue": rev, "growth_rate": growth_rate})
     return pd.DataFrame(rows)
 
 
@@ -235,13 +290,12 @@ def build_scenario_dataframe(starting_revenue, start_year=2026, periods=3,
                               bear_growth=0.06, base_growth=0.12, bull_growth=0.17):
     scenarios = {"Bear Case": bear_growth, "Base Case": base_growth, "Bull Case": bull_growth}
     rows = []
-    for scenario_name, growth_rate in scenarios.items():
-        revenue = starting_revenue
+    for name, g in scenarios.items():
+        rev = starting_revenue
         for i in range(periods):
             year = start_year + i
-            revenue = revenue * (1 + growth_rate)
-            rows.append({"scenario": scenario_name, "year": year,
-                         "revenue": revenue, "growth_rate": growth_rate})
+            rev = rev * (1 + g)
+            rows.append({"scenario": name, "year": year, "revenue": rev, "growth_rate": g})
     return pd.DataFrame(rows)
 
 
@@ -268,78 +322,67 @@ def sensitivity_grid(starting_revenue, starting_op_margin, growth_range, margin_
         row = []
         for g in growth_range:
             rev = starting_revenue * ((1 + g) ** years_ahead)
-            op_income = rev * m
-            row.append(op_income)
+            row.append(rev * m)
         grid.append(row)
     return np.array(grid)
 
 
-def format_display_dataframe(df):
-    return df
-
-
-def apply_manual_statement_selection(result, *_args):
-    return result
-
-
-def raw_table_label(i, _t):
-    return f"Table {i}"
+def format_display_dataframe(df): return df
+def apply_manual_statement_selection(result, *_args): return result
+def raw_table_label(i, _t): return f"Table {i}"
 
 
 def answer_question(question, df, kpis=None):
-    if df.empty:
-        return "No data available."
+    if df.empty and kpis is None: return "No data available."
     q = question.lower()
-    if "company" in df.columns and "Microsoft" in df["company"].values:
-        r = df[df["company"] == "Microsoft"].iloc[0]
-    else:
-        r = df.iloc[0]
+    k = kpis
 
-    revenue = r["revenue"]; yoy = r["revenue_yoy_growth"]
-    gross_margin = r["gross_margin"]; operating_margin = r["operating_margin"]
-    net_margin = r["net_margin"]; fcf = r["free_cash_flow"]
-    cash = r["cash_balance"]; debt = r["total_debt"]
-    service_mix = r.get("service_revenue_mix", None)
+    if any(w in q for w in ["segment", "azure", "cloud", "productivity", "personal computing"]):
+        seg = k["segments"]
+        lines = []
+        for _, r in seg.iterrows():
+            g = (r["rev_2025"] - r["rev_2024"]) / r["rev_2024"]
+            lines.append(f"{r['segment']}: revenue {fmt_cur(r['rev_2025'])} ({fmt_pct(g)} YoY), operating income {fmt_cur(r['opi_2025'])}.")
+        return "Segment results FY2025 — " + " ".join(lines)
 
-    if "forecast" in q or "projection" in q or "future" in q:
-        base_forecast = build_forecast_dataframe(revenue, 0.12, 2026, 3)
-        final_year = int(base_forecast.iloc[-1]["year"])
-        final_revenue = base_forecast.iloc[-1]["revenue"]
-        return (f"Using a 12.0% annual growth assumption, Microsoft revenue would reach "
-                f"{fmt_cur(final_revenue)} by FY{final_year}. Simplified scenario, not a formal forecast.")
+    if any(w in q for w in ["capital", "buyback", "dividend", "allocation"]):
+        c = k["cap_allocation"]
+        return (f"FY2025 capital allocation: Capex {fmt_cur(c['capex'])}, "
+                f"acquisitions {fmt_cur(c['acquisitions'])}, dividends {fmt_cur(c['dividends'])}, "
+                f"buybacks {fmt_cur(c['buybacks'])}. Total returned to shareholders: {fmt_cur(c['total_returned_to_shareholders'])}.")
 
-    if "peer" in q or "compare" in q or "benchmark" in q:
-        if len(df) > 1:
-            lines = [f"{row['company']}: revenue {fmt_cur(row['revenue'])}, "
-                     f"op margin {fmt_pct(row['operating_margin'])}, "
-                     f"FCF {fmt_cur(row['free_cash_flow'])}." for _, row in df.iterrows()]
-            return "Peer comparison — " + " ".join(lines)
+    if any(w in q for w in ["ebitda", "rule of 40", "roic", "return on"]):
+        return (f"Key ratios FY2025 — EBITDA {fmt_cur(k['ebitda'])} ({fmt_pct(k['ebitda_margin'])} margin), "
+                f"Rule of 40: {k['rule_of_40']*100:.1f}%, ROIC {fmt_pct(k['roic'])}, "
+                f"Net Debt/EBITDA {fmt_ratio(k['net_debt_ebitda'])}, "
+                f"Effective tax rate {fmt_pct(k['effective_tax_rate'])}.")
 
-    if "revenue" in q or "growth" in q:
-        mix_text = ""
-        if service_mix is not None:
-            mix_text = (f" Service and other revenue = {fmt_pct(service_mix)} of total revenue, "
-                        f"the largest category.")
-        return (f"Microsoft generated {fmt_cur(revenue)} in FY{r['year']} revenue "
-                f"({fmt_pct(yoy)} YoY).{mix_text}")
+    if any(w in q for w in ["forecast", "projection", "future"]):
+        fd = build_forecast_dataframe(k["revenue"], 0.12, 2026, 3)
+        fy = int(fd.iloc[-1]["year"]); fr = fd.iloc[-1]["revenue"]
+        return (f"Using a 12% growth assumption, revenue would reach {fmt_cur(fr)} by FY{fy}. Simplified scenario, not a formal forecast.")
 
-    if "margin" in q or "profit" in q:
-        return (f"Strong profitability profile: gross margin {fmt_pct(gross_margin)}, "
-                f"operating margin {fmt_pct(operating_margin)}, net margin {fmt_pct(net_margin)}.")
+    if any(w in q for w in ["revenue", "growth"]):
+        return (f"Microsoft generated {fmt_cur(k['revenue'])} in FY2025 revenue ({fmt_pct(k['revenue_yoy_growth'])} YoY). "
+                f"Service and other revenue = {fmt_pct(k['service_revenue_mix'])} of the total. "
+                f"Intelligent Cloud (Azure) was the fastest-growing segment.")
 
-    if "cash" in q or "fcf" in q or "liquidity" in q:
-        d2c = debt / cash if cash else None
-        return (f"Microsoft generated {fmt_cur(fcf)} in free cash flow with {fmt_cur(cash)} in cash. "
-                f"Total debt {fmt_cur(debt)} — debt-to-cash ~{d2c:.1f}x.")
+    if any(w in q for w in ["margin", "profit"]):
+        return (f"Strong profitability: gross margin {fmt_pct(k['gross_margin'])}, operating margin {fmt_pct(k['operating_margin'])}, "
+                f"net margin {fmt_pct(k['net_margin'])}, EBITDA margin {fmt_pct(k['ebitda_margin'])}.")
 
-    if "debt" in q or "balance sheet" in q:
-        d2c = debt / cash if cash else None
-        return (f"Balance sheet: {fmt_cur(cash)} of cash vs {fmt_cur(debt)} of total debt "
-                f"(debt-to-cash ~{d2c:.1f}x).")
+    if any(w in q for w in ["cash", "fcf", "liquidity"]):
+        return (f"Microsoft generated {fmt_cur(k['free_cash_flow'])} in FCF ({fmt_pct(k['fcf_margin'])} of revenue) — note capex nearly doubled to "
+                f"{fmt_cur(k['capex'])} for AI infrastructure, so FCF declined slightly vs FY24. "
+                f"Cash + ST investments {fmt_cur(k['cash_plus_st_inv'])}, net debt {fmt_cur(k['net_debt'])}.")
 
-    return (f"Microsoft generated {fmt_cur(revenue)} of FY{r['year']} revenue, "
-            f"grew {fmt_pct(yoy)} YoY, operating margin {fmt_pct(operating_margin)}, "
-            f"and produced {fmt_cur(fcf)} in free cash flow.")
+    if any(w in q for w in ["debt", "balance sheet", "leverage"]):
+        return (f"Balance sheet: {fmt_cur(k['cash_plus_st_inv'])} cash + ST investments vs {fmt_cur(k['total_debt'])} total debt. "
+                f"Net debt {fmt_cur(k['net_debt'])}. Net Debt/EBITDA of {fmt_ratio(k['net_debt_ebitda'])} — very low leverage.")
+
+    return (f"Microsoft FY2025: revenue {fmt_cur(k['revenue'])} ({fmt_pct(k['revenue_yoy_growth'])} YoY), "
+            f"operating margin {fmt_pct(k['operating_margin'])}, FCF {fmt_cur(k['free_cash_flow'])}, "
+            f"ROIC {fmt_pct(k['roic'])}, Net Debt/EBITDA {fmt_ratio(k['net_debt_ebitda'])}.")
 
 
 def stream_answer(question, df, kpis=None):
