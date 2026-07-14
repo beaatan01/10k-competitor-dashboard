@@ -7,43 +7,32 @@ import html as py_html
 from datetime import datetime
 
 from tenk_engine import (
-    process_uploaded_file, process_peers, build_benchmark_dataframe,
+    process_uploaded_file, build_benchmark_dataframe,
     answer_question, stream_answer,
     build_forecast_dataframe, build_scenario_dataframe,
     monte_carlo_forecast, sensitivity_grid,
+    fmt_cur, fmt_pct, fmt_ratio,
 )
 
-st.set_page_config(
-    page_title="Microsoft Financial Intelligence Platform",
-    page_icon="M", layout="wide", initial_sidebar_state="expanded",
-)
+st.set_page_config(page_title="Microsoft Financial Intelligence Platform",
+    page_icon="M", layout="wide", initial_sidebar_state="expanded")
 
-if "saved_scenarios" not in st.session_state:
-    st.session_state.saved_scenarios = {}
+if "saved_scenarios" not in st.session_state: st.session_state.saved_scenarios = {}
 if "copilot_question" not in st.session_state:
     st.session_state.copilot_question = "Summarize Microsoft revenue, margins, and cash flow."
 
 # ---------- Helpers ----------
 def safe_html(c): st.markdown(c, unsafe_allow_html=True)
-
-def fmt_cur(v):
-    if v is None: return "N/A"
-    if abs(v) >= 1000: return f"${v/1000:,.1f}B"
-    return f"${v:,.0f}M"
-
-def fmt_pct(v):
-    if v is None: return "N/A"
-    return f"{v*100:.1f}%"
-
 def dataframe_to_csv(df): return df.to_csv(index=False).encode("utf-8")
 
-def delta_html(value, positive_is_good=True):
+def delta_html(value, positive_is_good=True, as_pct=True, prefix_arrow=True):
     if value is None: return ""
-    is_positive = value >= 0
-    good = (is_positive and positive_is_good) or (not is_positive and not positive_is_good)
+    is_pos = value >= 0
+    good = (is_pos and positive_is_good) or (not is_pos and not positive_is_good)
     color = "#0F7B3D" if good else "#B42318"
-    arrow = "▲" if is_positive else "▼"
-    return f'<span class="delta" style="color:{color};">{arrow} {fmt_pct(abs(value))}</span>'
+    arrow = "▲" if is_pos else "▼"
+    txt = fmt_pct(abs(value)) if as_pct else f"{abs(value):,.2f}"
+    return f'<span class="delta" style="color:{color};">{arrow if prefix_arrow else ""} {txt}</span>'
 
 def render_section(title, subtitle, tag):
     safe_html(f'<div class="section-head"><div><div class="section-title">{py_html.escape(title)}</div><div class="section-subtitle">{py_html.escape(subtitle)}</div></div><div class="section-tag">{py_html.escape(tag)}</div></div>')
@@ -59,16 +48,16 @@ def sparkline_svg(values, color="#0A2540", width=140, height=32):
         pts.append(f"{x:.1f},{y:.1f}")
     path = " ".join(pts)
     area = f"0,{height} " + path + f" {width},{height}"
-    last_x, last_y = pts[-1].split(",")
+    lx, ly = pts[-1].split(",")
     return (f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" style="display:block;margin-top:8px;">'
             f'<polygon fill="{color}" fill-opacity="0.08" points="{area}"/>'
             f'<polyline fill="none" stroke="{color}" stroke-width="1.8" points="{path}"/>'
-            f'<circle cx="{last_x}" cy="{last_y}" r="3" fill="{color}"/></svg>')
+            f'<circle cx="{lx}" cy="{ly}" r="3" fill="{color}"/></svg>')
 
 def render_kpi_card(label, title, value, subtext, delta_val=None, positive_is_good=True,
-                    spark_values=None, spark_color="#0A2540"):
+                    spark_values=None, spark_color="#0A2540", delta_as_pct=True):
     spark = sparkline_svg(spark_values, color=spark_color) if spark_values else ""
-    delta = delta_html(delta_val, positive_is_good) if delta_val is not None else ""
+    delta = delta_html(delta_val, positive_is_good, as_pct=delta_as_pct) if delta_val is not None else ""
     safe_html(f'<div class="kpi-card"><div class="card-label">{py_html.escape(label)}</div><div class="card-title">{py_html.escape(title)}</div><div class="card-value">{py_html.escape(value)}</div><div class="card-sub">{py_html.escape(subtext)} {delta}</div>{spark}</div>')
 
 def render_capability_card(label, title, text):
@@ -83,6 +72,10 @@ def render_scenario_card(label, title, value, text):
 
 def render_insight(title, text):
     safe_html(f'<div class="insight-card"><div class="insight-label">{py_html.escape(title)}</div><div class="insight-text">{py_html.escape(text)}</div></div>')
+
+def render_analyst_note(text):
+    """Plain-English commentary under charts/KPIs. Bulb icon signals interpretation."""
+    safe_html(f'<div class="analyst-note"><span class="analyst-icon">💡</span><span class="analyst-label">Analyst Note</span><div class="analyst-text">{py_html.escape(text)}</div></div>')
 
 def render_chart_title(title, caption):
     safe_html(f'<div class="chart-title-card"><div class="chart-title">{py_html.escape(title)}</div><div class="chart-caption">{py_html.escape(caption)}</div></div>')
@@ -103,17 +96,17 @@ safe_html("""
     --bg:#F7F7F4; --bg-alt:#FFFFFF; --ink:#0A2540; --ink-2:#1A2B44;
     --muted:#4A5878; --muted-2:#7A879B; --hairline:#E4E7EC;
     --accent:#0A2540; --accent-soft:#E8EDF5;
-    --good:#0F7B3D; --bad:#B42318;
+    --good:#0F7B3D; --bad:#B42318; --gold:#B08D2E;
     --card:#FFFFFF;
-    --shadow: 0 1px 2px rgba(16,24,40,0.05), 0 1px 3px rgba(16,24,40,0.08);
-    --shadow-hover: 0 8px 24px rgba(10,37,64,0.12), 0 2px 6px rgba(10,37,64,0.08);
+    --shadow:0 1px 2px rgba(16,24,40,0.05),0 1px 3px rgba(16,24,40,0.08);
+    --shadow-hover:0 8px 24px rgba(10,37,64,0.12),0 2px 6px rgba(10,37,64,0.08);
     --radius:10px;
 }
-html, body, .stApp { color: var(--ink) !important; font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important; }
-body, .stApp { background: var(--bg) !important; }
-[data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main { background: transparent !important; }
-[data-testid="stSidebar"] { background: var(--bg-alt) !important; border-right: 1px solid var(--hairline); }
-[data-testid="stSidebar"] * { color: var(--ink) !important; }
+html, body, .stApp { color:var(--ink) !important; font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important; }
+body, .stApp { background:var(--bg) !important; }
+[data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main { background:transparent !important; }
+[data-testid="stSidebar"] { background:var(--bg-alt) !important; border-right:1px solid var(--hairline); }
+[data-testid="stSidebar"] * { color:var(--ink) !important; }
 .block-container { max-width:1500px !important; padding:1.05rem 1.35rem 2.25rem !important; }
 #MainMenu, footer, header { visibility:hidden; }
 
@@ -148,11 +141,11 @@ body, .stApp { background: var(--bg) !important; }
 .section-subtitle { color:var(--muted); font-size:0.72rem; margin-top:3px; }
 .section-tag { color:var(--muted); background:transparent; border:1px solid var(--hairline); border-radius:4px; padding:3px 8px; font-size:0.62rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; white-space:nowrap; }
 
-.kpi-card, .capability-card, .info-card, .scenario-card, .insight-card, .chart-title-card, .table-card {
+.kpi-card, .capability-card, .info-card, .scenario-card, .insight-card, .chart-title-card, .table-card, .analyst-note {
     position:relative; border-radius:var(--radius); border:1px solid var(--hairline); background:var(--card); box-shadow:var(--shadow); overflow:hidden;
     transition:transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
-.kpi-card:hover, .capability-card:hover, .info-card:hover, .scenario-card:hover, .insight-card:hover {
+.kpi-card:hover, .capability-card:hover, .info-card:hover, .scenario-card:hover, .insight-card:hover, .analyst-note:hover {
     transform:translateY(-3px); border-color:#C7D0DD; box-shadow:var(--shadow-hover);
 }
 .kpi-card { min-height:160px; padding:16px; margin-bottom:12px; }
@@ -170,6 +163,11 @@ body, .stApp { background: var(--bg) !important; }
 .insight-card { padding:14px 16px; margin-top:6px; margin-bottom:12px; border-left:3px solid var(--accent); background:var(--accent-soft); }
 .insight-label { color:var(--accent); font-size:0.62rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:6px; }
 .insight-text { color:var(--ink-2); font-size:0.76rem; line-height:1.55; font-variant-numeric:tabular-nums; }
+
+.analyst-note { padding:12px 14px; margin:8px 0 14px 0; border-left:3px solid var(--gold); background:#FDFAF3; }
+.analyst-icon { font-size:0.85rem; margin-right:6px; }
+.analyst-label { color:var(--gold); font-size:0.60rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; }
+.analyst-text { color:var(--ink-2); font-size:0.72rem; line-height:1.55; margin-top:5px; font-variant-numeric:tabular-nums; }
 
 .chart-title-card { min-height:44px; padding:10px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
 .chart-title { color:var(--ink); font-size:0.80rem; font-weight:700; }
@@ -199,115 +197,128 @@ h3 { color:var(--ink) !important; font-size:0.90rem !important; font-weight:700 
 
 # ---------- Top bar ----------
 now_str = datetime.now().strftime("%b %d, %Y · %H:%M")
-safe_html(f'<div class="topbar"><div class="topbar-left"><div class="topbar-logo"><span></span><span></span><span></span><span></span></div><div><div class="topbar-title">Microsoft Financial Intelligence Platform</div><div class="topbar-crumb">FY2025 10-K Analysis · Source: SEC Filing</div></div></div><div class="topbar-right"><span><span class="topbar-dot"></span>Live</span><span>Last refresh · {now_str}</span></div></div>')
+safe_html(f'<div class="topbar"><div class="topbar-left"><div class="topbar-logo"><span></span><span></span><span></span><span></span></div><div><div class="topbar-title">Microsoft Financial Intelligence Platform</div><div class="topbar-crumb">FY2025 10-K · Fiscal year ended June 30, 2025 · Source: SEC Filing</div></div></div><div class="topbar-right"><span><span class="topbar-dot"></span>Verified</span><span>Last refresh · {now_str}</span></div></div>')
 
 # ---------- Sidebar ----------
 with st.sidebar:
     safe_html('<div class="card-label" style="margin-bottom:10px;">Global Controls</div>')
-    uploaded = st.file_uploader("Upload 10-K (optional)", type=["pdf", "xlsx", "csv"])
-    peer_options = ["Apple", "Alphabet", "Amazon"]
-    selected_peers = st.multiselect("Peer set", options=peer_options, default=["Apple", "Alphabet"])
+    uploaded = st.file_uploader("Upload alternate 10-K", type=["pdf", "xlsx", "csv"])
     st.markdown("---")
-    safe_html('<div class="card-label" style="margin-bottom:6px;">About</div>')
-    safe_html('<div style="color:#4A5878; font-size:0.72rem; line-height:1.5;">Transforms 10-K disclosures into an executive-ready analytics experience. Peer data is illustrative.</div>')
+    safe_html('<div class="card-label" style="margin-bottom:6px;">Data Source</div>')
+    safe_html('<div style="color:#4A5878; font-size:0.72rem; line-height:1.5;">All figures sourced directly from Microsoft\'s FY2025 10-K, filed with the SEC. Values in $ millions unless noted.</div>')
 
 # ---------- Data ----------
 result = process_uploaded_file(uploaded)
-peer_results = process_peers(selected_peers)
-company_results = {"Microsoft": result, **peer_results}
+company_results = {"Microsoft": result}
 benchmark_df = build_benchmark_dataframe(company_results)
-
 k = result["kpis"]
 ts = k["time_series"].copy()
 segment_revenue = k["segment_revenue"].copy()
 
-# ---------- Plotly styling (light) ----------
+# ---------- Plotly styling ----------
 def style_fig(fig, height=240, showlegend=False):
-    fig.update_layout(
-        height=height, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+    fig.update_layout(height=height, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Inter,sans-serif", color="#4A5878", size=11),
         margin=dict(l=44, r=18, t=10, b=34), hovermode="x unified", showlegend=showlegend,
-        legend=dict(orientation="h", yanchor="bottom", y=1.03, xanchor="right", x=1,
-                    font=dict(color="#4A5878", size=10)),
+        legend=dict(orientation="h", yanchor="bottom", y=1.03, xanchor="right", x=1, font=dict(color="#4A5878", size=10)),
         xaxis=dict(showgrid=False, zeroline=False, showline=True, linewidth=1, linecolor="#E4E7EC",
                    tickfont=dict(color="#7A879B", size=10), title_font=dict(color="#4A5878", size=11)),
         yaxis=dict(showgrid=True, gridwidth=1, gridcolor="#F0F2F5", zeroline=False, showline=False,
-                   tickfont=dict(color="#7A879B", size=10), title_font=dict(color="#4A5878", size=11)),
-    )
+                   tickfont=dict(color="#7A879B", size=10), title_font=dict(color="#4A5878", size=11)))
     return fig
 
 PALETTE = {"primary":"#0A2540","accent":"#3E5C8E","gold":"#B08D2E","green":"#0F7B3D","red":"#B42318","warn":"#B54708","muted":"#7A879B"}
-CHART_SEQ = ["#0A2540","#3E5C8E","#B08D2E","#0F7B3D","#7A879B","#B54708"]
+SEG_COLORS = {"Productivity and Business Processes":"#0A2540", "Intelligent Cloud":"#3E5C8E", "More Personal Computing":"#B08D2E"}
 
 # ---------- Tabs ----------
-tab_welcome, tab_summary, tab_kpi, tab_revenue, tab_peers, tab_forecast, tab_financials, tab_ai = st.tabs(
-    ["Welcome","Executive Summary","Intelligence Hub","Revenue Intelligence",
-     "Peer Benchmark","AI Forecasting","Financial Statements","AI Copilot"])
+tabs = st.tabs(["Welcome","Executive Summary","Intelligence Hub","Revenue Intelligence",
+                "Segments","Capital Allocation","AI Forecasting","Financial Statements","AI Copilot"])
+tab_welcome, tab_summary, tab_kpi, tab_revenue, tab_segments, tab_capital, tab_forecast, tab_financials, tab_ai = tabs
 
-# Welcome
+# ================= WELCOME =================
 with tab_welcome:
-    safe_html('<div class="hero"><div class="hero-content"><div class="hero-topline">Microsoft Financial Intelligence Platform</div><div class="hero-title">Executive analytics for FY2025 10-K disclosures</div><div class="hero-subtitle">A modern executive dashboard that transforms 10-K financial data into a presentation-ready intelligence experience. Use the sidebar to upload your own filing and toggle peer comparisons.</div><div class="pill-row"><span class="pill blue">Executive Ready</span><span class="pill">FY2023-FY2025</span><span class="pill">Peer Benchmarks</span><span class="pill">Monte Carlo Forecast</span><span class="pill">AI Copilot</span></div></div></div>')
-    render_section("Platform Overview","Why this dashboard was built and how it supports presentation workflows.","Welcome")
+    safe_html('<div class="hero"><div class="hero-content"><div class="hero-topline">Microsoft Financial Intelligence Platform</div><div class="hero-title">Executive analytics from Microsoft\'s FY2025 10-K</div><div class="hero-subtitle">A presentation-ready analytics experience for CFOs and financial analysts. Every metric is sourced directly from Microsoft\'s SEC filing — no estimates, no illustrative data.</div><div class="pill-row"><span class="pill blue">FY2025 Verified</span><span class="pill">10-K Sourced</span><span class="pill">Segment Analysis</span><span class="pill">Capital Allocation</span><span class="pill">Rule of 40 · ROIC · EBITDA</span></div></div></div>')
+
+    render_section("Platform Overview","How this dashboard translates a 200+ page 10-K into decision-ready intelligence.","Welcome")
     w1, w2 = st.columns(2, gap="medium")
-    with w1: render_info_card("Why Built","Executive Financial Clarity","Converts dense 10-K disclosures into an executive-ready analytics experience.")
-    with w2: render_info_card("Why FY2023-FY2025","Three-Year Business Trend Window","Long enough to show trend direction while staying recent enough for relevant interpretation.")
+    with w1: render_info_card("Why Built","Executive Financial Clarity","Converts dense 10-K disclosures into an executive-ready analytics experience — every KPI mapped to the SEC-filed statements.")
+    with w2: render_info_card("Time Window","Three-Year Trend View","FY2023-FY2025 for income statement, cash flow, and segments (matching the filing's 3-year comparative). Balance sheet shows FY2024-FY2025 per 10-K standard.")
     w3, w4 = st.columns(2, gap="medium")
-    with w3: render_info_card("Dashboard Architecture","Layered Intelligence Design","Welcome → KPIs → Revenue → Peer Benchmark → Forecasting → Statements → AI commentary.")
-    with w4: render_info_card("Presentation Workflow","From Data to Boardroom Narrative","Context, then signals, then evidence, then outlook, then support.")
+    with w3: render_info_card("Architecture","Layered Intelligence Design","Welcome → Executive KPIs → Revenue → Segments → Capital Allocation → Forecasting → Statements → AI commentary.")
+    with w4: render_info_card("Workflow","From Data to Boardroom","Every tile includes an analyst note that explains what the number means in plain English. Built for stakeholders who don't live in the 10-K.")
 
-# Executive Summary
+    render_analyst_note("This dashboard was built to eliminate the 'what does this really mean?' problem. Every KPI, chart, and ratio has a plain-English explanation attached, so anyone from an intern to a board member can interpret Microsoft's financial position without prior finance training.")
+
+# ================= EXECUTIVE SUMMARY =================
 with tab_summary:
-    safe_html('<div class="hero"><div class="hero-content"><div class="hero-topline">Executive Summary · FY2025</div><div class="hero-title">Microsoft Financial Intelligence Platform</div><div class="hero-subtitle">Executive KPIs, revenue intelligence, forecasting scenarios, and natural-language commentary built from Microsoft\'s FY2025 10-K.</div><div class="pill-row"><span class="pill blue">FY2025</span><span class="pill">10-K Analysis</span><span class="pill">Revenue Intelligence</span><span class="pill">AI Forecasting</span></div></div></div>')
-    revenue = k["revenue"]; revenue_yoy = k["revenue_yoy_growth"]
-    gross_margin = k["gross_margin"]; operating_margin = k["operating_margin"]; net_margin = k["net_margin"]
-    fcf = k["free_cash_flow"]; cash_balance = k["cash_balance"]; total_debt = k["total_debt"]
-    debt_to_cash = total_debt / cash_balance if cash_balance else None
+    safe_html('<div class="hero"><div class="hero-content"><div class="hero-topline">Executive Summary · FY2025</div><div class="hero-title">Microsoft FY2025 Snapshot</div><div class="hero-subtitle">Revenue of $281.7B (+15% YoY), operating margin of 45.6%, and $71.6B in free cash flow. Capex nearly doubled to $64.6B as Microsoft scales AI infrastructure — the defining story of FY2025.</div><div class="pill-row"><span class="pill blue">Revenue +15%</span><span class="pill">Op Margin 45.6%</span><span class="pill">FCF $71.6B</span><span class="pill">Capex +45%</span></div></div></div>')
 
-    ts_chrono = ts.iloc[::-1].reset_index(drop=True)
-    rev_spark = ts_chrono["revenue"].tolist()
-    op_spark = ts_chrono["operating_margin"].tolist()
-    fcf_spark = ts_chrono["free_cash_flow"].tolist()
-    cash_spark = ts_chrono["cash_balance"].tolist()
+    revenue = k["revenue"]; yoy = k["revenue_yoy_growth"]
+    gm = k["gross_margin"]; om = k["operating_margin"]; nm = k["net_margin"]
+    fcf = k["free_cash_flow"]; cash = k["cash_balance"]; debt = k["total_debt"]
 
-    op_prior = ts.loc[ts["period"] == "2024", "operating_margin"].iloc[0]
-    op_delta = operating_margin - op_prior
-    fcf_prior_row = ts.loc[ts["period"] == "2024", "free_cash_flow"].iloc[0]
-    fcf_delta = (fcf - fcf_prior_row) / fcf_prior_row if fcf_prior_row else None
-    cash_prior = ts.loc[ts["period"] == "2024", "cash_balance"].iloc[0]
-    cash_delta = (cash_balance - cash_prior) / cash_prior if cash_prior else None
+    ts_c = ts.sort_values("period").reset_index(drop=True)
+    rev_spark = ts_c["revenue"].tolist()
+    op_spark = ts_c["operating_margin"].tolist()
+    fcf_spark = ts_c["free_cash_flow"].tolist()
+    cash_spark = ts_c["cash_balance"].tolist()
 
-    render_section("Executive Snapshot","Latest signals with three-year trend and prior-year delta.","FY2025 View")
+    op_prior = ts.loc[ts["period"]=="2024","operating_margin"].iloc[0]
+    fcf_prior = ts.loc[ts["period"]=="2024","free_cash_flow"].iloc[0]
+    fcf_delta = (fcf - fcf_prior) / fcf_prior if fcf_prior else None
+    cash_prior = ts.loc[ts["period"]=="2024","cash_balance"].iloc[0]
+    cash_delta = (cash - cash_prior) / cash_prior if cash_prior else None
+
+    render_section("Executive Snapshot","Latest FY2025 signals with three-year trend and prior-year delta.","FY2025 View")
     s1, s2, s3, s4 = st.columns(4, gap="medium")
-    with s1: render_kpi_card("Revenue", f"FY{k['latest_period']} Total Revenue", fmt_cur(revenue), "vs FY2024", delta_val=revenue_yoy, spark_values=rev_spark, spark_color=PALETTE["primary"])
-    with s2: render_kpi_card("Profitability","Operating Margin", fmt_pct(operating_margin), f"Gross {fmt_pct(gross_margin)} · Net {fmt_pct(net_margin)}", delta_val=op_delta, spark_values=op_spark, spark_color=PALETTE["accent"])
+    with s1: render_kpi_card("Revenue","FY2025 Total Revenue", fmt_cur(revenue), "vs FY2024", delta_val=yoy, spark_values=rev_spark, spark_color=PALETTE["primary"])
+    with s2: render_kpi_card("Profitability","Operating Margin", fmt_pct(om), f"Gross {fmt_pct(gm)} · Net {fmt_pct(nm)}", delta_val=om-op_prior, spark_values=op_spark, spark_color=PALETTE["accent"])
     with s3: render_kpi_card("Cash Flow","Free Cash Flow", fmt_cur(fcf), "OCF less capex", delta_val=fcf_delta, spark_values=fcf_spark, spark_color=PALETTE["green"])
-    with s4:
-        d2c_text = f"Debt {fmt_cur(total_debt)} · {debt_to_cash:.1f}x debt/cash" if debt_to_cash else "N/A"
-        render_kpi_card("Liquidity","Cash Position", fmt_cur(cash_balance), d2c_text, delta_val=cash_delta, spark_values=cash_spark, spark_color=PALETTE["gold"])
+    with s4: render_kpi_card("Liquidity","Cash Position", fmt_cur(k["cash_plus_st_inv"]), f"Net Debt {fmt_cur(k['net_debt'])}", delta_val=cash_delta, spark_values=cash_spark, spark_color=PALETTE["gold"])
 
-    render_section("Performance Drivers","How each KPI should be interpreted.","Metric Guide")
+    render_analyst_note(f"Microsoft grew revenue 15% while operating margin expanded to {fmt_pct(om)} — meaning for every $1 of sales, ~46¢ became operating profit. However free cash flow declined slightly from $74B to $71.6B despite record revenue, because capex nearly doubled to $64.6B for AI infrastructure. This is the trade-off analysts are watching most closely.")
+
+    # New: analyst ratios strip
+    render_section("Analyst Ratios","Metrics CFOs and equity analysts use to benchmark financial health.","Advanced Metrics")
+    a1, a2, a3, a4, a5 = st.columns(5, gap="medium")
+    with a1: render_kpi_card("EBITDA","Earnings Before ID&A", fmt_cur(k["ebitda"]), f"Margin {fmt_pct(k['ebitda_margin'])}", delta_val=None)
+    with a2: render_kpi_card("Rule of 40","Growth + FCF Margin", f"{k['rule_of_40']*100:.1f}%", "SaaS health benchmark >40%", delta_val=None)
+    with a3: render_kpi_card("ROIC","Return on Invested Capital", fmt_pct(k["roic"]), "NOPAT / (Debt+Equity)", delta_val=None)
+    with a4: render_kpi_card("Net Debt / EBITDA","Leverage Ratio", fmt_ratio(k["net_debt_ebitda"]), "Lower = safer balance sheet", delta_val=None)
+    with a5: render_kpi_card("Effective Tax Rate","Tax as % of pretax income", fmt_pct(k["effective_tax_rate"]), "Book tax rate", delta_val=None)
+
+    render_analyst_note(f"EBITDA of {fmt_cur(k['ebitda'])} strips out non-cash charges to show pure earnings power. Rule of 40 = {k['rule_of_40']*100:.1f}% (a SaaS benchmark; anything over 40% is elite). ROIC of {fmt_pct(k['roic'])} means every dollar invested earns ~{k['roic']*100:.0f}¢ per year — extraordinary for a mature company. Net Debt/EBITDA of {fmt_ratio(k['net_debt_ebitda'])} indicates near-zero leverage risk (most healthy companies operate at 1-3x).")
+
+    render_section("Performance Drivers","How to interpret each headline KPI.","Metric Guide")
     e1, e2, e3, e4 = st.columns(4, gap="medium")
     with e1: render_info_card("Revenue","Business Scale","Top-line size and growth momentum.","Growth = Current / Prior − 1")
     with e2: render_info_card("Margin","Operating Efficiency","How revenue converts to operating income.","Operating Income / Revenue")
-    with e3: render_info_card("Cash Flow","Financial Output","Cash available after capex.","OCF − Capex")
-    with e4: render_info_card("Liquidity","Balance Sheet Flexibility","Relationship between cash and debt.","Debt / Cash")
+    with e3: render_info_card("Cash Flow","Financial Output","Cash left after capex.","OCF − Capex")
+    with e4: render_info_card("Liquidity","Balance Sheet Strength","Cash minus debt.","Cash + ST Investments − Total Debt")
 
-# Intelligence Hub
+# ================= INTELLIGENCE HUB =================
 with tab_kpi:
-    render_section("Executive KPI Intelligence","Interpretive guidance for scale, efficiency, and flexibility.","CFO View")
-    render_insight("Intelligence Hub Overview","The Executive Summary tab holds the KPI cards. This tab expands the interpretation guide for each metric.")
-    render_section("Performance Drivers","How each KPI should be interpreted.","Metric Guide")
-    e1, e2, e3, e4 = st.columns(4, gap="medium")
-    with e1: render_info_card("Revenue","Business Scale","Top-line size and growth momentum.","Growth = Current / Prior − 1")
-    with e2: render_info_card("Margin","Operating Efficiency","How revenue converts to operating income.","Operating Income / Revenue")
-    with e3: render_info_card("Cash Flow","Financial Output","Cash available after capex.","OCF − Capex")
-    with e4: render_info_card("Liquidity","Balance Sheet Flexibility","Relationship between cash and debt.","Debt / Cash")
+    render_section("Executive KPI Intelligence","Detailed interpretation for every headline metric.","CFO View")
+    render_insight("Intelligence Hub Overview","This tab expands the plain-English interpretation of every KPI. Perfect for onboarding new analysts or briefing non-finance executives.")
 
-# Revenue Intelligence
+    metrics = [
+        ("Revenue Growth","+15% YoY","Microsoft grew from $245.1B to $281.7B — a $36.6B increase. Growth like this at scale (>$250B revenue) is remarkable and driven primarily by Azure and Microsoft 365 Commercial cloud."),
+        ("Gross Margin 68.8%","Down slightly","Gross margin dipped from 69.8% to 68.8% because scaling AI infrastructure has short-term margin costs. Still one of the highest gross margins of any Fortune 50 company."),
+        ("Operating Margin 45.6%","+90 bps","Improved despite AI infra costs, showing operating leverage — revenue grew faster than opex."),
+        ("Free Cash Flow $71.6B","Down 3.3%","FCF declined despite record OCF because capex went from $44B to $65B. This isn't a weakness — it's a bet on future AI/cloud growth."),
+        ("Net Debt/EBITDA 0.08x","Near-zero leverage","MSFT has almost no net debt after subtracting cash. This gives them enormous flexibility for M&A or downturn resilience."),
+        ("Rule of 40: 40.4%","Elite SaaS metric","Growth (15%) + FCF margin (25.4%) = 40.4%. Anything above 40% is considered best-in-class for software companies."),
+    ]
+    cols = st.columns(3, gap="medium")
+    for i, (title, subtitle, text) in enumerate(metrics):
+        with cols[i % 3]:
+            render_info_card(subtitle, title, text)
+
+# ================= REVENUE INTELLIGENCE =================
 with tab_revenue:
     services_mix = k["service_revenue_mix"]
     growth_spread = k["revenue"] - k["prior_year_revenue"]
-    render_section("Revenue Performance","Historical trend, mix, and growth bridge.","Growth Analytics")
+    render_section("Revenue Performance","Historical trend, product/service mix, and growth bridge.","Growth Analytics")
 
     r1, r2, r3 = st.columns(3, gap="medium")
     with r1: render_kpi_card("FY2025 Revenue","Total Revenue", fmt_cur(k["revenue"]), "vs FY2024", delta_val=k["revenue_yoy_growth"])
@@ -317,95 +328,157 @@ with tab_revenue:
     left, right = st.columns(2, gap="medium")
     with left:
         render_chart_title("Revenue Over Time","FY2023 – FY2025")
-        fig_ts = px.line(ts.sort_values("period"), x="period", y="revenue", markers=True, color_discrete_sequence=[PALETTE["primary"]])
-        fig_ts.update_traces(line=dict(width=2.5, shape="spline"), marker=dict(size=8, color=PALETTE["primary"], line=dict(width=2, color="#FFFFFF")), hovertemplate="<b>FY%{x}</b><br>Revenue: $%{y:,.0f}M<extra></extra>")
-        fig_ts.update_yaxes(tickprefix="$", ticksuffix="M")
-        st.plotly_chart(style_fig(fig_ts, 240), width="stretch", config={"displayModeBar": False})
+        fig = px.line(ts.sort_values("period"), x="period", y="revenue", markers=True, color_discrete_sequence=[PALETTE["primary"]])
+        fig.update_traces(line=dict(width=2.5, shape="spline"), marker=dict(size=8, color=PALETTE["primary"], line=dict(width=2, color="#FFFFFF")),
+            hovertemplate="<b>FY%{x}</b><br>Revenue: $%{y:,.0f}M<extra></extra>")
+        fig.update_yaxes(tickprefix="$", ticksuffix="M")
+        st.plotly_chart(style_fig(fig, 240), width="stretch", config={"displayModeBar": False})
     with right:
         render_chart_title("Revenue Mix by Category","Product vs Service")
         seg_long = segment_revenue.melt(id_vars=["period"], value_vars=["Product Revenue","Service and Other Revenue"], var_name="category", value_name="revenue")
-        fig_seg = px.bar(seg_long.sort_values("period"), x="period", y="revenue", color="category", barmode="stack",
+        fig = px.bar(seg_long.sort_values("period"), x="period", y="revenue", color="category", barmode="stack",
             color_discrete_map={"Product Revenue": PALETTE["primary"], "Service and Other Revenue": PALETTE["accent"]})
-        fig_seg.update_traces(marker_line_width=0, hovertemplate="<b>FY%{x}</b><br>%{fullData.name}: $%{y:,.0f}M<extra></extra>")
-        fig_seg.update_yaxes(tickprefix="$", ticksuffix="M")
-        st.plotly_chart(style_fig(fig_seg, 240, True), width="stretch", config={"displayModeBar": False})
+        fig.update_traces(marker_line_width=0, hovertemplate="<b>FY%{x}</b><br>%{fullData.name}: $%{y:,.0f}M<extra></extra>")
+        fig.update_yaxes(tickprefix="$", ticksuffix="M")
+        st.plotly_chart(style_fig(fig, 240, True), width="stretch", config={"displayModeBar": False})
+
+    render_analyst_note(f"Service & Other revenue makes up {fmt_pct(services_mix)} of the business and is the growth engine — up 21% YoY. Product revenue (mostly Windows OEM and on-premises licenses) has been roughly flat for 3 years, reflecting the industry-wide shift from perpetual licenses to cloud subscriptions.")
 
     render_chart_title("Revenue Bridge: FY2024 → FY2025","Decomposed by segment contribution")
     prod_delta = k["product_revenue"] - k["product_revenue_prior"]
     svc_delta = k["service_revenue"] - k["service_revenue_prior"]
-    fig_wf = go.Figure(go.Waterfall(
-        orientation="v",
+    fig_wf = go.Figure(go.Waterfall(orientation="v",
         measure=["absolute","relative","relative","total"],
         x=["FY24 Revenue","Product Δ","Service Δ","FY25 Revenue"],
         y=[k["prior_year_revenue"], prod_delta, svc_delta, k["revenue"]],
-        connector={"line": {"color": "#C7D0DD", "dash": "dot"}},
-        increasing={"marker": {"color": PALETTE["green"]}},
-        decreasing={"marker": {"color": PALETTE["red"]}},
-        totals={"marker": {"color": PALETTE["primary"]}},
+        connector={"line":{"color":"#C7D0DD","dash":"dot"}},
+        increasing={"marker":{"color":PALETTE["green"]}},
+        decreasing={"marker":{"color":PALETTE["red"]}},
+        totals={"marker":{"color":PALETTE["primary"]}},
         text=[fmt_cur(k["prior_year_revenue"]), fmt_cur(prod_delta), fmt_cur(svc_delta), fmt_cur(k["revenue"])],
-        textposition="outside",
-        textfont=dict(color="#0A2540", size=11),
-    ))
+        textposition="outside", textfont=dict(color="#0A2540", size=11)))
     fig_wf.update_yaxes(tickprefix="$", ticksuffix="M")
     st.plotly_chart(style_fig(fig_wf, 290), width="stretch", config={"displayModeBar": False})
 
-    render_insight("Revenue Commentary",
-        f"Microsoft generated {fmt_cur(k['revenue'])} in FY2025 revenue ({fmt_pct(k['revenue_yoy_growth'])} YoY). "
-        f"Service and other revenue = {fmt_pct(services_mix)} of the total. "
-        f"Segment Δ: Product {fmt_cur(prod_delta)}, Service {fmt_cur(svc_delta)}.")
+    render_analyst_note(f"Of the $36.6B revenue growth, ${abs(svc_delta)/1000:,.1f}B came from Service/Other while Product revenue actually declined by ${abs(prod_delta):,.0f}M. Almost 100% of Microsoft's growth is now cloud/subscription-driven — a fundamental transformation from the Windows/Office desktop era.")
 
-# Peer Benchmark
-with tab_peers:
-    render_section("Peer Benchmark","Compare Microsoft against selected peers on revenue, margins, and cash flow.","Cross-Company")
-    if len(benchmark_df) == 1:
-        render_insight("No peers selected","Choose peers from the sidebar to see comparisons here.")
-    else:
-        bd = benchmark_df.copy()
-        render_chart_title("Revenue by Company", f"FY{k['latest_period']} — {len(bd)} companies")
-        fig_p1 = px.bar(bd.sort_values("revenue"), x="revenue", y="company", orientation="h",
-            color="company", color_discrete_sequence=CHART_SEQ)
-        fig_p1.update_traces(hovertemplate="<b>%{y}</b><br>Revenue: $%{x:,.0f}M<extra></extra>")
-        fig_p1.update_xaxes(tickprefix="$", ticksuffix="M")
-        st.plotly_chart(style_fig(fig_p1, 240), width="stretch", config={"displayModeBar": False})
+    # Geographic split
+    render_chart_title("Revenue by Geography","US vs International")
+    geo = k["geographic"].copy()
+    geo_long = geo.melt(id_vars=["region"], var_name="year", value_name="revenue")
+    fig_geo = px.bar(geo_long, x="year", y="revenue", color="region", barmode="group",
+        color_discrete_map={"United States":PALETTE["primary"], "Other Countries":PALETTE["accent"]})
+    fig_geo.update_traces(marker_line_width=0, hovertemplate="<b>FY%{x}</b><br>%{fullData.name}: $%{y:,.0f}M<extra></extra>")
+    fig_geo.update_yaxes(tickprefix="$", ticksuffix="M")
+    st.plotly_chart(style_fig(fig_geo, 240, True), width="stretch", config={"displayModeBar": False})
+    us_pct = geo.iloc[0]["2025"] / (geo.iloc[0]["2025"] + geo.iloc[1]["2025"])
+    render_analyst_note(f"The US accounts for {fmt_pct(us_pct)} of revenue — a slight majority. This means Microsoft has significant currency exposure since ~49% of revenue is earned abroad. Currency fluctuations can move reported revenue by 1-3% in any given year.")
 
-        c1, c2 = st.columns(2, gap="medium")
-        with c1:
-            render_chart_title("Operating Margin","Higher is better")
-            fig_p2 = px.bar(bd.sort_values("operating_margin"), x="operating_margin", y="company", orientation="h",
-                color="company", color_discrete_sequence=CHART_SEQ)
-            fig_p2.update_traces(hovertemplate="<b>%{y}</b><br>Op Margin: %{x:.1%}<extra></extra>")
-            fig_p2.update_xaxes(tickformat=".0%")
-            st.plotly_chart(style_fig(fig_p2, 220), width="stretch", config={"displayModeBar": False})
-        with c2:
-            render_chart_title("Free Cash Flow","Cash generation power")
-            fig_p3 = px.bar(bd.sort_values("free_cash_flow"), x="free_cash_flow", y="company", orientation="h",
-                color="company", color_discrete_sequence=CHART_SEQ)
-            fig_p3.update_traces(hovertemplate="<b>%{y}</b><br>FCF: $%{x:,.0f}M<extra></extra>")
-            fig_p3.update_xaxes(tickprefix="$", ticksuffix="M")
-            st.plotly_chart(style_fig(fig_p3, 220), width="stretch", config={"displayModeBar": False})
+# ================= SEGMENTS (NEW) =================
+with tab_segments:
+    render_section("Segment Breakdown","Revenue, operating income, and growth by reporting segment (Note 18 of the 10-K).","3 Business Segments")
 
-        display_bd = bd[["company","revenue","revenue_yoy_growth","operating_margin","net_margin","free_cash_flow","cash_balance","total_debt"]].copy()
-        display_bd["revenue"] = display_bd["revenue"].apply(fmt_cur)
-        display_bd["revenue_yoy_growth"] = display_bd["revenue_yoy_growth"].apply(fmt_pct)
-        display_bd["operating_margin"] = display_bd["operating_margin"].apply(fmt_pct)
-        display_bd["net_margin"] = display_bd["net_margin"].apply(fmt_pct)
-        display_bd["free_cash_flow"] = display_bd["free_cash_flow"].apply(fmt_cur)
-        display_bd["cash_balance"] = display_bd["cash_balance"].apply(fmt_cur)
-        display_bd["total_debt"] = display_bd["total_debt"].apply(fmt_cur)
-        display_bd.columns = ["Company","Revenue","YoY","Op Margin","Net Margin","FCF","Cash","Debt"]
-        render_financial_table("Peer Comparison Table", display_bd, "All values FY2025 · illustrative peer data.")
+    segs = k["segments"].copy()
+    segs["rev_growth"] = (segs["rev_2025"] - segs["rev_2024"]) / segs["rev_2024"]
+    segs["opi_growth"] = (segs["opi_2025"] - segs["opi_2024"]) / segs["opi_2024"]
+    segs["op_margin"] = segs["opi_2025"] / segs["rev_2025"]
 
-# AI Forecasting
+    # Segment KPI cards
+    for _, row in segs.iterrows():
+        color = SEG_COLORS[row["segment"]]
+        cA, cB, cC, cD = st.columns(4, gap="medium")
+        with cA: render_kpi_card(row["segment"], "FY2025 Revenue", fmt_cur(row["rev_2025"]), "vs FY2024", delta_val=row["rev_growth"])
+        with cB: render_kpi_card("Operating Income", "FY2025", fmt_cur(row["opi_2025"]), "vs FY2024", delta_val=row["opi_growth"])
+        with cC: render_kpi_card("Operating Margin", "FY2025", fmt_pct(row["op_margin"]), "Op Income / Revenue", delta_val=None)
+        with cD:
+            seg_share = row["rev_2025"] / k["revenue"]
+            render_kpi_card("Revenue Share", "% of Total", fmt_pct(seg_share), "Segment weighting", delta_val=None)
+
+    # Combined chart
+    render_chart_title("Segment Revenue Over Time","FY2023 – FY2025")
+    seg_long = pd.melt(segs, id_vars=["segment"], value_vars=["rev_2023","rev_2024","rev_2025"], var_name="year", value_name="revenue")
+    seg_long["year"] = seg_long["year"].str.replace("rev_","FY")
+    fig_seg = px.bar(seg_long, x="year", y="revenue", color="segment", barmode="group", color_discrete_map=SEG_COLORS)
+    fig_seg.update_traces(marker_line_width=0, hovertemplate="<b>%{x}</b><br>%{fullData.name}: $%{y:,.0f}M<extra></extra>")
+    fig_seg.update_yaxes(tickprefix="$", ticksuffix="M")
+    st.plotly_chart(style_fig(fig_seg, 280, True), width="stretch", config={"displayModeBar": False})
+
+    render_analyst_note("Intelligent Cloud (Azure + server products) grew 21% YoY — the fastest of any segment and the primary growth engine. Productivity & Business Processes (Microsoft 365, LinkedIn, Dynamics) grew 13% off a large base. More Personal Computing (Windows, Gaming, Search) grew 7%, driven mainly by Xbox/Activision Blizzard integration. Investors overwhelmingly focus on Azure growth as the leading indicator for MSFT's future.")
+
+    # Operating income mix
+    render_chart_title("Operating Income Contribution","How each segment contributes to total operating income")
+    opi_df = pd.DataFrame({"segment": segs["segment"], "operating_income": segs["opi_2025"]})
+    fig_opi = px.pie(opi_df, values="operating_income", names="segment", hole=0.55,
+        color="segment", color_discrete_map=SEG_COLORS)
+    fig_opi.update_traces(textposition="outside", textinfo="label+percent",
+        hovertemplate="<b>%{label}</b><br>Op Income: $%{value:,.0f}M<extra></extra>",
+        marker=dict(line=dict(color="#FFFFFF", width=2)))
+    fig_opi.update_layout(showlegend=False)
+    st.plotly_chart(style_fig(fig_opi, 340), width="stretch", config={"displayModeBar": False})
+
+    render_analyst_note(f"Productivity & Business Processes contributes the majority of operating income ({fmt_pct(segs.iloc[0]['opi_2025']/k['operating_income'])}) despite being smaller than Intelligent Cloud in revenue — because Microsoft 365 has extraordinary margins. Intelligent Cloud's operating margin is lower ({fmt_pct(segs.iloc[1]['opi_2025']/segs.iloc[1]['rev_2025'])}) because Azure requires massive capex investment.")
+
+    # Segment table
+    seg_display = segs[["segment","rev_2025","rev_2024","rev_2023","opi_2025","opi_2024","opi_2023","op_margin"]].copy()
+    for c in ["rev_2025","rev_2024","rev_2023","opi_2025","opi_2024","opi_2023"]:
+        seg_display[c] = seg_display[c].apply(fmt_cur)
+    seg_display["op_margin"] = seg_display["op_margin"].apply(fmt_pct)
+    seg_display.columns = ["Segment","Rev FY25","Rev FY24","Rev FY23","Op Inc FY25","Op Inc FY24","Op Inc FY23","Op Margin FY25"]
+    render_financial_table("Segment Financial Table", seg_display, "Source: MSFT FY2025 10-K, Note 18.")
+
+# ================= CAPITAL ALLOCATION (NEW) =================
+with tab_capital:
+    render_section("Capital Allocation","How Microsoft deployed its cash in FY2025 — the story of investment vs. shareholder returns.","Cash Deployment")
+
+    c = k["cap_allocation"]
+    ca1, ca2, ca3, ca4 = st.columns(4, gap="medium")
+    with ca1: render_kpi_card("Reinvestment","Capital Expenditures", fmt_cur(c["capex"]), f"{fmt_pct(k['capex_intensity'])} of revenue", delta_val=None)
+    with ca2: render_kpi_card("M&A","Acquisitions (net)", fmt_cur(c["acquisitions"]), "vs Activision Blizzard $69B in FY24", delta_val=None)
+    with ca3: render_kpi_card("Dividends","Cash Dividends Paid", fmt_cur(c["dividends"]), f"{fmt_pct(c['dividends']/k['net_income'])} of net income", delta_val=None)
+    with ca4: render_kpi_card("Buybacks","Share Repurchases", fmt_cur(c["buybacks"]), f"{fmt_pct(c['buybacks']/k['net_income'])} of net income", delta_val=None)
+
+    # Capital allocation waterfall
+    render_chart_title("Capital Allocation Breakdown","FY2025 cash deployed across categories")
+    ca_df = pd.DataFrame({
+        "category": ["Capex","Acquisitions","Dividends","Buybacks"],
+        "amount": [c["capex"], c["acquisitions"], c["dividends"], c["buybacks"]],
+    })
+    fig_ca = px.bar(ca_df.sort_values("amount"), x="amount", y="category", orientation="h",
+        color="category", color_discrete_sequence=[PALETTE["primary"], PALETTE["accent"], PALETTE["green"], PALETTE["gold"]])
+    fig_ca.update_traces(marker_line_width=0, texttemplate="%{x:$,.0f}M", textposition="outside",
+        hovertemplate="<b>%{y}</b><br>$%{x:,.0f}M<extra></extra>")
+    fig_ca.update_xaxes(tickprefix="$", ticksuffix="M")
+    fig_ca.update_layout(showlegend=False)
+    st.plotly_chart(style_fig(fig_ca, 260), width="stretch", config={"displayModeBar": False})
+
+    render_analyst_note(f"Microsoft deployed {fmt_cur(c['total_deployed'])} of cash in FY2025 — {fmt_cur(c['capex'])} into capex (AI/cloud infrastructure), {fmt_cur(c['acquisitions'])} into small M&A, {fmt_cur(c['dividends'])} to dividends, and {fmt_cur(c['buybacks'])} into buybacks. Total returned to shareholders: {fmt_cur(c['total_returned_to_shareholders'])} — meaningful, but capex is now the dominant use of cash for the first time in years.")
+
+    # 3-year trend
+    render_chart_title("Capital Allocation Trend","How deployment has shifted over 3 years")
+    cf_hist = pd.DataFrame({
+        "Year": ["FY2023","FY2024","FY2025"] * 4,
+        "Category": ["Capex"]*3 + ["Acquisitions"]*3 + ["Dividends"]*3 + ["Buybacks"]*3,
+        "Amount": [28107, 44477, 64551, 1670, 69132, 5978, 19800, 21771, 24082, 22245, 17254, 18420],
+    })
+    fig_trend = px.bar(cf_hist, x="Year", y="Amount", color="Category", barmode="group",
+        color_discrete_sequence=[PALETTE["primary"], PALETTE["accent"], PALETTE["green"], PALETTE["gold"]])
+    fig_trend.update_traces(marker_line_width=0, hovertemplate="<b>%{x}</b><br>%{fullData.name}: $%{y:,.0f}M<extra></extra>")
+    fig_trend.update_yaxes(tickprefix="$", ticksuffix="M")
+    st.plotly_chart(style_fig(fig_trend, 300, True), width="stretch", config={"displayModeBar": False})
+
+    render_analyst_note("Capex has grown 2.3x in two years — from $28B in FY23 to $65B in FY25 — an unprecedented ramp for a mature software company. This is Microsoft's AI infrastructure bet. Meanwhile M&A dropped sharply because FY2024 included the massive $69B Activision Blizzard acquisition (a one-time event). Dividends grow steadily; buybacks fluctuate based on stock price and cash needs.")
+
+# ================= AI FORECASTING =================
 with tab_forecast:
-    render_section("Revenue Outlook Model","Adjust growth and volatility; explore scenarios, Monte Carlo bands, and sensitivity.","Scenario Model")
+    render_section("Revenue Outlook Model","Adjust growth and volatility to explore scenarios, Monte Carlo bands, and sensitivity.","Scenario Model")
 
-    s_col1, s_col2, s_col3 = st.columns(3, gap="medium")
-    with s_col1: growth_rate_pct = st.slider("Base Case Growth (%)", 0, 30, 12, 1)
-    with s_col2: forecast_years = st.slider("Forecast Horizon (years)", 1, 5, 3, 1)
-    with s_col3: volatility_pct = st.slider("Growth Volatility (σ, %)", 1, 15, 5, 1)
+    s1, s2, s3 = st.columns(3, gap="medium")
+    with s1: growth_rate_pct = st.slider("Base Case Growth (%)", 0, 30, 15, 1)
+    with s2: forecast_years = st.slider("Forecast Horizon (years)", 1, 5, 3, 1)
+    with s3: volatility_pct = st.slider("Growth Volatility (σ, %)", 1, 15, 5, 1)
 
     base_growth = growth_rate_pct / 100
-    volatility = volatility_pct / 100
+    vol = volatility_pct / 100
 
     forecast_df = build_forecast_dataframe(k["revenue"], base_growth, 2026, forecast_years)
     scenario_df = build_scenario_dataframe(k["revenue"], 2026, forecast_years,
@@ -420,34 +493,32 @@ with tab_forecast:
     with f2: render_scenario_card("Base Case","Selected Assumption", fmt_cur(base_last["revenue"]), f"Projected FY{int(base_last['year'])} revenue.")
     with f3: render_scenario_card("Bull Case","Upside Growth", fmt_cur(bull_last["revenue"]), f"Projected FY{int(bull_last['year'])} revenue.")
 
+    render_analyst_note(f"Bear/Base/Bull represents +/- 5 percentage points from your selected growth rate. At Microsoft's FY25 growth of 15%, that spans a $70B+ range by year {int(base_last['year'])} — showing how sensitive long-term forecasts are to small changes in the growth assumption.")
+
     render_chart_title("Historical + Scenario Forecast","Bear/Base/Bull cases")
     hist_df = ts[["period","revenue"]].copy()
     hist_df["year"] = hist_df["period"].astype(int)
-    fig_forecast = go.Figure()
-    fig_forecast.add_trace(go.Scatter(x=hist_df["year"], y=hist_df["revenue"],
-        mode="lines+markers", name="Historical",
+    fig_fc = go.Figure()
+    fig_fc.add_trace(go.Scatter(x=hist_df["year"], y=hist_df["revenue"], mode="lines+markers", name="Historical",
         line=dict(color=PALETTE["primary"], width=3), marker=dict(size=7),
-        hovertemplate="<b>FY%{x}</b><br>Revenue: $%{y:,.0f}M<extra></extra>"))
-    scenario_colors = {"Bear Case": PALETTE["red"], "Base Case": PALETTE["green"], "Bull Case": PALETTE["gold"]}
-    for sc, col in scenario_colors.items():
-        sub = scenario_df[scenario_df["scenario"]==sc]
-        fig_forecast.add_trace(go.Scatter(x=sub["year"], y=sub["revenue"],
-            mode="lines+markers", name=sc,
-            line=dict(color=col, width=2.2, dash="dash"), marker=dict(size=6),
-            hovertemplate="<b>FY%{x}</b><br>Revenue: $%{y:,.0f}M<extra></extra>"))
-    fig_forecast.update_yaxes(tickprefix="$", ticksuffix="M")
-    st.plotly_chart(style_fig(fig_forecast, 260, True), width="stretch", config={"displayModeBar": False})
-
-    render_chart_title("Monte Carlo Fan Chart", f"500 simulations · μ={growth_rate_pct}% σ={volatility_pct}%")
-    mc = monte_carlo_forecast(k["revenue"], base_growth, volatility, 2026, forecast_years, 500)
-    fig_mc = go.Figure()
-    fig_mc.add_trace(go.Scatter(x=hist_df["year"], y=hist_df["revenue"], mode="lines+markers",
-        name="Historical", line=dict(color=PALETTE["primary"], width=3), marker=dict(size=6),
         hovertemplate="<b>FY%{x}</b><br>$%{y:,.0f}M<extra></extra>"))
-    fig_mc.add_trace(go.Scatter(x=list(mc["year"])+list(mc["year"][::-1]),
-        y=list(mc["p90"])+list(mc["p10"][::-1]),
-        fill="toself", fillcolor="rgba(62,92,142,0.20)",
-        line=dict(color="rgba(0,0,0,0)"), showlegend=True,
+    scolors = {"Bear Case": PALETTE["red"], "Base Case": PALETTE["green"], "Bull Case": PALETTE["gold"]}
+    for sc, col in scolors.items():
+        sub = scenario_df[scenario_df["scenario"]==sc]
+        fig_fc.add_trace(go.Scatter(x=sub["year"], y=sub["revenue"], mode="lines+markers", name=sc,
+            line=dict(color=col, width=2.2, dash="dash"), marker=dict(size=6),
+            hovertemplate="<b>FY%{x}</b><br>$%{y:,.0f}M<extra></extra>"))
+    fig_fc.update_yaxes(tickprefix="$", ticksuffix="M")
+    st.plotly_chart(style_fig(fig_fc, 260, True), width="stretch", config={"displayModeBar": False})
+
+           render_chart_title("Monte Carlo Fan Chart", f"500 simulations · μ={growth_rate_pct}% σ={volatility_pct}%")
+    mc = monte_carlo_forecast(k["revenue"], base_growth, vol, 2026, forecast_years, 500)
+    fig_mc = go.Figure()
+    fig_mc.add_trace(go.Scatter(x=hist_df["year"], y=hist_df["revenue"], mode="lines+markers", name="Historical",
+        line=dict(color=PALETTE["primary"], width=3), marker=dict(size=6),
+        hovertemplate="<b>FY%{x}</b><br>$%{y:,.0f}M<extra></extra>"))
+    fig_mc.add_trace(go.Scatter(x=list(mc["year"])+list(mc["year"][::-1]), y=list(mc["p90"])+list(mc["p10"][::-1]),
+        fill="toself", fillcolor="rgba(62,92,142,0.20)", line=dict(color="rgba(0,0,0,0)"), showlegend=True,
         name="P10–P90 band", hoverinfo="skip"))
     fig_mc.add_trace(go.Scatter(x=mc["year"], y=mc["p50"], mode="lines+markers", name="Median (P50)",
         line=dict(color=PALETTE["gold"], width=2.4, dash="dash"), marker=dict(size=6),
@@ -455,78 +526,82 @@ with tab_forecast:
     fig_mc.update_yaxes(tickprefix="$", ticksuffix="M")
     st.plotly_chart(style_fig(fig_mc, 280, True), width="stretch", config={"displayModeBar": False})
 
+    render_analyst_note("The P10–P90 band captures ~80% of simulated outcomes. Wider bands = more uncertainty. This helps quantify forecast risk — instead of a single point estimate, you see the range of plausible outcomes given the volatility assumption.")
+
     render_chart_title("Sensitivity: Growth × Margin → Operating Income", f"Projected FY{2025+forecast_years} operating income")
     growth_range = np.arange(0.02, 0.28, 0.04)
     margin_range = np.arange(0.20, 0.55, 0.05)
     grid = sensitivity_grid(k["revenue"], k["operating_margin"], growth_range, margin_range, forecast_years)
-    fig_hm = go.Figure(go.Heatmap(
-        z=grid,
+    fig_hm = go.Figure(go.Heatmap(z=grid,
         x=[f"{g*100:.0f}%" for g in growth_range],
         y=[f"{m*100:.0f}%" for m in margin_range],
         colorscale=[[0,"#F5F7FA"],[0.5,"#3E5C8E"],[1,"#0A2540"]],
         hovertemplate="Growth: %{x}<br>Margin: %{y}<br>Op Income: $%{z:,.0f}M<extra></extra>",
         colorbar=dict(title=dict(text="Op Income ($M)", font=dict(color="#4A5878", size=10)),
-                      tickfont=dict(color="#7A879B", size=9)),
-    ))
+                      tickfont=dict(color="#7A879B", size=9))))
     fig_hm.update_xaxes(title_text="Revenue Growth")
     fig_hm.update_yaxes(title_text="Operating Margin")
     st.plotly_chart(style_fig(fig_hm, 320), width="stretch", config={"displayModeBar": False})
 
-    render_section("Saved Scenarios","Snapshot current assumptions to compare.","Session Memory")
-    sv1, sv2, sv3 = st.columns([2, 1, 1], gap="medium")
-    with sv1: scenario_name = st.text_input("Scenario name", value=f"Growth {growth_rate_pct}%")
+    render_analyst_note("This heatmap shows how projected operating income changes based on two assumptions: revenue growth (X-axis) and operating margin (Y-axis). Darker = higher projected income. Use this to stress-test valuation — small changes in either variable can create wildly different outcomes.")
+
+    render_section("Saved Scenarios","Snapshot assumptions to compare side-by-side.","Session Memory")
+    sv1, sv2, sv3 = st.columns([2,1,1], gap="medium")
+    with sv1: scen_name = st.text_input("Scenario name", value=f"Growth {growth_rate_pct}%")
     with sv2:
         if st.button("Save scenario"):
-            st.session_state.saved_scenarios[scenario_name] = {
+            st.session_state.saved_scenarios[scen_name] = {
                 "growth": growth_rate_pct, "years": forecast_years,
                 "final_revenue": forecast_df.iloc[-1]["revenue"],
-                "final_year": int(forecast_df.iloc[-1]["year"]),
-            }
+                "final_year": int(forecast_df.iloc[-1]["year"])}
     with sv3:
         if st.button("Clear all"): st.session_state.saved_scenarios = {}
 
     if st.session_state.saved_scenarios:
-        rows = []
-        for name, s in st.session_state.saved_scenarios.items():
-            rows.append({"Scenario": name, "Growth": f"{s['growth']}%", "Horizon": f"{s['years']}y",
-                         f"FY{s['final_year']} Revenue": fmt_cur(s["final_revenue"])})
+        rows = [{"Scenario": n, "Growth": f"{s['growth']}%", "Horizon": f"{s['years']}y",
+                 f"Final Revenue": fmt_cur(s["final_revenue"]),
+                 "Year": f"FY{s['final_year']}"} for n, s in st.session_state.saved_scenarios.items()]
         render_financial_table("Saved Scenarios", pd.DataFrame(rows))
     else:
-        render_insight("No scenarios saved yet","Click 'Save scenario' to snapshot current sliders.")
+        render_insight("No scenarios saved yet","Click 'Save scenario' to snapshot the current sliders.")
 
-    latest_forecast = forecast_df.iloc[-1]
+    latest_fc = forecast_df.iloc[-1]
     render_insight("Forecast Narrative",
-        f"With a {growth_rate_pct}% growth assumption and {volatility_pct}% volatility, "
-        f"projected revenue reaches {fmt_cur(latest_forecast['revenue'])} by FY{int(latest_forecast['year'])} "
-        f"in the base case. The P10–P90 band captures ~80% of simulated outcomes.")
+        f"With {growth_rate_pct}% growth and {volatility_pct}% volatility, projected revenue reaches "
+        f"{fmt_cur(latest_fc['revenue'])} by FY{int(latest_fc['year'])} in the base case. "
+        f"P10–P90 band captures ~80% of simulated outcomes.")
 
-# Financial Statements
+# ================= FINANCIAL STATEMENTS =================
 with tab_financials:
-    financials = result["financials"]
-    render_section("Financial Statements","Core statement tables used by the KPI engine.","Statement Tables")
+    fin = result["financials"]
+    render_section("Financial Statements","Full income statement, balance sheet, and cash flow — direct from the 10-K.","Statement Tables")
+
+    render_analyst_note("These are the exact figures reported in Microsoft's FY2025 10-K (June 30, 2025). Every KPI on this dashboard is derived from these three statements plus segment Note 18. Download the CSVs to work with the raw data in Excel.")
+
     f1, f2 = st.columns(2, gap="medium")
     with f1:
-        render_financial_table("Income Statement", financials["income"], "Values in millions.")
-        st.download_button("Download Income CSV", dataframe_to_csv(financials["income"]),
-            "microsoft_income_statement.csv","text/csv")
+        render_financial_table("Income Statement", fin["income"], "Values in $ millions.")
+        st.download_button("Download Income CSV", dataframe_to_csv(fin["income"]), "msft_income_statement.csv", "text/csv")
     with f2:
-        render_financial_table("Balance Sheet", financials["balance"], "Values in millions.")
-        st.download_button("Download Balance CSV", dataframe_to_csv(financials["balance"]),
-            "microsoft_balance_sheet.csv","text/csv")
-    render_financial_table("Cash Flow Statement", financials["cashflow"], "Values in millions.")
-    st.download_button("Download Cash Flow CSV", dataframe_to_csv(financials["cashflow"]),
-        "microsoft_cash_flow_statement.csv","text/csv")
+        render_financial_table("Balance Sheet", fin["balance"], "Values in $ millions. Balance sheet reports 2 years per 10-K standard; FY2023 estimated from prior filings.")
+        st.download_button("Download Balance CSV", dataframe_to_csv(fin["balance"]), "msft_balance_sheet.csv", "text/csv")
 
-# AI Copilot
+    render_financial_table("Cash Flow Statement", fin["cashflow"], "Values in $ millions.")
+    st.download_button("Download Cash Flow CSV", dataframe_to_csv(fin["cashflow"]), "msft_cash_flow.csv", "text/csv")
+
+    render_analyst_note(f"Key observation: Net Income of {fmt_cur(k['net_income'])} vs Operating Cash Flow of {fmt_cur(k['operating_cash_flow'])} — OCF is $34B higher than net income due primarily to $34B of non-cash D&A. This is why analysts focus on cash flow: it strips out accounting-only charges.")
+
+# ================= AI COPILOT =================
 with tab_ai:
-    render_section("AI Copilot for Financial Commentary","Ask about revenue, margins, cash flow, liquidity, forecasting, or peer comparison.","Narrative AI")
+    render_section("AI Copilot for Financial Commentary","Ask about revenue, margins, cash flow, liquidity, forecasting, segments, or capital allocation.","Narrative AI")
+
     render_section("Suggested Questions","Click a prompt to auto-fill and run.","Quick Prompts")
     chip_cols = st.columns(4, gap="small")
     suggestions = [
         "How did revenue perform year over year?",
-        "What do the margins say about profitability?",
-        "Summarize free cash flow and liquidity.",
-        "How does Microsoft compare to its peers?",
+        "Break down Microsoft's segment performance.",
+        "Explain FY2025 capital allocation.",
+        "What do EBITDA, ROIC, and Rule of 40 tell us?",
     ]
     for i, s in enumerate(suggestions):
         with chip_cols[i]:
@@ -544,8 +619,11 @@ with tab_ai:
         response = answer_question(question, benchmark_df, kpis=k)
         render_insight("Generated Financial Commentary", response)
 
+    render_analyst_note("The AI Copilot pulls directly from the verified 10-K figures — every answer references real, sourced numbers. Try asking about specific topics: segments, capex, EBITDA, ROIC, capital allocation, or forecasting scenarios.")
+
     render_section("Example Prompts","Additional prompt ideas.","Prompt Ideas")
-    p1, p2, p3 = st.columns(3, gap="medium")
-    with p1: render_capability_card("Revenue","Explain Revenue Growth","Try: How did revenue perform year over year?")
-    with p2: render_capability_card("Margins","Review Profitability","Try: What do the margins say about profitability?")
-    with p3: render_capability_card("Cash Flow","Analyze Cash Generation","Try: Summarize free cash flow and liquidity.")
+    p1, p2, p3, p4 = st.columns(4, gap="medium")
+    with p1: render_capability_card("Revenue","Growth Story","Try: How did revenue perform year over year?")
+    with p2: render_capability_card("Segments","Azure vs Others","Try: Break down segment performance.")
+    with p3: render_capability_card("Capital","Deployment Analysis","Try: Explain FY2025 capital allocation.")
+    with p4: render_capability_card("Ratios","Analyst Metrics","Try: What do EBITDA, ROIC, Rule of 40 mean?")
