@@ -22,7 +22,6 @@ def microsoft_fallback_financials():
         {"line_item": "Provision for Income Taxes",  "2025": 21795.0,  "2024": 19651.0,  "2023": 16950.0},
         {"line_item": "Net Income",                  "2025": 101832.0, "2024": 88136.0,  "2023": 72361.0},
     ])
-    # Balance sheet: 10-K only reports FY25 & FY24. FY23 cash from CF stmt end-of-period.
     balance = pd.DataFrame([
         {"line_item": "Cash and Cash Equivalents",   "2025": 30242.0,  "2024": 18315.0,  "2023": 34704.0},
         {"line_item": "Short-Term Investments",      "2025": 64323.0,  "2024": 57228.0,  "2023": 76558.0},
@@ -35,17 +34,16 @@ def microsoft_fallback_financials():
         {"line_item": "Stockholders' Equity",        "2025": 343479.0, "2024": 268477.0, "2023": 206223.0},
     ])
     cashflow = pd.DataFrame([
-        {"line_item": "Net Income",                     "2025": 101832.0, "2024": 88136.0,  "2023": 72361.0},
-        {"line_item": "Depreciation & Amortization",    "2025": 34153.0,  "2024": 22287.0,  "2023": 13861.0},
-        {"line_item": "Stock-Based Compensation",       "2025": 11974.0,  "2024": 10734.0,  "2023": 9611.0},
-        {"line_item": "Operating Cash Flow",            "2025": 136162.0, "2024": 118548.0, "2023": 87582.0},
-        {"line_item": "Capital Expenditures",           "2025": -64551.0, "2024": -44477.0, "2023": -28107.0},
-        {"line_item": "Acquisitions (net)",             "2025": -5978.0,  "2024": -69132.0, "2023": -1670.0},
-        {"line_item": "Common Stock Repurchased",       "2025": -18420.0, "2024": -17254.0, "2023": -22245.0},
-        {"line_item": "Dividends Paid",                 "2025": -24082.0, "2024": -21771.0, "2023": -19800.0},
-        {"line_item": "Net Change in Cash",             "2025": 11927.0,  "2024": -16389.0, "2023": 20773.0},
+        {"line_item": "Net Income",                  "2025": 101832.0, "2024": 88136.0,  "2023": 72361.0},
+        {"line_item": "Depreciation & Amortization", "2025": 34153.0,  "2024": 22287.0,  "2023": 13861.0},
+        {"line_item": "Stock-Based Compensation",    "2025": 11974.0,  "2024": 10734.0,  "2023": 9611.0},
+        {"line_item": "Operating Cash Flow",         "2025": 136162.0, "2024": 118548.0, "2023": 87582.0},
+        {"line_item": "Capital Expenditures",        "2025": -64551.0, "2024": -44477.0, "2023": -28107.0},
+        {"line_item": "Acquisitions (net)",          "2025": -5978.0,  "2024": -69132.0, "2023": -1670.0},
+        {"line_item": "Common Stock Repurchased",    "2025": -18420.0, "2024": -17254.0, "2023": -22245.0},
+        {"line_item": "Dividends Paid",              "2025": -24082.0, "2024": -21771.0, "2023": -19800.0},
+        {"line_item": "Net Change in Cash",          "2025": 11927.0,  "2024": -16389.0, "2023": 20773.0},
     ])
-    # Segments — verified from Note 18
     segments = pd.DataFrame([
         {"segment": "Productivity and Business Processes",
          "rev_2025": 120810.0, "rev_2024": 106820.0, "rev_2023": 94151.0,
@@ -58,7 +56,7 @@ def microsoft_fallback_financials():
          "opi_2025": 14166.0,  "opi_2024": 11959.0,  "opi_2023": 10038.0},
     ])
     geographic = pd.DataFrame([
-        {"region": "United States",  "2025": 144546.0, "2024": 124704.0, "2023": 106744.0},
+        {"region": "United States",   "2025": 144546.0, "2024": 124704.0, "2023": 106744.0},
         {"region": "Other Countries", "2025": 137178.0, "2024": 120418.0, "2023": 105171.0},
     ])
     per_share = {
@@ -67,6 +65,132 @@ def microsoft_fallback_financials():
     }
     return {"income": income, "balance": balance, "cashflow": cashflow,
             "segments": segments, "geographic": geographic, "per_share": per_share}
+
+
+# ============================================================
+# Timeline events — for annotated charts (#20)
+# ============================================================
+TIMELINE_EVENTS = [
+    {"year": 2023.0, "label": "OpenAI $10B investment", "yoffset": 40},
+    {"year": 2023.75, "label": "Copilot launch",         "yoffset": -40},
+    {"year": 2024.5,  "label": "Activision closes ($69B)","yoffset": 40},
+    {"year": 2025.0,  "label": "AI capex ramp",          "yoffset": -40},
+]
+
+# ============================================================
+# Industry benchmarks — for comparison callouts (#15, #19)
+# Sourced from public S&P 500 / large-cap software averages
+# ============================================================
+INDUSTRY_BENCHMARKS = {
+    "operating_margin_sp500": 0.13,
+    "operating_margin_software": 0.22,
+    "fcf_margin_sp500": 0.08,
+    "roic_sp500": 0.10,
+    "gross_margin_software": 0.55,
+    "capex_intensity_sp500": 0.05,
+    "rule_of_40_saas": 0.40,
+    "net_debt_ebitda_median": 1.5,
+}
+
+# ============================================================
+# Ratio thresholds — for quality gauges (#18)
+# Returns tier: "elite" / "strong" / "average" / "weak"
+# ============================================================
+def rate_metric(metric, value):
+    if value is None: return "n/a"
+    thresholds = {
+        "operating_margin": [(0.30, "elite"), (0.20, "strong"), (0.10, "average")],
+        "gross_margin":     [(0.60, "elite"), (0.40, "strong"), (0.25, "average")],
+        "fcf_margin":       [(0.20, "elite"), (0.12, "strong"), (0.05, "average")],
+        "roic":             [(0.20, "elite"), (0.12, "strong"), (0.07, "average")],
+        "rule_of_40":       [(0.40, "elite"), (0.30, "strong"), (0.20, "average")],
+        "ebitda_margin":    [(0.40, "elite"), (0.25, "strong"), (0.15, "average")],
+    }
+    if metric not in thresholds: return "n/a"
+    for cutoff, tier in thresholds[metric]:
+        if value >= cutoff: return tier
+    return "weak"
+
+
+# ============================================================
+# Formula explanations — for hover/expand tooltips (#26, #29)
+# ============================================================
+FORMULAS = {
+    "operating_margin": {"formula": "Operating Income ÷ Revenue",
+                          "example": "$128,528M ÷ $281,724M = 45.6%",
+                          "meaning": "For every $1 of sales, ~46¢ becomes operating profit before interest and taxes."},
+    "gross_margin":     {"formula": "(Revenue − Cost of Revenue) ÷ Revenue",
+                          "example": "$193,893M ÷ $281,724M = 68.8%",
+                          "meaning": "How much revenue is left after direct costs of delivering products/services."},
+    "net_margin":       {"formula": "Net Income ÷ Revenue",
+                          "example": "$101,832M ÷ $281,724M = 36.1%",
+                          "meaning": "Bottom-line profit as a % of sales."},
+    "ebitda":           {"formula": "Operating Income + D&A",
+                          "example": "$128,528M + $34,153M = $162,681M",
+                          "meaning": "Earnings before non-cash D&A charges — a proxy for cash-generating power."},
+    "ebitda_margin":    {"formula": "EBITDA ÷ Revenue",
+                          "example": "$162,681M ÷ $281,724M = 57.7%",
+                          "meaning": "How much of every dollar of revenue converts to pre-tax cash earnings."},
+    "fcf":              {"formula": "Operating Cash Flow − Capex",
+                          "example": "$136,162M − $64,551M = $71,611M",
+                          "meaning": "Cash generated after reinvesting in the business — fuel for dividends, buybacks, M&A."},
+    "fcf_margin":       {"formula": "Free Cash Flow ÷ Revenue",
+                          "example": "$71,611M ÷ $281,724M = 25.4%",
+                          "meaning": "How much revenue converts to distributable cash."},
+    "rule_of_40":       {"formula": "Revenue Growth % + FCF Margin %",
+                          "example": "14.9% + 25.4% = 40.4%",
+                          "meaning": "SaaS health check. >40% = elite balance of growth and profitability."},
+    "roic":             {"formula": "NOPAT ÷ (Debt + Equity)",
+                          "example": "$105,873M ÷ $386,630M = 27.4%",
+                          "meaning": "Every $1 of capital earns ~27¢ per year — extraordinary for a mature company."},
+    "net_debt_ebitda":  {"formula": "(Total Debt − Cash) ÷ EBITDA",
+                          "example": "($43,151M − $30,242M) ÷ $162,681M = 0.08x",
+                          "meaning": "Leverage ratio. Lower = safer balance sheet. Healthy companies typically 1–3x."},
+    "effective_tax_rate": {"formula": "Provision for Taxes ÷ Pretax Income",
+                            "example": "$21,795M ÷ $123,627M = 17.6%",
+                            "meaning": "Actual tax rate MSFT pays after credits, deductions, and jurisdictional mix."},
+    "capex_intensity":  {"formula": "Capex ÷ Revenue",
+                          "example": "$64,551M ÷ $281,724M = 22.9%",
+                          "meaning": "How aggressively the company reinvests in physical assets. AI infra is driving this up."},
+}
+
+
+# ============================================================
+# Source page references — for tiny "10-K p.XX" superscripts (#30)
+# ============================================================
+SOURCE_REFS = {
+    "income_statement": "10-K p.48",
+    "balance_sheet":    "10-K p.50",
+    "cash_flow":        "10-K p.51",
+    "segments":         "10-K Note 18, p.82-84",
+    "geographic":       "10-K Note 18, p.84",
+}
+
+
+# ============================================================
+# Executive TL;DR summary — for landing callout (#6)
+# ============================================================
+def executive_summary():
+    return ("Microsoft delivered record $281.7B revenue in FY2025 (+15% YoY) with elite 45.6% operating margins. "
+            "The story of the year: capex grew 45% to $64.6B (more than doubled over 2 years) as MSFT races to "
+            "build AI infrastructure — a bet that shifts cash flow economics but positions the company as the "
+            "critical infrastructure layer for the AI era. Intelligent Cloud (Azure) led all segments with 21% growth.")
+
+
+# ============================================================
+# "By the numbers" ribbon stats (#23)
+# ============================================================
+def ribbon_stats():
+    return [
+        {"value": "228K",   "label": "Employees"},
+        {"value": "3",      "label": "Segments"},
+        {"value": "51%",    "label": "US Revenue"},
+        {"value": "+15%",   "label": "YoY Growth"},
+        {"value": "$30B",   "label": "Cash"},
+        {"value": "$65B",   "label": "Capex"},
+        {"value": "45.6%",  "label": "Op Margin"},
+        {"value": "27.4%",  "label": "ROIC"},
+    ]
 
 
 # ============================================================
@@ -90,9 +214,14 @@ def fmt_ratio(v, suffix="x"):
     if v is None: return "N/A"
     return f"{v:.2f}{suffix}"
 
+def fmt_bps(v):
+    """Format a decimal change (0.0098) as basis points (98 bps)."""
+    if v is None: return "N/A"
+    return f"{v*10000:+.0f} bps"
+
 
 # ============================================================
-# KPI Computation — expanded with real analyst metrics
+# KPI Computation
 # ============================================================
 
 def _row(df, col_name, col_val):
@@ -135,12 +264,9 @@ def compute_kpis(financials):
         rev = total_rev[p]; opi = op_inc[p]; ni = net_inc[p]
         ocf_v = ocf[p]; cx = abs(capex[p]); fcf = ocf_v - cx
         ebitda = opi + da[p]
-        # Effective tax rate
         etr = safe_div(tax[p], pretax[p])
-        # Rule of 40 — need prior year for growth (skip earliest)
         ts_rows.append({
-            "period": p,
-            "revenue": rev,
+            "period": p, "revenue": rev,
             "gross_margin": safe_div(gross[p], rev),
             "operating_margin": safe_div(opi, rev),
             "net_margin": safe_div(ni, rev),
@@ -156,15 +282,12 @@ def compute_kpis(financials):
             "net_debt": debt[p] - cash[p],
             "net_debt_ebitda": safe_div(debt[p] - cash[p], ebitda),
             "operating_cash_flow": ocf_v,
-            "capex": cx,
-            "free_cash_flow": fcf,
+            "capex": cx, "free_cash_flow": fcf,
             "dividends_paid": abs(dividends[p]),
             "buybacks": abs(buybacks[p]),
             "acquisitions": abs(acq[p]),
         })
     ts = pd.DataFrame(ts_rows)
-
-    # Add YoY growth + Rule of 40 (needs prior year)
     ts = ts.sort_values("period").reset_index(drop=True)
     ts["revenue_growth"] = ts["revenue"].pct_change()
     ts["rule_of_40"] = ts["revenue_growth"] + ts["fcf_margin"]
@@ -177,14 +300,19 @@ def compute_kpis(financials):
     latest_ts = ts.loc[ts["period"] == latest].iloc[0]
     yoy_growth = (total_rev["2025"] - total_rev["2024"]) / total_rev["2024"]
 
-    # ROIC = NOPAT / (Debt + Equity)
+    # Deltas vs prior year
+    prior_ts = ts.loc[ts["period"] == "2024"].iloc[0]
+    op_margin_delta = latest_ts["operating_margin"] - prior_ts["operating_margin"]  # ~98 bps
+    gm_delta = latest_ts["gross_margin"] - prior_ts["gross_margin"]
+    capex_yoy = (latest_ts["capex"] - prior_ts["capex"]) / prior_ts["capex"]
+    capex_2yr = (latest_ts["capex"] - ts.loc[ts["period"]=="2023"].iloc[0]["capex"]) / ts.loc[ts["period"]=="2023"].iloc[0]["capex"]
+
     nopat = op_inc[latest] * (1 - latest_ts["effective_tax_rate"])
     invested_capital = debt[latest] + equity[latest]
     roic = safe_div(nopat, invested_capital)
     roe  = safe_div(net_inc[latest], equity[latest])
     roa  = safe_div(net_inc[latest], tot_assets[latest])
 
-    # Capital allocation total FY25
     cap_allocation = {
         "capex": abs(capex[latest]),
         "acquisitions": abs(acq[latest]),
@@ -241,6 +369,12 @@ def compute_kpis(financials):
         "roic": roic, "roe": roe, "roa": roa,
 
         "cap_allocation": cap_allocation,
+
+        # Additional derived deltas
+        "op_margin_delta": op_margin_delta,   # ~+0.0098 (98 bps)
+        "gross_margin_delta": gm_delta,
+        "capex_yoy_growth": capex_yoy,        # ~0.45 (45%)
+        "capex_2yr_growth": capex_2yr,        # ~1.30 (130%)
     }
 
 
@@ -252,7 +386,7 @@ def process_uploaded_file(_file=None):
 
 
 def process_peers(peer_names):
-    return {}  # peers disabled until we have real 10-Ks for them
+    return {}
 
 
 def build_benchmark_dataframe(results):
@@ -365,20 +499,20 @@ def answer_question(question, df, kpis=None):
     if any(w in q for w in ["revenue", "growth"]):
         return (f"Microsoft generated {fmt_cur(k['revenue'])} in FY2025 revenue ({fmt_pct(k['revenue_yoy_growth'])} YoY). "
                 f"Service and other revenue = {fmt_pct(k['service_revenue_mix'])} of the total. "
-                f"Intelligent Cloud (Azure) was the fastest-growing segment.")
+                f"Intelligent Cloud (Azure) was the fastest-growing segment at +21%.")
 
     if any(w in q for w in ["margin", "profit"]):
-        return (f"Strong profitability: gross margin {fmt_pct(k['gross_margin'])}, operating margin {fmt_pct(k['operating_margin'])}, "
-                f"net margin {fmt_pct(k['net_margin'])}, EBITDA margin {fmt_pct(k['ebitda_margin'])}.")
+        return (f"Strong profitability: gross margin {fmt_pct(k['gross_margin'])}, operating margin {fmt_pct(k['operating_margin'])} "
+                f"(up ~100 bps YoY), net margin {fmt_pct(k['net_margin'])}, EBITDA margin {fmt_pct(k['ebitda_margin'])}.")
 
     if any(w in q for w in ["cash", "fcf", "liquidity"]):
-        return (f"Microsoft generated {fmt_cur(k['free_cash_flow'])} in FCF ({fmt_pct(k['fcf_margin'])} of revenue) — note capex nearly doubled to "
-                f"{fmt_cur(k['capex'])} for AI infrastructure, so FCF declined slightly vs FY24. "
+        return (f"Microsoft generated {fmt_cur(k['free_cash_flow'])} in FCF ({fmt_pct(k['fcf_margin'])} of revenue). "
+                f"Note capex grew 45% YoY to {fmt_cur(k['capex'])} for AI infrastructure, so FCF declined slightly vs FY24. "
                 f"Cash + ST investments {fmt_cur(k['cash_plus_st_inv'])}, net debt {fmt_cur(k['net_debt'])}.")
 
     if any(w in q for w in ["debt", "balance sheet", "leverage"]):
         return (f"Balance sheet: {fmt_cur(k['cash_plus_st_inv'])} cash + ST investments vs {fmt_cur(k['total_debt'])} total debt. "
-                f"Net debt {fmt_cur(k['net_debt'])}. Net Debt/EBITDA of {fmt_ratio(k['net_debt_ebitda'])} — very low leverage.")
+                f"Net debt {fmt_cur(k['net_debt'])}. Net Debt/EBITDA of {fmt_ratio(k['net_debt_ebitda'])} — near-zero leverage.")
 
     return (f"Microsoft FY2025: revenue {fmt_cur(k['revenue'])} ({fmt_pct(k['revenue_yoy_growth'])} YoY), "
             f"operating margin {fmt_pct(k['operating_margin'])}, FCF {fmt_cur(k['free_cash_flow'])}, "
