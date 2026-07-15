@@ -16,11 +16,10 @@ st.set_page_config(
 )
 
 # ============================================================
-# THEME — Fluent + nested tiles + polish
+# THEME
 # ============================================================
 st.markdown("""
 <style>
-/* Base */
 .stApp { background: #FFFFFF; }
 html, body, [class*="css"] {
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -33,7 +32,7 @@ h1, h2, h3, h4 { color: #252423; font-weight: 600; letter-spacing: -0.01em; }
 h1 { font-size: 2.25rem; }
 
 /* ==========================================================
-   HEADER TILE (top of each tab)
+   HEADER TILE
    ========================================================== */
 .header-tile {
   background: #FFFFFF; border: 1px solid #EDEBE9; border-radius: 4px;
@@ -44,15 +43,15 @@ h1 { font-size: 2.25rem; }
 .header-tile:hover { box-shadow: 0 4px 12px rgba(0,120,212,0.08); border-color: #C7E0F4; }
 .header-tile:hover .gradient-stripe { animation-duration: 2s; }
 .header-tile:hover .live-dot { animation-duration: 1s; }
-.header-tile h1 { margin: 0 0 0.4rem 0; font-size: 1.85rem; color: #252423; }
-.header-tile .subtitle-wrap { position: relative; height: 26px; overflow: hidden; }
-.header-tile .subtitle { color: #605E5C; font-size: 1rem; line-height: 1.5; margin: 0; position: absolute; left: 0; right: 0; }
+.header-tile h1 { margin: 0 0 0.75rem 0; font-size: 1.85rem; color: #252423; }
+.header-tile .subtitle-wrap { position: relative; height: 30px; overflow: hidden; margin-bottom: 0.5rem; }
+.header-tile .subtitle { color: #605E5C; font-size: 1rem; line-height: 1.6; margin: 0; position: absolute; left: 0; right: 0; }
 .header-tile .subtitle.rotating { opacity: 0; animation: subtitleCycle 18s infinite; }
 @keyframes subtitleCycle {
   0%, 30% { opacity: 1; transform: translateY(0); }
   33%, 100% { opacity: 0; transform: translateY(-6px); }
 }
-.header-tile .meta { color: #8A8886; font-size: 0.78rem; margin-top: 0.85rem; font-family: 'Segoe UI', monospace; }
+.header-tile .meta { color: #8A8886; font-size: 0.78rem; margin-top: 1rem; font-family: 'Segoe UI', monospace; }
 
 .gradient-stripe {
   position: absolute; bottom: 0; left: 0; height: 3px; width: 100%;
@@ -71,21 +70,25 @@ h1 { font-size: 2.25rem; }
   padding: 0.3rem 0.75rem; font-size: 0.72rem; color: #005A9E; font-weight: 600;
 }
 .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #107C10; animation: pulse 2s infinite; }
-.header-tile.centered { text-align: center; padding: 3rem 2rem; }
-.header-tile.centered h1 { font-size: 2.25rem; }
+
+/* Centered variant — Welcome page (FIX: more padding, proper line spacing, no collision) */
+.header-tile.centered { text-align: center; padding: 3.5rem 2rem 3rem 2rem; }
+.header-tile.centered h1 { font-size: 2.4rem; margin-bottom: 1.25rem; }
+.header-tile.centered .subtitle { position: static; font-size: 1.05rem; line-height: 1.6; margin-bottom: 1.5rem; color: #605E5C; }
+.header-tile.centered .meta { margin-top: 0.5rem; font-size: 0.8rem; }
 
 /* ==========================================================
-   SECTION TILE (small header tile inside content wrapper)
+   SECTION TILE (small header inside content wrap)
    ========================================================== */
 .section-tile {
   background: #FFFFFF; border: 1px solid #EDEBE9; border-radius: 4px;
-  padding: 1rem 1.35rem; margin-bottom: 1.25rem;
+  padding: 0.9rem 1.25rem; margin-bottom: 1rem;
   position: relative; overflow: hidden;
   transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 .section-tile:hover { box-shadow: 0 3px 10px rgba(0,120,212,0.06); border-color: #C7E0F4; transform: translateY(-1px); }
-.section-tile .section-tile-title { font-size: 1.15rem; font-weight: 600; color: #252423; margin: 0; }
-.section-tile .section-tile-sub { font-size: 0.82rem; color: #8A8886; margin-top: 0.15rem; }
+.section-tile .section-tile-title { font-size: 1.05rem; font-weight: 600; color: #252423; margin: 0; }
+.section-tile .section-tile-sub { font-size: 0.78rem; color: #8A8886; margin-top: 0.1rem; }
 .section-tile .mini-stripe {
   position: absolute; bottom: 0; left: 0; height: 2px; width: 100%;
   background: linear-gradient(90deg, transparent, #0078D4, transparent);
@@ -93,24 +96,23 @@ h1 { font-size: 2.25rem; }
 }
 
 /* ==========================================================
-   CONTENT WRAPPER (big outer tile for a section)
+   CONTENT WRAPPER (grey outer tile)
    ========================================================== */
 .content-wrap {
   background: #FAFAFA; border: 1px solid #EDEBE9; border-radius: 6px;
-  padding: 1.25rem; margin: 2rem 0 2.5rem 0;
+  padding: 1.25rem; margin: 1.25rem 0 1.5rem 0;
 }
 
 /* ==========================================================
-   KPI CARD with unified expander
+   KPI CARD (compact for Power BI density)
    ========================================================== */
 .kpi-card {
   background: #FFFFFF; border: 1px solid #EDEBE9; border-radius: 4px 4px 0 0;
   border-bottom: none;
-  padding: 1.1rem 1.25rem;
+  padding: 0.85rem 1rem;
   border-top: 2px solid #0078D4;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, border-top-width 0.2s ease;
   animation: fadeInUp 0.5s ease both;
-  cursor: default;
   position: relative;
 }
 .kpi-card:hover {
@@ -127,63 +129,55 @@ h1 { font-size: 2.25rem; }
 .kpi-card.signal { border-top-color: #FFB900; }
 .kpi-card.signal:hover { border-color: #FFE599; box-shadow: 0 4px 12px rgba(255,185,0,0.10); }
 
-.kpi-label { font-size: 0.72rem; color: #605E5C; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; font-weight: 600; }
-.kpi-value { font-size: 1.85rem; font-weight: 600; color: #252423; line-height: 1.1; transition: color 0.2s ease; }
-.kpi-delta { font-size: 0.82rem; margin-top: 0.4rem; font-weight: 500; transition: transform 0.2s ease; display: inline-block; }
+.kpi-label { font-size: 0.68rem; color: #605E5C; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.3rem; font-weight: 600; }
+.kpi-value { font-size: 1.55rem; font-weight: 600; color: #252423; line-height: 1.1; transition: color 0.2s ease; }
+.kpi-delta { font-size: 0.78rem; margin-top: 0.3rem; font-weight: 500; transition: transform 0.2s ease; display: inline-block; }
 .kpi-delta.up { color: #107C10; }
 .kpi-delta.down { color: #D83B01; }
 .kpi-delta.flat { color: #8A8886; }
-.kpi-sub { font-size: 0.72rem; color: #8A8886; margin-top: 0.25rem; }
-
-.kpi-card:nth-child(1) { animation-delay: 0.05s; }
-.kpi-card:nth-child(2) { animation-delay: 0.10s; }
-.kpi-card:nth-child(3) { animation-delay: 0.15s; }
+.kpi-sub { font-size: 0.68rem; color: #8A8886; margin-top: 0.2rem; }
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ==========================================================
-   UNIFIED EXPANDER — attached to bottom of KPI card
-   ========================================================== */
 .kpi-expander-wrap {
   border: 1px solid #EDEBE9; border-top: none;
   border-radius: 0 0 4px 4px;
-  overflow: hidden; margin-bottom: 1rem;
+  overflow: hidden; margin-bottom: 0.75rem;
   transition: border-color 0.2s ease;
 }
 .kpi-expander-wrap:hover { border-color: #C7E0F4; }
 .kpi-expander-wrap .stExpander { border: none !important; background: #FFFFFF !important; }
 .kpi-expander-wrap .streamlit-expanderHeader {
   background: #FFFFFF !important; border: none !important; border-top: 1px solid #F3F2F1 !important;
-  border-radius: 0 !important; padding: 0.55rem 1.25rem !important;
-  font-size: 0.78rem !important; color: #0078D4 !important; font-weight: 500 !important;
+  border-radius: 0 !important; padding: 0.5rem 1rem !important;
+  font-size: 0.75rem !important; color: #0078D4 !important; font-weight: 500 !important;
 }
 .kpi-expander-wrap .streamlit-expanderHeader:hover { background: #FAFAFA !important; color: #005A9E !important; }
-.kpi-expander-wrap .streamlit-expanderContent { background: #FFFFFF !important; padding: 0.5rem 1.25rem 1rem 1.25rem !important; }
+.kpi-expander-wrap .streamlit-expanderContent { background: #FFFFFF !important; padding: 0.5rem 1rem 0.75rem 1rem !important; }
 
 /* ==========================================================
-   ANALYST NOTE with spacing
+   ANALYST NOTE
    ========================================================== */
 .analyst-note {
   background: #F3F9FD; border-left: 3px solid #0078D4; border-radius: 2px;
-  padding: 0.95rem 1.15rem; margin: 1.5rem 0 1rem 0;
-  font-size: 0.92rem; color: #252423; line-height: 1.6;
+  padding: 0.85rem 1.1rem; margin: 1rem 0;
+  font-size: 0.9rem; color: #252423; line-height: 1.6;
 }
 .analyst-note strong { color: #005A9E; }
-.analyst-note.top-spaced { margin-top: 2rem; }
+.analyst-note.top-spaced { margin-top: 1.5rem; }
 
 /* ==========================================================
    RIBBON CARDS
    ========================================================== */
 .ribbon-card {
   background: #FFFFFF; border: 1px solid #EDEBE9; border-radius: 4px;
-  padding: 0.85rem 1rem; text-align: center;
+  padding: 0.75rem 0.9rem; text-align: center;
   border-top: 2px solid #0078D4;
   transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   animation: fadeInUp 0.5s ease both;
-  cursor: default;
 }
 .ribbon-card:hover {
   background: #FAFAFA;
@@ -192,13 +186,13 @@ h1 { font-size: 2.25rem; }
   box-shadow: 0 4px 12px rgba(0,120,212,0.08);
 }
 .ribbon-card:hover .ribbon-num { transform: scale(1.05); color: #005A9E; }
-.ribbon-num { font-size: 1.25rem; font-weight: 600; color: #252423; font-variant-numeric: tabular-nums; line-height: 1.15; transition: transform 0.2s ease, color 0.2s ease; display: inline-block; }
-.ribbon-lbl { font-size: 0.68rem; color: #605E5C; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.3rem; font-weight: 600; }
+.ribbon-num { font-size: 1.15rem; font-weight: 600; color: #252423; font-variant-numeric: tabular-nums; line-height: 1.15; transition: transform 0.2s ease, color 0.2s ease; display: inline-block; }
+.ribbon-lbl { font-size: 0.64rem; color: #605E5C; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 0.25rem; font-weight: 600; }
 
 /* ==========================================================
-   ROTATING CAROUSEL (welcome)
+   CAROUSEL (Welcome)
    ========================================================== */
-.cstat-wrap { position: relative; height: 60px; text-align: center; margin-top: 1.5rem; }
+.cstat-wrap { position: relative; height: 60px; text-align: center; margin: 2rem auto 0 auto; }
 .cstat {
   position: absolute; left: 0; right: 0;
   font-size: 1.5rem; color: #0078D4; font-weight: 600; font-variant-numeric: tabular-nums;
@@ -219,7 +213,7 @@ h1 { font-size: 2.25rem; }
   50% { box-shadow: 0 0 0 6px rgba(16,124,16,0); }
 }
 .as-of { display: inline-block; background: #F3F2F1; border: 1px solid #EDEBE9; border-radius: 20px; padding: 0.25rem 0.75rem; font-size: 0.72rem; color: #605E5C; font-family: 'Segoe UI', monospace; }
-.source-cite { font-size: 0.68rem; color: #8A8886; vertical-align: super; margin-left: 0.25rem; }
+.source-cite { font-size: 0.66rem; color: #8A8886; vertical-align: super; margin-left: 0.25rem; }
 
 .footer { background: #252423; color: #F3F2F1; padding: 2rem; border-radius: 4px; margin-top: 3rem; text-align: center; font-size: 0.85rem; }
 .footer a { color: #6AB4F7; text-decoration: none; margin: 0 0.75rem; font-weight: 500; }
@@ -257,7 +251,7 @@ h1 { font-size: 2.25rem; }
 """, unsafe_allow_html=True)
 
 # ============================================================
-# LOAD DATA
+# DATA
 # ============================================================
 FINANCIALS = engine.microsoft_fallback_financials()
 KPIS = engine.compute_kpis(FINANCIALS)
@@ -286,13 +280,11 @@ ND_EBITDA  = KPIS["net_debt_ebitda"]
 OPM_DELTA  = KPIS["op_margin_delta"] * 10000
 CAPEX_YOY  = KPIS["capex_yoy_growth"] * 100
 REV_YOY    = KPIS["revenue_yoy_growth"] * 100
-CASH_B     = KPIS["cash_plus_st_inv"] / 1000
 
 # ============================================================
 # HELPERS
 # ============================================================
 def header_tile(title, subtitles, meta=None, live_metric=None, centered=False):
-    """subtitles: string or list of strings (list = rotating carousel)."""
     cls = "header-tile centered" if centered else "header-tile"
     if isinstance(subtitles, str):
         sub_html = f'<div class="subtitle-wrap"><p class="subtitle">{subtitles}</p></div>'
@@ -371,17 +363,17 @@ def ribbon_bar():
 
 def kpi_explainer(what, calc, source, useful):
     return f"""
-    **What does this mean?**
-    {what}
+**What does this mean?**
+{what}
 
-    **How was this calculated?**
-    {calc}
+**How was this calculated?**
+{calc}
 
-    **Where does this come from?**
-    {source}
+**Where does this come from?**
+{source}
 
-    **Why is it useful?**
-    {useful}
+**Why is it useful?**
+{useful}
     """
 
 FLUENT_LAYOUT = dict(
@@ -427,7 +419,7 @@ tabs = st.tabs([
 ])
 
 # ============================================================
-# TAB 1: WELCOME
+# TAB 1: WELCOME (fixed spacing, no more collision)
 # ============================================================
 with tabs[0]:
     st.markdown("""
@@ -452,7 +444,7 @@ with tabs[0]:
     st.markdown(f'<div class="cstat-wrap">{stats_html}</div>', unsafe_allow_html=True)
 
 # ============================================================
-# TAB 2: EXECUTIVE SUMMARY
+# TAB 2: EXECUTIVE SUMMARY (Power BI grid layout)
 # ============================================================
 with tabs[1]:
     header_tile(
@@ -470,170 +462,138 @@ with tabs[1]:
     ribbon_bar()
     st.caption("The eight most-referenced statistics from Microsoft's FY2025 filing — spanning headcount, profitability, and balance sheet strength.")
 
-    # SECTION 1 — Key Financial Metrics
+    # ============ POWER BI GRID: Key Financial Metrics (6 tiles in ONE row) ============
     content_wrap_open()
-    section_tile("Key Financial Metrics", "Headline results with year-over-year comparison")
+    section_tile("Key Financial Metrics", "Six headline results — year-over-year comparison")
 
-    cols = st.columns(3, gap="medium")
-    with cols[0]:
-        st.markdown(kpi_card("Revenue", f"${REV_B:.1f}B", f"+{REV_YOY:.1f}%", "up", "vs $245.1B FY24", "p.48"), unsafe_allow_html=True)
-        kpi_expander_open()
-        with st.expander("What does this mean?"):
-            st.markdown(kpi_explainer(
-                what="All money Microsoft earned from selling products and services during FY2025 — including Azure, Office 365, LinkedIn, Windows, Xbox, and other offerings.",
-                calc="Sum of Product Revenue ($63.9B) + Service and Other Revenue ($217.8B) = $281.7B total.",
-                source="10-K Income Statement, page 48. Verified directly from the filed PDF.",
-                useful="Revenue growth is the single most-watched top-line indicator. A 14.9% jump at $245B+ scale signals extraordinary demand — most companies this large grow 3–5% annually."
-            ))
-        kpi_expander_close()
-    with cols[1]:
-        st.markdown(kpi_card("Net Income", f"${NI_B:.1f}B", "+15.6%", "up", "vs $88.1B FY24", "p.48"), unsafe_allow_html=True)
-        kpi_expander_open()
-        with st.expander("What does this mean?"):
-            st.markdown(kpi_explainer(
-                what="The final profit after all expenses, interest, and taxes are subtracted from revenue. This is what Microsoft actually 'keeps.'",
-                calc="Revenue ($281.7B) − Cost of Revenue − Operating Expenses − Other Income (Expense) − Taxes = $101.8B.",
-                source="10-K Income Statement, page 48. Also known as 'net earnings.'",
-                useful="Net income growing faster than revenue (15.6% vs 14.9%) indicates improving operational efficiency."
-            ))
-        kpi_expander_close()
-    with cols[2]:
-        st.markdown(kpi_card("Operating Margin", f"{OPM:.1f}%", f"+{OPM_DELTA:.0f} bps", "up", "vs 44.6% FY24", "p.48"), unsafe_allow_html=True)
-        kpi_expander_open()
-        with st.expander("What does this mean?"):
-            st.markdown(kpi_explainer(
-                what="The percentage of revenue that becomes operating profit before interest and taxes.",
-                calc="Operating Income ($128.5B) ÷ Revenue ($281.7B) = 45.6%.",
-                source="10-K Income Statement, page 48.",
-                useful="45.6% is elite territory — most Fortune 500 companies operate at 10–15% margins."
-            ))
-        kpi_expander_close()
+    kpi_data = [
+        ("Revenue", f"${REV_B:.1f}B", f"+{REV_YOY:.1f}%", "up", "vs $245.1B FY24", "p.48", "",
+         "All money Microsoft earned from selling products and services during FY2025.",
+         "Product Revenue ($63.9B) + Service and Other Revenue ($217.8B) = $281.7B total.",
+         "10-K Income Statement, page 48.",
+         "A 14.9% jump at $245B+ scale signals extraordinary demand."),
+        ("Net Income", f"${NI_B:.1f}B", "+15.6%", "up", "vs $88.1B FY24", "p.48", "",
+         "The final profit after all expenses, interest, and taxes.",
+         "Revenue − Cost of Revenue − Operating Expenses − Other − Taxes = $101.8B.",
+         "10-K Income Statement, page 48.",
+         "Net income growing faster than revenue indicates improving efficiency."),
+        ("Operating Margin", f"{OPM:.1f}%", f"+{OPM_DELTA:.0f} bps", "up", "vs 44.6% FY24", "p.48", "",
+         "Percentage of revenue that becomes operating profit.",
+         "Operating Income ($128.5B) ÷ Revenue ($281.7B) = 45.6%.",
+         "10-K Income Statement, page 48.",
+         "45.6% is elite — most Fortune 500 companies operate at 10–15%."),
+        ("Free Cash Flow", f"${FCF_B:.1f}B", "-3.3%", "down", "vs $74.1B FY24", "p.51", "warning",
+         "Cash left over after operating expenses AND capital investments.",
+         "Operating Cash Flow ($136.2B) − Capital Expenditures ($64.6B) = $71.6B.",
+         "10-K Cash Flow Statement, page 51.",
+         "First decline in 5+ years — AI capex is outpacing cash generation."),
+        ("Capital Expenditure", f"${CAPEX_B:.1f}B", f"+{CAPEX_YOY:.1f}%", "up", "vs $44.5B FY24", "p.51", "signal",
+         "Money spent on long-term physical assets — datacenters, servers, chips.",
+         "Total capex in FY2025 = $64.6B, up from $44.5B in FY24 (+45.2%).",
+         "10-K Cash Flow Statement, page 51.",
+         "More than doubled over 2 years — largest infrastructure buildout in company history."),
+        ("Diluted EPS", f"${EPS:.2f}", "+15.6%", "up", "vs $11.80 FY24", "p.48", "",
+         "Earnings per share — total profit divided by diluted share count.",
+         "Net Income ($101.8B) ÷ Diluted Share Count (7,465M) = $13.64.",
+         "10-K Income Statement, page 48.",
+         "Grew slightly faster than net income due to share buybacks."),
+    ]
 
-    cols2 = st.columns(3, gap="medium")
-    with cols2[0]:
-        st.markdown(kpi_card("Free Cash Flow", f"${FCF_B:.1f}B", "-3.3%", "down", "vs $74.1B FY24", "p.51", variant="warning"), unsafe_allow_html=True)
-        kpi_expander_open()
-        with st.expander("What does this mean?"):
-            st.markdown(kpi_explainer(
-                what="The cash Microsoft has left over after operating expenses AND capital investments.",
-                calc="Operating Cash Flow ($136.2B) − Capital Expenditures ($64.6B) = $71.6B.",
-                source="10-K Cash Flow Statement, page 51.",
-                useful="FCF declined for the first time in 5+ years — a signal that AI infrastructure spending is now outpacing cash generation growth."
-            ))
-        kpi_expander_close()
-    with cols2[1]:
-        st.markdown(kpi_card("Capital Expenditure", f"${CAPEX_B:.1f}B", f"+{CAPEX_YOY:.1f}%", "up", "vs $44.5B FY24", "p.51", variant="signal"), unsafe_allow_html=True)
-        kpi_expander_open()
-        with st.expander("What does this mean?"):
-            st.markdown(kpi_explainer(
-                what="Money spent on long-term physical assets — datacenters, servers, chips, buildings.",
-                calc="Total capital expenditure in FY2025 = $64.6B, up from $44.5B in FY24 (a 45.2% increase).",
-                source="10-K Cash Flow Statement, page 51.",
-                useful="Capex more than doubled over 2 years ($28B → $65B) — the largest infrastructure buildout in Microsoft's history."
-            ))
-        kpi_expander_close()
-    with cols2[2]:
-        st.markdown(kpi_card("Diluted EPS", f"${EPS:.2f}", "+15.6%", "up", "vs $11.80 FY24", "p.48"), unsafe_allow_html=True)
-        kpi_expander_open()
-        with st.expander("What does this mean?"):
-            st.markdown(kpi_explainer(
-                what="Earnings per share — total profit divided by diluted share count.",
-                calc="Net Income ($101.8B) ÷ Diluted Share Count (7,465M) = $13.64.",
-                source="10-K Income Statement, page 48.",
-                useful="EPS grew slightly faster than net income due to share buybacks reducing total share count."
-            ))
-        kpi_expander_close()
+    kpi_cols = st.columns(6, gap="small")
+    for i, (label, val, delta, dir_, sub, src, variant, what, calc, source, useful) in enumerate(kpi_data):
+        with kpi_cols[i]:
+            st.markdown(kpi_card(label, val, delta, dir_, sub, src, variant), unsafe_allow_html=True)
+            kpi_expander_open()
+            with st.expander("What does this mean?"):
+                st.markdown(kpi_explainer(what, calc, source, useful))
+            kpi_expander_close()
 
-    note("The following six metrics represent Microsoft's core FY2025 performance indicators as reported in the 10-K filing. "
-         "Each includes year-over-year comparison. Click 'What does this mean?' on any card for a plain-English explanation.", top_spaced=True)
+    note("The following six metrics represent Microsoft's core FY2025 performance indicators. "
+         "Click 'What does this mean?' on any card for a plain-English explanation.", top_spaced=True)
     content_wrap_close()
 
-    # SECTION 2 — Waterfall Bridge
-    content_wrap_open()
-    section_tile("Revenue Bridge FY24 → FY25", "How segments contributed to the +$36.6B revenue increase")
+    # ============ POWER BI GRID: Waterfall + Health Indicators SIDE-BY-SIDE ============
+    left_col, right_col = st.columns([1.5, 1], gap="medium")
 
-    seg_df = FINANCIALS["segments"]
-    pbp_delta = (seg_df.iloc[0]["rev_2025"] - seg_df.iloc[0]["rev_2024"]) / 1000
-    ic_delta  = (seg_df.iloc[1]["rev_2025"] - seg_df.iloc[1]["rev_2024"]) / 1000
-    mpc_delta = (seg_df.iloc[2]["rev_2025"] - seg_df.iloc[2]["rev_2024"]) / 1000
+    # LEFT: Waterfall bridge
+    with left_col:
+        content_wrap_open()
+        section_tile("Revenue Bridge FY24 → FY25", "Segment contribution to +$36.6B growth")
 
-    fig_wf = go.Figure(go.Waterfall(
-        orientation="v",
-        measure=["absolute", "relative", "relative", "relative", "total"],
-        x=["FY24 Revenue", "Productivity & BP", "Intelligent Cloud", "More Personal Computing", "FY25 Revenue"],
-        y=[245.1, pbp_delta, ic_delta, mpc_delta, 281.7],
-        text=[f"${245.1:.1f}B", f"+${pbp_delta:.1f}B", f"+${ic_delta:.1f}B", f"+${mpc_delta:.1f}B", f"${281.7:.1f}B"],
-        textposition="outside",
-        textfont=dict(family="Segoe UI", size=12, color="#252423"),
-        connector={"line": {"color": "#C7E0F4", "width": 1}},
-        increasing={"marker": {"color": "#0078D4", "line": {"color": "#005A9E", "width": 1}}},
-        totals={"marker": {"color": "#252423", "line": {"color": "#252423", "width": 1}}},
-        hovertemplate="<b>%{x}</b><br>%{text}<extra></extra>",
-    ))
-    fig_wf.update_layout(
-        **FLUENT_LAYOUT, height=460,
-        yaxis=dict(title="Revenue ($B)", gridcolor="#F3F2F1", rangemode="tozero"),
-        margin=dict(l=40, r=40, t=60, b=40), showlegend=False,
-    )
-    st.plotly_chart(fig_wf, use_container_width=True)
+        seg_df = FINANCIALS["segments"]
+        pbp_delta = (seg_df.iloc[0]["rev_2025"] - seg_df.iloc[0]["rev_2024"]) / 1000
+        ic_delta  = (seg_df.iloc[1]["rev_2025"] - seg_df.iloc[1]["rev_2024"]) / 1000
+        mpc_delta = (seg_df.iloc[2]["rev_2025"] - seg_df.iloc[2]["rev_2024"]) / 1000
 
-    note("This waterfall shows exactly how Microsoft's revenue grew from $245.1B to $281.7B — decomposed by segment contribution. "
-         "<strong>Intelligent Cloud contributed the largest share</strong> at approximately +$19B, accounting for over half of total growth.", top_spaced=True)
-
-    with st.expander("How to read a waterfall chart"):
-        st.markdown(kpi_explainer(
-            what="A waterfall chart decomposes a total change into its component parts. It's the standard way analysts visualize 'how did we get from A to B.'",
-            calc="Start with FY24 revenue ($245.1B), add each segment's growth contribution stacked on top, ending at FY25 revenue ($281.7B). Each blue bar is a positive contribution.",
-            source="Segment data from 10-K Note 18, pages 82–84.",
-            useful="Waterfalls immediately reveal which drivers matter most. Here it shows Intelligent Cloud contributed more than the other two segments combined — critical context for evaluating the AI capex strategy."
+        fig_wf = go.Figure(go.Waterfall(
+            orientation="v",
+            measure=["absolute", "relative", "relative", "relative", "total"],
+            x=["FY24", "Prod & BP", "Intell. Cloud", "MPC", "FY25"],
+            y=[245.1, pbp_delta, ic_delta, mpc_delta, 281.7],
+            text=[f"${245.1:.1f}B", f"+${pbp_delta:.1f}B", f"+${ic_delta:.1f}B", f"+${mpc_delta:.1f}B", f"${281.7:.1f}B"],
+            textposition="outside",
+            textfont=dict(family="Segoe UI", size=11, color="#252423"),
+            connector={"line": {"color": "#C7E0F4", "width": 1}},
+            increasing={"marker": {"color": "#0078D4"}},
+            totals={"marker": {"color": "#252423"}},
+            hovertemplate="<b>%{x}</b><br>%{text}<extra></extra>",
         ))
-    content_wrap_close()
+        fig_wf.update_layout(
+            **FLUENT_LAYOUT, height=380,
+            yaxis=dict(title="Revenue ($B)", gridcolor="#F3F2F1", rangemode="tozero"),
+            margin=dict(l=40, r=20, t=30, b=40), showlegend=False,
+        )
+        st.plotly_chart(fig_wf, use_container_width=True)
 
-    # SECTION 3 — Financial Health Indicators
-    content_wrap_open()
-    section_tile("Financial Health Indicators", "Investor-grade quality ratios")
+        note("<strong>Intelligent Cloud</strong> contributed the largest share (~+$19B) — over half of total growth.")
+        content_wrap_close()
 
-    hcols = st.columns(3, gap="medium")
-    with hcols[0]:
+    # RIGHT: Health Indicators (3 stacked tiles)
+    with right_col:
+        content_wrap_open()
+        section_tile("Financial Health Indicators", "Investor-grade quality ratios")
+
         st.markdown(kpi_card("Rule of 40", f"{RULE40:.1f}", "Elite tier", "up", "Growth% + FCF margin%"), unsafe_allow_html=True)
         kpi_expander_open()
         with st.expander("What does this mean?"):
             st.markdown(kpi_explainer(
-                what="A SaaS benchmark test. Companies must grow fast AND maintain strong cash flow margins simultaneously. Scores above 40 are considered 'elite.'",
+                what="SaaS benchmark. Scores above 40 are 'elite.'",
                 calc="Revenue Growth (14.9%) + FCF Margin (25.4%) = 40.3.",
-                source="SaaS industry standard, derived from 10-K.",
-                useful="At $282B scale, sustaining a Rule of 40 score is extraordinary."
-            ))
-        kpi_expander_close()
-    with hcols[1]:
-        st.markdown(kpi_card("Return on Invested Capital", f"{ROIC:.1f}%", "World class", "up", "Profit per $1 invested"), unsafe_allow_html=True)
-        kpi_expander_open()
-        with st.expander("What does this mean?"):
-            st.markdown(kpi_explainer(
-                what="How much profit Microsoft generates from every dollar invested in the business.",
-                calc="NOPAT ($105.9B) ÷ Invested Capital ($386.6B) = 27.4%.",
-                source="Derived from 10-K.",
-                useful="Above 15% indicates value creation; above 20% is exceptional. Microsoft's 27.4% is world-class."
-            ))
-        kpi_expander_close()
-    with hcols[2]:
-        st.markdown(kpi_card("Net Debt / EBITDA", f"{ND_EBITDA:.2f}x", "Fortress balance sheet", "up", "Leverage ratio"), unsafe_allow_html=True)
-        kpi_expander_open()
-        with st.expander("What does this mean?"):
-            st.markdown(kpi_explainer(
-                what="How many years of pre-tax earnings would be required to pay off all debt.",
-                calc="(Total Debt $43.2B − Cash & ST Investments $94.6B) ÷ EBITDA $162.7B = 0.08x.",
-                source="10-K Balance Sheet, page 50.",
-                useful="Below 1.0x is 'fortress balance sheet.' Microsoft's 0.08x means all debt could be repaid with one month of earnings."
+                source="10-K derived.",
+                useful="At $282B scale, sustaining Rule of 40 is extraordinary."
             ))
         kpi_expander_close()
 
-    note("These three ratios are used by professional investors to assess long-term business quality. "
-         "Each measures a different dimension of financial strength — growth quality, capital efficiency, and leverage.", top_spaced=True)
-    content_wrap_close()
+        st.markdown(kpi_card("ROIC", f"{ROIC:.1f}%", "World class", "up", "Profit per $1 invested"), unsafe_allow_html=True)
+        kpi_expander_open()
+        with st.expander("What does this mean?"):
+            st.markdown(kpi_explainer(
+                what="Profit generated from every dollar invested in the business.",
+                calc="NOPAT ($105.9B) ÷ Invested Capital ($386.6B) = 27.4%.",
+                source="10-K derived.",
+                useful="Above 20% is exceptional. 27.4% is world-class."
+            ))
+        kpi_expander_close()
+
+        st.markdown(kpi_card("Net Debt / EBITDA", f"{ND_EBITDA:.2f}x", "Fortress", "up", "Leverage ratio"), unsafe_allow_html=True)
+        kpi_expander_open()
+        with st.expander("What does this mean?"):
+            st.markdown(kpi_explainer(
+                what="Years of earnings needed to pay off debt.",
+                calc="(Debt $43.2B − Cash $94.6B) ÷ EBITDA $162.7B = 0.08x.",
+                source="10-K Balance Sheet.",
+                useful="0.08x means all debt could be repaid with one month of earnings."
+            ))
+        kpi_expander_close()
+        content_wrap_close()
+
+    # ============ Full-width analyst summary at bottom ============
+    note("<strong>The FY2025 story in one line:</strong> Microsoft delivered record revenue and profits, while making the largest AI infrastructure bet in company history. "
+         "Free cash flow declined for the first time in 5+ years — not a business weakness, but a deliberate reinvestment choice. "
+         "Financial health remains world-class across every metric.")
 
 # ============================================================
-# TAB 3: REVENUE & SEGMENTS
+# TAB 3: REVENUE & SEGMENTS (Power BI grid)
 # ============================================================
 with tabs[2]:
     header_tile(
@@ -647,60 +607,17 @@ with tabs[2]:
         live_metric="$281.7B FY25"
     )
 
-    # SECTION 1 — Revenue Trajectory
+    # ============ ROW 1: 3 Segment KPI tiles ============
     content_wrap_open()
-    section_tile("Revenue Trajectory", "Five-year top-line growth with year-over-year overlay")
-
-    years6 = list(range(2020, 2026))
-    rev6 = [143.0, 168.1, 198.3, 211.9, 245.1, 281.7]
-    growth6 = [None, 17.5, 17.9, 6.9, 15.7, 14.9]
-
-    fig_r = go.Figure()
-    fig_r.add_trace(go.Bar(
-        x=years6, y=rev6, marker_color="#0078D4", name="Revenue",
-        text=[f"${v:.0f}B" for v in rev6], textposition="outside",
-        customdata=[[g if g else 0] for g in growth6],
-        hovertemplate="<b>FY%{x}</b><br>Revenue: $%{y:.1f}B<br>Growth: %{customdata[0]:.1f}%<extra></extra>",
-    ))
-    fig_r.add_trace(go.Scatter(
-        x=years6, y=growth6, mode="lines+markers", name="YoY Growth %",
-        yaxis="y2", line=dict(color="#FFB900", width=3),
-        marker=dict(size=10),
-        hovertemplate="<b>FY%{x}</b><br>YoY Growth: %{y:.1f}%<extra></extra>",
-    ))
-    fig_r.update_layout(
-        **FLUENT_LAYOUT, height=420,
-        yaxis=dict(title="Revenue ($B)", gridcolor="#F3F2F1"),
-        yaxis2=dict(title="Growth %", overlaying="y", side="right", showgrid=False),
-        xaxis=dict(tickmode="array", tickvals=years6),
-        legend=dict(orientation="h", y=1.02, x=1, xanchor="right"),
-        margin=dict(l=40, r=40, t=40, b=40),
-    )
-    st.plotly_chart(fig_r, use_container_width=True)
-
-    st.markdown("#### $300B Revenue Milestone")
-    progress_pct = (REV_B / 300) * 100
-    st.progress(progress_pct / 100, text=f"${REV_B:.1f}B of $300B target · {progress_pct:.1f}% achieved")
-    st.caption("At current pace, Microsoft is projected to cross $300B in annual revenue in late 2025 or early 2026 — a historic milestone.")
-
-    note("Microsoft has grown revenue from $143B to $282B over five fiscal years — nearly doubling the top line. "
-         "The <strong>blue bars</strong> show total revenue, and the <strong>gold line</strong> shows year-over-year growth. "
-         "Growth has held remarkably steady around 15% even as the company scaled.", top_spaced=True)
-    content_wrap_close()
-
-    # SECTION 2 — Segment Performance
-    content_wrap_open()
-    section_tile("Segment Performance", "Business unit revenue and growth breakdown")
+    section_tile("Segment Overview", "FY2025 revenue and growth by operating segment")
 
     seg_df = FINANCIALS["segments"]
-    colors_seg = ["#0078D4", "#005A9E", "#605E5C"]
-
-    scols = st.columns(3, gap="medium")
     seg_explanations = [
         "Office 365, LinkedIn, and Dynamics — enterprise productivity software.",
         "Azure cloud, servers, and enterprise services — the AI infrastructure segment.",
         "Windows, Xbox, Surface, and Bing — consumer-facing products.",
     ]
+    scols = st.columns(3, gap="medium")
     for i, row in seg_df.iterrows():
         rev_b = row["rev_2025"] / 1000
         growth = (row["rev_2025"] - row["rev_2024"]) / row["rev_2024"] * 100
@@ -708,92 +625,137 @@ with tabs[2]:
             st.markdown(kpi_card(
                 row["segment"],
                 f"${rev_b:.1f}B",
-                f"+{growth:.1f}%",
-                "up",
+                f"+{growth:.1f}%", "up",
                 f"{rev_b/REV_B*100:.0f}% of total revenue",
             ), unsafe_allow_html=True)
             kpi_expander_open()
             with st.expander("What does this mean?"):
                 st.markdown(kpi_explainer(
                     what=seg_explanations[i],
-                    calc=f"FY2025 revenue ${rev_b:.1f}B, up from ${row['rev_2024']/1000:.1f}B in FY2024 (+{growth:.1f}%).",
+                    calc=f"FY25 revenue ${rev_b:.1f}B, up from ${row['rev_2024']/1000:.1f}B in FY24 (+{growth:.1f}%).",
                     source="10-K Note 18: Segment Information.",
-                    useful=f"This segment represents {rev_b/REV_B*100:.0f}% of Microsoft's total revenue base."
+                    useful=f"This segment represents {rev_b/REV_B*100:.0f}% of Microsoft's total revenue."
                 ))
             kpi_expander_close()
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    fig_s = go.Figure()
-    fig_s.add_trace(go.Bar(
-        x=seg_df["segment"],
-        y=seg_df["rev_2025"] / 1000,
-        marker_color=colors_seg,
-        text=[f"${v/1000:.1f}B" for v in seg_df["rev_2025"]],
-        textposition="outside",
-        customdata=[[(r["rev_2025"] - r["rev_2024"]) / r["rev_2024"] * 100] for _, r in seg_df.iterrows()],
-        hovertemplate="<b>%{x}</b><br>Revenue: $%{y:.1f}B<br>YoY Growth: %{customdata[0]:.1f}%<extra></extra>",
-    ))
-    fig_s.update_layout(
-        **FLUENT_LAYOUT, height=380,
-        yaxis=dict(title="Revenue ($B)", gridcolor="#F3F2F1"),
-        margin=dict(l=40, r=40, t=40, b=40), showlegend=False,
-    )
-    st.plotly_chart(fig_s, use_container_width=True)
-
-    note("Microsoft reports three operating segments in its 10-K. Each represents a distinct customer base, product mix, and growth trajectory. "
-         "<strong>Intelligent Cloud</strong> is the fastest-growing segment and is directly benefiting from AI infrastructure investment.", top_spaced=True)
     content_wrap_close()
 
-    # SECTION 3 — Segment Operating Income
-    content_wrap_open()
-    section_tile("Segment Operating Income", "Where profit is actually generated")
+    # ============ ROW 2: Revenue Trajectory + Segment Revenue SIDE-BY-SIDE ============
+    left_col, right_col = st.columns(2, gap="medium")
 
-    opi_vals = seg_df["opi_2025"] / 1000
-    opi_prior = seg_df["opi_2024"] / 1000
-    opi_margin = seg_df["opi_2025"] / seg_df["rev_2025"] * 100
+    with left_col:
+        content_wrap_open()
+        section_tile("Revenue Trajectory", "Five-year top-line growth")
 
-    fig_opi = go.Figure()
-    fig_opi.add_trace(go.Bar(
-        y=seg_df["segment"], x=opi_prior, orientation="h",
-        marker_color="#C7E0F4", name="FY2024",
-        text=[f"${v:.1f}B" for v in opi_prior],
-        textposition="inside",
-        insidetextfont=dict(color="#005A9E"),
-        hovertemplate="<b>%{y}</b><br>FY24 Operating Income: $%{x:.1f}B<extra></extra>",
-    ))
-    fig_opi.add_trace(go.Bar(
-        y=seg_df["segment"], x=opi_vals, orientation="h",
-        marker_color="#0078D4", name="FY2025",
-        text=[f"${v:.1f}B ({m:.0f}% margin)" for v, m in zip(opi_vals, opi_margin)],
-        textposition="outside",
-        hovertemplate="<b>%{y}</b><br>FY25 Operating Income: $%{x:.1f}B<br>Margin: %{customdata[0]:.1f}%<extra></extra>",
-        customdata=[[m] for m in opi_margin],
-    ))
-    fig_opi.update_layout(
-        **FLUENT_LAYOUT, height=380, barmode="group",
-        xaxis=dict(title="Operating Income ($B)", gridcolor="#F3F2F1"),
-        yaxis=dict(title=""),
-        legend=dict(orientation="h", y=1.05, x=1, xanchor="right"),
-        margin=dict(l=40, r=100, t=40, b=40),
-    )
-    st.plotly_chart(fig_opi, use_container_width=True)
+        years6 = list(range(2020, 2026))
+        rev6 = [143.0, 168.1, 198.3, 211.9, 245.1, 281.7]
+        growth6 = [None, 17.5, 17.9, 6.9, 15.7, 14.9]
 
-    note("Revenue tells us where growth is coming from — but <strong>operating income</strong> tells us where the profit lives. "
-         "Notably, <strong>Productivity & Business Processes</strong> generates the highest operating income ($69.8B) despite Intelligent Cloud having higher revenue growth. "
-         "Office and LinkedIn are Microsoft's true profit engine.", top_spaced=True)
-
-    with st.expander("What is Operating Income?"):
-        st.markdown(kpi_explainer(
-            what="The profit earned from a segment's core business activities, before interest and taxes.",
-            calc="Segment Revenue − Cost of Revenue − Segment Operating Expenses = Operating Income.",
-            source="10-K Note 18: Segment Information, pages 82–84.",
-            useful="Comparing operating income across segments reveals where profit actually lives. P&BP generates the highest absolute profit ($69.8B) with a 58% operating margin — one of the highest in enterprise software."
+        fig_r = go.Figure()
+        fig_r.add_trace(go.Bar(
+            x=years6, y=rev6, marker_color="#0078D4", name="Revenue",
+            text=[f"${v:.0f}B" for v in rev6], textposition="outside",
+            customdata=[[g if g else 0] for g in growth6],
+            hovertemplate="<b>FY%{x}</b><br>Revenue: $%{y:.1f}B<br>Growth: %{customdata[0]:.1f}%<extra></extra>",
         ))
-    content_wrap_close()
+        fig_r.add_trace(go.Scatter(
+            x=years6, y=growth6, mode="lines+markers", name="YoY %",
+            yaxis="y2", line=dict(color="#FFB900", width=3),
+            marker=dict(size=8),
+            hovertemplate="<b>FY%{x}</b><br>YoY: %{y:.1f}%<extra></extra>",
+        ))
+        fig_r.update_layout(
+            **FLUENT_LAYOUT, height=350,
+            yaxis=dict(title="Revenue ($B)", gridcolor="#F3F2F1"),
+            yaxis2=dict(title="Growth %", overlaying="y", side="right", showgrid=False),
+            xaxis=dict(tickmode="array", tickvals=years6),
+            legend=dict(orientation="h", y=1.02, x=1, xanchor="right"),
+            margin=dict(l=40, r=40, t=40, b=40),
+        )
+        st.plotly_chart(fig_r, use_container_width=True)
+        content_wrap_close()
+
+    with right_col:
+        content_wrap_open()
+        section_tile("Segment Revenue", "FY2025 revenue by segment")
+
+        colors_seg = ["#0078D4", "#005A9E", "#605E5C"]
+        fig_s = go.Figure()
+        fig_s.add_trace(go.Bar(
+            x=seg_df["segment"],
+            y=seg_df["rev_2025"] / 1000,
+            marker_color=colors_seg,
+            text=[f"${v/1000:.1f}B" for v in seg_df["rev_2025"]],
+            textposition="outside",
+            customdata=[[(r["rev_2025"] - r["rev_2024"]) / r["rev_2024"] * 100] for _, r in seg_df.iterrows()],
+            hovertemplate="<b>%{x}</b><br>Revenue: $%{y:.1f}B<br>Growth: %{customdata[0]:.1f}%<extra></extra>",
+        ))
+        fig_s.update_layout(
+            **FLUENT_LAYOUT, height=350,
+            yaxis=dict(title="Revenue ($B)", gridcolor="#F3F2F1"),
+            xaxis=dict(tickfont=dict(size=10)),
+            margin=dict(l=40, r=40, t=40, b=40), showlegend=False,
+        )
+        st.plotly_chart(fig_s, use_container_width=True)
+        content_wrap_close()
+
+    # ============ ROW 3: $300B Progress + Segment Operating Income SIDE-BY-SIDE ============
+    left_col2, right_col2 = st.columns([1, 1.5], gap="medium")
+
+    with left_col2:
+        content_wrap_open()
+        section_tile("$300B Revenue Milestone", "Progress toward historic threshold")
+
+        progress_pct = (REV_B / 300) * 100
+        st.markdown(f"""
+        <div style="padding: 1rem 0.5rem;">
+          <div style="font-size:2rem; font-weight:600; color:#0078D4; font-variant-numeric: tabular-nums;">${REV_B:.1f}B</div>
+          <div style="font-size:0.85rem; color:#605E5C; margin-bottom:1rem;">out of $300B target</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.progress(progress_pct / 100, text=f"{progress_pct:.1f}% achieved")
+        st.caption("Projected to cross $300B in late 2025 / early 2026 — a historic milestone.")
+
+        note("Microsoft doubled revenue from $143B → $282B in five years while sustaining ~15% growth.")
+        content_wrap_close()
+
+    with right_col2:
+        content_wrap_open()
+        section_tile("Segment Operating Income", "Where profit is actually generated")
+
+        opi_vals = seg_df["opi_2025"] / 1000
+        opi_prior = seg_df["opi_2024"] / 1000
+        opi_margin = seg_df["opi_2025"] / seg_df["rev_2025"] * 100
+
+        fig_opi = go.Figure()
+        fig_opi.add_trace(go.Bar(
+            y=seg_df["segment"], x=opi_prior, orientation="h",
+            marker_color="#C7E0F4", name="FY2024",
+            text=[f"${v:.1f}B" for v in opi_prior], textposition="inside",
+            insidetextfont=dict(color="#005A9E"),
+            hovertemplate="<b>%{y}</b><br>FY24: $%{x:.1f}B<extra></extra>",
+        ))
+        fig_opi.add_trace(go.Bar(
+            y=seg_df["segment"], x=opi_vals, orientation="h",
+            marker_color="#0078D4", name="FY2025",
+            text=[f"${v:.1f}B ({m:.0f}%)" for v, m in zip(opi_vals, opi_margin)],
+            textposition="outside",
+            customdata=[[m] for m in opi_margin],
+            hovertemplate="<b>%{y}</b><br>FY25: $%{x:.1f}B<br>Margin: %{customdata[0]:.1f}%<extra></extra>",
+        ))
+        fig_opi.update_layout(
+            **FLUENT_LAYOUT, height=380, barmode="group",
+            xaxis=dict(title="Operating Income ($B)", gridcolor="#F3F2F1"),
+            yaxis=dict(title="", tickfont=dict(size=10)),
+            legend=dict(orientation="h", y=1.05, x=1, xanchor="right"),
+            margin=dict(l=40, r=80, t=40, b=40),
+        )
+        st.plotly_chart(fig_opi, use_container_width=True)
+
+        note("<strong>Productivity & BP</strong> generates the highest operating income ($69.8B, 58% margin). Office and LinkedIn are the true profit engine.")
+        content_wrap_close()
 
 # ============================================================
-# TAB 4: CAPITAL ALLOCATION
+# TAB 4: CAPITAL ALLOCATION (Power BI grid)
 # ============================================================
 with tabs[3]:
     header_tile(
@@ -809,7 +771,7 @@ with tabs[3]:
 
     ca = KPIS["cap_allocation"]
 
-    # SECTION 1 — Capital Deployment
+    # ============ ROW 1: 4 Capital Deployment KPI tiles ============
     content_wrap_open()
     section_tile("Capital Deployment", "FY2025 uses of operating cash flow")
 
@@ -827,84 +789,81 @@ with tabs[3]:
         st.markdown(kpi_card("Acquisitions", f"${ca['acquisitions']/1000:.1f}B",
                               "net of divestitures", "flat", "strategic add-ons"), unsafe_allow_html=True)
 
-    note("Microsoft generated $136.2B in operating cash flow during FY2025. The following four categories represent how that cash was allocated. "
-         "<strong>Capex accounted for 57% of total capital deployed</strong> — the highest share in the company's history.", top_spaced=True)
+    note("Microsoft generated $136.2B in operating cash flow. <strong>Capex accounted for 57% of total capital deployed</strong> — the highest share ever.", top_spaced=True)
     content_wrap_close()
 
-    # SECTION 2 — Deployment Mix (Donut)
-    content_wrap_open()
-    section_tile("Capital Deployment Mix", "Visual breakdown of the four capital uses")
+    # ============ ROW 2: Donut + Capex Trajectory SIDE-BY-SIDE ============
+    left_col, right_col = st.columns(2, gap="medium")
 
-    allocation_labels = ["Capital Expenditure", "Dividends", "Share Repurchases", "Acquisitions"]
-    allocation_values = [ca["capex"]/1000, ca["dividends"]/1000, ca["buybacks"]/1000, ca["acquisitions"]/1000]
-    total_deployed = sum(allocation_values)
-    allocation_colors = ["#0078D4", "#005A9E", "#605E5C", "#FFB900"]
+    with left_col:
+        content_wrap_open()
+        section_tile("Capital Deployment Mix", "Breakdown of the four capital uses")
 
-    fig_donut = go.Figure(go.Pie(
-        labels=allocation_labels, values=allocation_values,
-        marker=dict(colors=allocation_colors, line=dict(color="#FFFFFF", width=3)),
-        hole=0.65,
-        textinfo="label+percent",
-        textposition="outside",
-        textfont=dict(family="Segoe UI", size=12, color="#252423"),
-        pull=[0.03, 0, 0, 0],
-        hovertemplate="<b>%{label}</b><br>$%{value:.1f}B<br>%{percent}<extra></extra>",
-        rotation=90,
-    ))
-    fig_donut.add_annotation(
-        text=f"<b style='font-size:24px;color:#252423;'>${total_deployed:.1f}B</b><br><span style='font-size:12px;color:#605E5C;'>Total Deployed FY25</span>",
-        x=0.5, y=0.5, showarrow=False, font=dict(family="Segoe UI"),
-    )
-    fig_donut.update_layout(
-        **FLUENT_LAYOUT, height=440,
-        margin=dict(l=40, r=40, t=20, b=40),
-        showlegend=True,
-        legend=dict(orientation="v", x=1.02, y=0.5, font=dict(family="Segoe UI", size=11)),
-    )
-    st.plotly_chart(fig_donut, use_container_width=True)
+        allocation_labels = ["Capex", "Dividends", "Buybacks", "Acquisitions"]
+        allocation_values = [ca["capex"]/1000, ca["dividends"]/1000, ca["buybacks"]/1000, ca["acquisitions"]/1000]
+        total_deployed = sum(allocation_values)
+        allocation_colors = ["#0078D4", "#005A9E", "#605E5C", "#FFB900"]
 
-    note("Management's capital allocation choices signal strategic priorities. "
-         "Microsoft's 57% allocation to capex reflects a decisive bet that AI infrastructure will generate superior returns compared to other uses of cash.", top_spaced=True)
-
-    with st.expander("What are the four uses of cash?"):
-        st.markdown(kpi_explainer(
-            what="Companies can deploy cash in four primary ways: (1) reinvest via capex, (2) buybacks, (3) dividends, or (4) acquisitions.",
-            calc=f"Capex ${ca['capex']/1000:.1f}B + Buybacks ${ca['buybacks']/1000:.1f}B + Dividends ${ca['dividends']/1000:.1f}B + Acquisitions ${ca['acquisitions']/1000:.1f}B = ${total_deployed:.1f}B total.",
-            source="10-K Cash Flow Statement, page 51.",
-            useful="Capital allocation choices reveal strategic priorities. Microsoft is betting heavily on internal reinvestment over shareholder returns."
+        fig_donut = go.Figure(go.Pie(
+            labels=allocation_labels, values=allocation_values,
+            marker=dict(colors=allocation_colors, line=dict(color="#FFFFFF", width=3)),
+            hole=0.65,
+            textinfo="label+percent",
+            textposition="outside",
+            textfont=dict(family="Segoe UI", size=11, color="#252423"),
+            pull=[0.03, 0, 0, 0],
+            hovertemplate="<b>%{label}</b><br>$%{value:.1f}B<br>%{percent}<extra></extra>",
+            rotation=90,
         ))
-    content_wrap_close()
+        fig_donut.add_annotation(
+            text=f"<b style='font-size:20px;color:#252423;'>${total_deployed:.1f}B</b><br><span style='font-size:11px;color:#605E5C;'>Total FY25</span>",
+            x=0.5, y=0.5, showarrow=False, font=dict(family="Segoe UI"),
+        )
+        fig_donut.update_layout(
+            **FLUENT_LAYOUT, height=380,
+            margin=dict(l=20, r=20, t=20, b=20), showlegend=False,
+        )
+        st.plotly_chart(fig_donut, use_container_width=True)
 
-    # SECTION 3 — Capex Trajectory
-    content_wrap_open()
-    section_tile("Capital Expenditure Trajectory", "The largest infrastructure buildout in company history")
+        note("57% capex allocation reflects a decisive bet that AI infrastructure will generate superior returns.")
 
-    capex_years = [2020, 2021, 2022, 2023, 2024, 2025]
-    capex_vals = [15.4, 20.6, 23.9, 28.1, 44.5, 64.6]
+        with st.expander("What are the four uses of cash?"):
+            st.markdown(kpi_explainer(
+                what="Four ways to deploy cash: capex, buybacks, dividends, acquisitions.",
+                calc=f"Total: ${total_deployed:.1f}B across all four categories.",
+                source="10-K Cash Flow Statement, page 51.",
+                useful="Capital allocation choices reveal strategic priorities."
+            ))
+        content_wrap_close()
 
-    fig_capex = go.Figure()
-    fig_capex.add_trace(go.Bar(
-        x=capex_years, y=capex_vals, marker_color="#0078D4",
-        text=[f"${v:.1f}B" for v in capex_vals], textposition="outside",
-        hovertemplate="<b>FY%{x}</b><br>Capex: $%{y:.1f}B<extra></extra>",
-    ))
-    fig_capex.add_annotation(x=2023, y=28.1, text="Pre-AI baseline", showarrow=True, arrowhead=2,
-                              ax=-40, ay=-40, font=dict(size=10, color="#605E5C"))
-    fig_capex.add_annotation(x=2025, y=64.6, text="AI-era peak<br>(2.3x in 2 years)",
-                              showarrow=True, arrowhead=2,
-                              ax=40, ay=-50, font=dict(size=10, color="#D83B01"))
-    fig_capex.update_layout(
-        **FLUENT_LAYOUT, height=420,
-        yaxis=dict(title="Capex ($B)", gridcolor="#F3F2F1"),
-        margin=dict(l=40, r=40, t=40, b=40), showlegend=False,
-    )
-    st.plotly_chart(fig_capex, use_container_width=True)
+    with right_col:
+        content_wrap_open()
+        section_tile("Capex Trajectory", "Largest infrastructure buildout ever")
 
-    note("Microsoft's capex has <strong>more than doubled over two years</strong> — from $28B in FY2023 to $64.6B in FY2025. "
-         "This is the largest and fastest infrastructure buildout ever undertaken by Microsoft, driven almost entirely by AI datacenter demand.", top_spaced=True)
-    content_wrap_close()
+        capex_years = [2020, 2021, 2022, 2023, 2024, 2025]
+        capex_vals = [15.4, 20.6, 23.9, 28.1, 44.5, 64.6]
 
-    # SECTION 4 — FCF Composition
+        fig_capex = go.Figure()
+        fig_capex.add_trace(go.Bar(
+            x=capex_years, y=capex_vals, marker_color="#0078D4",
+            text=[f"${v:.1f}B" for v in capex_vals], textposition="outside",
+            hovertemplate="<b>FY%{x}</b><br>Capex: $%{y:.1f}B<extra></extra>",
+        ))
+        fig_capex.add_annotation(x=2023, y=28.1, text="Pre-AI", showarrow=True, arrowhead=2,
+                                  ax=-30, ay=-35, font=dict(size=10, color="#605E5C"))
+        fig_capex.add_annotation(x=2025, y=64.6, text="2.3x in 2 yrs", showarrow=True, arrowhead=2,
+                                  ax=30, ay=-40, font=dict(size=10, color="#D83B01"))
+        fig_capex.update_layout(
+            **FLUENT_LAYOUT, height=380,
+            yaxis=dict(title="Capex ($B)", gridcolor="#F3F2F1"),
+            margin=dict(l=40, r=20, t=30, b=40), showlegend=False,
+        )
+        st.plotly_chart(fig_capex, use_container_width=True)
+
+        note("Capex more than doubled in 2 years ($28B → $65B). All driven by AI datacenter demand.")
+        content_wrap_close()
+
+    # ============ ROW 3: FCF Composition (FULL WIDTH — story chart) ============
     content_wrap_open()
     section_tile("Free Cash Flow Composition", "Operating cash flow vs. reinvestment vs. distributable cash")
 
@@ -933,20 +892,18 @@ with tabs[3]:
     )
     st.plotly_chart(fig_fcf, use_container_width=True)
 
-    note("This chart shows the fundamental capital allocation trade-off. <strong>Operating cash flow</strong> (blue bars) grew 15% to $136B. "
-         "<strong>Capex</strong> (light blue bars) grew 45% to $65B. The gap between them — <strong>Free Cash Flow</strong> (orange line) — declined 3.3% for the first time in five years.", top_spaced=True)
+    note("<strong>OCF</strong> (blue) grew 15%. <strong>Capex</strong> (light blue) grew 45%. The gap — <strong>Free Cash Flow</strong> (orange line) — declined 3.3% for the first time in 5 years.", top_spaced=True)
 
     with st.expander("What is Free Cash Flow, and why does the decline matter?"):
         st.markdown(kpi_explainer(
-            what="Free Cash Flow is the cash a business generates after paying for both operations and capital investment.",
-            calc="Operating Cash Flow ($136.2B) − Capital Expenditure ($64.6B) = $71.6B FCF.",
+            what="Cash a business generates after paying for operations AND capital investment.",
+            calc="OCF ($136.2B) − Capex ($64.6B) = $71.6B FCF.",
             source="Derived from 10-K Cash Flow Statement, page 51.",
-            useful="FCF declined 3.3% year-over-year — the first decline in five years — because capex growth (+45%) outpaced OCF growth (+15%). The core business is healthy; the decline reflects a deliberate reinvestment choice."
+            useful="Declined 3.3% YoY — not weakness, but deliberate reinvestment. Core business still healthy."
         ))
 
-    note("<strong>The central strategic question:</strong> If Azure and AI-related revenue continue growing 20%+ annually, "
-         "the FY2025 capex commitment will be repaid multiple times over. If AI demand plateaus, Microsoft will have overspent by tens of billions. "
-         "The next 12–18 months of Azure growth will be the decisive test.")
+    note("<strong>The central strategic question:</strong> If Azure revenue keeps growing 20%+, the FY25 capex will be repaid multiple times. "
+         "If AI demand plateaus, Microsoft will have overspent by tens of billions. The next 12–18 months decide.")
     content_wrap_close()
 
 # ============================================================
@@ -956,9 +913,9 @@ with tabs[4]:
     header_tile(
         "AI Copilot",
         subtitles=[
-            "Ten pre-answered questions covering the most common areas of investor interest.",
+            "Ten pre-answered questions covering common investor and analyst areas of interest.",
             "Click any question below to reveal a conversational analysis.",
-            "Powered by the verified data from Microsoft's FY2025 10-K filing.",
+            "Powered by verified data from Microsoft's FY2025 10-K filing.",
         ],
         meta="Click any question below to reveal a conversational analysis.",
         live_metric="10 Questions"
